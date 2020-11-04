@@ -9,9 +9,13 @@ import (
 )
 
 var syncDir string
+var gitOps bool
+var dryrun bool
 
 func init() {
 	syncCmd.PersistentFlags().StringVarP(&syncDir, "directory", "d", ".", "Directory to sync.")
+	syncCmd.PersistentFlags().BoolVarP(&gitOps, "fullsync", "", true, "Delete any checks not found in this repository.")
+	syncCmd.PersistentFlags().BoolVarP(&dryrun, "dry-run", "", false, "Simulates a sync.")
 	policyCmd.AddCommand(syncCmd)
 }
 
@@ -20,54 +24,64 @@ var syncCmd = &cobra.Command{
 	Short: "Synchronize policies",
 	Long:  "Synchronize OPA policies to Fairwinds Insights",
 	Run: func(cmd *cobra.Command, args []string) {
-
-		// TODO remove hardcoded org, host, and GitOps Param
-		org := "centaurus"
-		host := "https://staging.insights.fairwinds.com"
-		results, err := opa.CompareChecks(syncDir, org, insightsToken, host, true)
+		org := configurationObject.Options.Organization
+		host := configurationObject.Options.Hostname
+		results, err := opa.CompareChecks(syncDir, org, insightsToken, host, gitOps)
 		if err != nil {
 			panic(err)
 		}
 		for _, instance := range results.InstanceDelete {
 			logrus.Infof("Deleting instance: %s:%s", instance.CheckName, instance.InstanceName)
-			err := insights.DeleteInstance(instance, org, insightsToken, host)
-			if err != nil {
-				panic(err)
+			if !dryrun {
+				err := insights.DeleteInstance(instance, org, insightsToken, host)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 		for _, check := range results.CheckDelete {
 			logrus.Infof("Deleting check: %s", check.CheckName)
-			err := insights.DeleteCheck(check, org, insightsToken, host)
-			if err != nil {
-				panic(err)
+			if !dryrun {
+				err := insights.DeleteCheck(check, org, insightsToken, host)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 		for _, check := range results.CheckInsert {
 			logrus.Infof("Adding check: %s", check.CheckName)
-			err := insights.PutCheck(check, org, insightsToken, host)
-			if err != nil {
-				panic(err)
+			if !dryrun {
+				err := insights.PutCheck(check, org, insightsToken, host)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 		for _, check := range results.CheckUpdate {
 			logrus.Infof("Updating check: %s", check.CheckName)
-			err := insights.PutCheck(check, org, insightsToken, host)
-			if err != nil {
-				panic(err)
+			if !dryrun {
+				err := insights.PutCheck(check, org, insightsToken, host)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 		for _, instance := range results.InstanceInsert {
 			logrus.Infof("Adding instance: %s:%s", instance.CheckName, instance.InstanceName)
-			err := insights.PutInstance(instance, org, insightsToken, host)
-			if err != nil {
-				panic(err)
+			if !dryrun {
+				err := insights.PutInstance(instance, org, insightsToken, host)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 		for _, instance := range results.InstanceUpdate {
 			logrus.Infof("Updating instance: %s:%s", instance.CheckName, instance.InstanceName)
-			err := insights.PutInstance(instance, org, insightsToken, host)
-			if err != nil {
-				panic(err)
+			if !dryrun {
+				err := insights.PutInstance(instance, org, insightsToken, host)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 	},
