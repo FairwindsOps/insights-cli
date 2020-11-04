@@ -1,0 +1,24 @@
+builds:
+- ldflags:
+  - -X main.version={{.Version}} -X main.commit={{.Commit}} -s -w
+  main: ./cmd/insights
+  goarch:
+  - amd64
+  - arm
+  - arm64
+  - 386
+  env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  - darwin
+  - windows
+  goarm:
+  - 6
+  - 7
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
