@@ -99,7 +99,14 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 		for _, check := range apiChecks {
 			if check.Name == fileCheck.CheckName {
 				found = true
-				// TODO check for changed properties
+				if check.Rego != fileCheck.Rego ||
+					notEqual(check.Category, fileCheck.Output.Category) ||
+					notEqual(check.Remediation, fileCheck.Output.Remediation) ||
+					notEqual(check.Severity, fileCheck.Output.Severity) ||
+					notEqual(check.Title, fileCheck.Output.Title) {
+
+					results.CheckUpdate = append(results.CheckUpdate, fileCheck)
+				}
 				break
 			}
 		}
@@ -138,6 +145,16 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 		results.InstanceDelete = append(results.InstanceDelete, diffInstances...)
 	}
 	return results
+}
+
+func notEqual(i1 interface{}, i2 interface{}) bool {
+	if (i1 == nil) != (i2 == nil) {
+		return true
+	}
+	if i1 == nil {
+		return false
+	}
+	return &i1 != &i2
 }
 
 func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, error) {
