@@ -2,8 +2,10 @@ package opa
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"reflect"
 	"strings"
 
 	"github.com/fairwindsops/insights-plugins/opa/pkg/opa"
@@ -52,6 +54,9 @@ func CompareChecks(folder, org, token, hostName string, gitops bool) (CompareRes
 			}).([]models.CustomCheckModel)) > 0
 		}).([]opa.OPACustomCheck)
 	}
+	fileChecks = funk.Filter(fileChecks, func(fc models.CustomCheckModel) bool {
+		return fc.Rego != ""
+	}).([]models.CustomCheckModel)
 	var apiInstances []opa.CheckSetting
 	// TODO replace with org wide get.
 	for _, check := range apiChecks {
@@ -121,7 +126,15 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 			for _, instance := range instances {
 				if fileInstance.InstanceName == instance.AdditionalData.Name {
 					found = true
-					// TODO check for changed properties
+					if !reflect.DeepEqual(instance.AdditionalData.Parameters, fileInstance.Parameters) ||
+						targetsNotEqual(instance.Targets, fileInstance.Targets) ||
+						notEqual(instance.AdditionalData.Output.Category, fileInstance.Output.Category) ||
+						notEqual(instance.AdditionalData.Output.Remediation, fileInstance.Output.Remediation) ||
+						notEqual(instance.AdditionalData.Output.Severity, fileInstance.Output.Severity) ||
+						notEqual(instance.AdditionalData.Output.Title, fileInstance.Output.Title) {
+						results.InstanceUpdate = append(results.InstanceUpdate, fileInstance)
+					}
+					// TODO check for changed targets
 					break
 				}
 			}
@@ -148,13 +161,19 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 }
 
 func notEqual(i1 interface{}, i2 interface{}) bool {
-	if (i1 == nil) != (i2 == nil) {
-		return true
+	return !reflect.DeepEqual(i1, i2)
+}
+
+func targetsNotEqual(apiTarget []string, fileTarget []models.KubernetesTarget) bool {
+	var fileStringTargets []string
+	for _, target := range fileTarget {
+		for _, kind := range target.Kinds {
+			for _, group := range target.APIGroups {
+				fileStringTargets = append(fileStringTargets, fmt.Sprintf("%s/%s", group, kind))
+			}
+		}
 	}
-	if i1 == nil {
-		return false
-	}
-	return &i1 != &i2
+	return !reflect.DeepEqual(apiTarget, fileStringTargets)
 }
 
 func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, error) {
@@ -168,7 +187,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 				logrus.Error(err, "Error reading file", filePath)
 				return nil, err
 			}
-			if strings.HasPrefix(filepath.Base(filePath), "policy") {
+			if strings.HasPrefix(filepath.Base(filePath), "policy.") {
 				extension := filepath.Ext(filePath)
 				if extension == ".rego" {
 					check.Rego = string(fileContents)
