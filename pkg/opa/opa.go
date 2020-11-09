@@ -214,7 +214,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 					}
 				} else {
 					logrus.Errorf("policy file is not a rego or yaml file: %s", extension)
-					return nil, errors.New("Policy file must be rego or yaml")
+					return nil, errors.New("policy file must be rego or yaml")
 				}
 			} else {
 				var instance models.CustomCheckInstanceModel
