@@ -1,0 +1,42 @@
+version: 2.1
+
+jobs:
+  release:
+    docker:
+      - image: cimg/go:1.15
+    steps:
+      - checkout
+      - run: curl -sL https://git.io/goreleaser | bash
+  test:
+    docker:
+      - image: cimg/go:1.15
+    steps:
+      - checkout
+      - run: |
+              go get -u golang.org/x/lint/golint
+              go get honnef.co/go/tools/cmd/staticcheck
+              go list ./pkg/... | grep -v vendor | xargs golint -set_exit_status
+              go list ./pkg/... | grep -v vendor | xargs go vet
+              staticcheck ./pkg/...
+              go test ./pkg/... -coverprofile=coverage.txt -covermode=count
+              bash <(curl -s https://codecov.io/bash)
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test:
+          filters:
+            branches:
+              only: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+      - release:
+          requires:
+          - test
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+
