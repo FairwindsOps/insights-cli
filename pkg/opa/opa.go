@@ -20,6 +20,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"reflect"
+	"sort"
 	"strings"
 
 	"github.com/fairwindsops/insights-plugins/opa/pkg/opa"
@@ -148,7 +149,7 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 						notEqual(instance.AdditionalData.Output.Title, fileInstance.Output.Title) {
 						results.InstanceUpdate = append(results.InstanceUpdate, fileInstance)
 					}
-					// TODO check for changed targets
+					// TODO check for changed clusters/run environments
 					break
 				}
 			}
@@ -187,6 +188,8 @@ func targetsNotEqual(apiTarget []string, fileTarget []models.KubernetesTarget) b
 			}
 		}
 	}
+	sort.Strings(fileStringTargets)
+	sort.Strings(apiTarget)
 	return !reflect.DeepEqual(apiTarget, fileStringTargets)
 }
 

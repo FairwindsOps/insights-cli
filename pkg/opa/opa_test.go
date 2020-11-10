@@ -17,7 +17,10 @@ package opa
 import (
 	"testing"
 
+	"github.com/fairwindsops/insights-plugins/opa/pkg/opa"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/fairwindsops/insights-cli/pkg/models"
 )
 
 func TestNotEqual(t *testing.T) {
@@ -42,9 +45,64 @@ func TestNotEqual(t *testing.T) {
 }
 
 func TestCompareCheck(t *testing.T) {
-	// TODO implement
+	results := compareChecks(nil, nil, nil)
+	assert.Equal(t, 0, len(results.CheckDelete))
+	assert.Equal(t, 0, len(results.CheckInsert))
+	assert.Equal(t, 0, len(results.CheckUpdate))
+	assert.Equal(t, 0, len(results.InstanceDelete))
+	assert.Equal(t, 0, len(results.InstanceInsert))
+	assert.Equal(t, 0, len(results.InstanceUpdate))
+	checks := []models.CustomCheckModel{
+		{
+			CheckName: "Check1",
+		},
+	}
+	results = compareChecks(checks, nil, nil)
+	assert.Equal(t, 0, len(results.CheckDelete))
+	assert.Equal(t, 1, len(results.CheckInsert))
+	assert.Equal(t, 0, len(results.CheckUpdate))
+	assert.Equal(t, 0, len(results.InstanceDelete))
+	assert.Equal(t, 0, len(results.InstanceInsert))
+	assert.Equal(t, 0, len(results.InstanceUpdate))
+	apiChecks := []opa.OPACustomCheck{
+		{
+			Name: "Check1",
+		},
+	}
+	results = compareChecks(checks, apiChecks, nil)
+	assert.Equal(t, 0, len(results.CheckDelete))
+	assert.Equal(t, 0, len(results.CheckInsert))
+	assert.Equal(t, 0, len(results.CheckUpdate))
+	assert.Equal(t, 0, len(results.InstanceDelete))
+	assert.Equal(t, 0, len(results.InstanceInsert))
+	assert.Equal(t, 0, len(results.InstanceUpdate))
+	// TODO implement checks for updates and instances
 }
 
 func TestTargetsNotEqual(t *testing.T) {
-	// TODO implement
+	apiTarget := []string{
+		"core/type1",
+		"core/type2",
+		"other/type1",
+		"other/type2",
+	}
+	fileTargets := []models.KubernetesTarget{
+		{
+			Kinds: []string{
+				"type1",
+				"type2",
+			},
+			APIGroups: []string{
+				"core",
+				"other",
+			},
+		},
+	}
+	assert.False(t, targetsNotEqual(apiTarget, fileTargets))
+	apiTarget = []string{
+		"core/type2",
+		"core/type1",
+		"other/type1",
+	}
+	assert.True(t, targetsNotEqual(apiTarget, fileTargets))
 }
