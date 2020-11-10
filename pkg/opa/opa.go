@@ -86,8 +86,13 @@ func CompareChecks(folder, org, token, hostName string, gitops bool) (CompareRes
 	return results, nil
 }
 
-func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACustomCheck, apiInstances []opa.CheckSetting) CompareResults {
-	var results CompareResults
+func instanceMatchesName(name string) func(opa.CheckSetting) bool {
+	return func(instance opa.CheckSetting) bool {
+		return instance.CheckName == name
+	}
+}
+
+func getMissingChecks(apiChecks []opa.OPACustomCheck, fileChecks []models.CustomCheckModel) []models.CustomCheckModel {
 	diff := funk.Subtract(
 		funk.Map(apiChecks, func(c opa.OPACustomCheck) string {
 			return c.Name
@@ -100,17 +105,18 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 			CheckName: s,
 		}
 	}).([]models.CustomCheckModel)
-	results.CheckDelete = append(results.CheckDelete, diffChecks...)
+	return diffChecks
+}
 
-	for _, instance := range apiInstances {
-		for _, deletedCheck := range results.CheckDelete {
-			if instance.CheckName == deletedCheck.CheckName {
-				results.InstanceDelete = append(results.InstanceDelete, models.CustomCheckInstanceModel{
-					CheckName:    instance.CheckName,
-					InstanceName: instance.AdditionalData.Name,
-				})
-				break
-			}
+func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACustomCheck, apiInstances []opa.CheckSetting) CompareResults {
+	var results CompareResults
+	results.CheckDelete = append(results.CheckDelete, getMissingChecks(apiChecks, fileChecks)...)
+	for _, deletedCheck := range results.CheckDelete {
+		for _, instance := range funk.Filter(apiInstances, instanceMatchesName(deletedCheck.CheckName)).([]opa.CheckSetting) {
+			results.InstanceDelete = append(results.InstanceDelete, models.CustomCheckInstanceModel{
+				CheckName:    instance.CheckName,
+				InstanceName: instance.AdditionalData.Name,
+			})
 		}
 	}
 
@@ -119,12 +125,7 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 		for _, check := range apiChecks {
 			if check.Name == fileCheck.CheckName {
 				found = true
-				if check.Rego != fileCheck.Rego ||
-					notEqual(check.Category, fileCheck.Output.Category) ||
-					notEqual(check.Remediation, fileCheck.Output.Remediation) ||
-					notEqual(check.Severity, fileCheck.Output.Severity) ||
-					notEqual(check.Title, fileCheck.Output.Title) {
-
+				if checksDoNotMatch(fileCheck, check) {
 					results.CheckUpdate = append(results.CheckUpdate, fileCheck)
 				}
 				break
@@ -133,23 +134,15 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 		if !found {
 			results.CheckInsert = append(results.CheckInsert, fileCheck)
 		}
-		instances := funk.Filter(apiInstances, func(instance opa.CheckSetting) bool {
-			return instance.CheckName == fileCheck.CheckName
-		}).([]opa.CheckSetting)
+		instances := funk.Filter(apiInstances, instanceMatchesName(fileCheck.CheckName)).([]opa.CheckSetting)
 		for _, fileInstance := range fileCheck.Instances {
 			found := false
 			for _, instance := range instances {
 				if fileInstance.InstanceName == instance.AdditionalData.Name {
 					found = true
-					if !reflect.DeepEqual(instance.AdditionalData.Parameters, fileInstance.Parameters) ||
-						targetsNotEqual(instance.Targets, fileInstance.Targets) ||
-						notEqual(instance.AdditionalData.Output.Category, fileInstance.Output.Category) ||
-						notEqual(instance.AdditionalData.Output.Remediation, fileInstance.Output.Remediation) ||
-						notEqual(instance.AdditionalData.Output.Severity, fileInstance.Output.Severity) ||
-						notEqual(instance.AdditionalData.Output.Title, fileInstance.Output.Title) {
+					if instancesDoNotMatch(fileInstance, instance) {
 						results.InstanceUpdate = append(results.InstanceUpdate, fileInstance)
 					}
-					// TODO check for changed clusters/run environments
 					break
 				}
 			}
@@ -157,26 +150,44 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 				results.InstanceInsert = append(results.InstanceInsert, fileInstance)
 			}
 		}
-		diff := funk.Subtract(
-			funk.Map(instances, func(i opa.CheckSetting) string {
-				return i.AdditionalData.Name
-			}),
-			funk.Map(fileCheck.Instances, func(i models.CustomCheckInstanceModel) string {
-				return i.InstanceName
-			}))
-		diffInstances := funk.Map(diff, func(s string) models.CustomCheckInstanceModel {
-			return models.CustomCheckInstanceModel{
-				InstanceName: s,
-				CheckName:    fileCheck.CheckName,
-			}
-		}).([]models.CustomCheckInstanceModel)
-		results.InstanceDelete = append(results.InstanceDelete, diffInstances...)
+		results.InstanceDelete = append(results.InstanceDelete, getDifferenceInstances(instances, fileCheck)...)
 	}
 	return results
 }
 
-func notEqual(i1 interface{}, i2 interface{}) bool {
-	return !reflect.DeepEqual(i1, i2)
+func getDifferenceInstances(instances []opa.CheckSetting, fileCheck models.CustomCheckModel) []models.CustomCheckInstanceModel {
+	diff := funk.Subtract(
+		funk.Map(instances, func(i opa.CheckSetting) string {
+			return i.AdditionalData.Name
+		}),
+		funk.Map(fileCheck.Instances, func(i models.CustomCheckInstanceModel) string {
+			return i.InstanceName
+		}))
+	diffInstances := funk.Map(diff, func(s string) models.CustomCheckInstanceModel {
+		return models.CustomCheckInstanceModel{
+			InstanceName: s,
+			CheckName:    fileCheck.CheckName,
+		}
+	}).([]models.CustomCheckInstanceModel)
+	return diffInstances
+}
+
+func instancesDoNotMatch(fileInstance models.CustomCheckInstanceModel, apiInstance opa.CheckSetting) bool {
+	// TODO check for changed clusters/run environments
+	return !reflect.DeepEqual(apiInstance.AdditionalData.Parameters, fileInstance.Parameters) ||
+		targetsNotEqual(apiInstance.Targets, fileInstance.Targets) ||
+		!reflect.DeepEqual(apiInstance.AdditionalData.Output.Category, fileInstance.Output.Category) ||
+		!reflect.DeepEqual(apiInstance.AdditionalData.Output.Remediation, fileInstance.Output.Remediation) ||
+		!reflect.DeepEqual(apiInstance.AdditionalData.Output.Severity, fileInstance.Output.Severity) ||
+		!reflect.DeepEqual(apiInstance.AdditionalData.Output.Title, fileInstance.Output.Title)
+}
+
+func checksDoNotMatch(fileCheck models.CustomCheckModel, apiCheck opa.OPACustomCheck) bool {
+	return apiCheck.Rego != fileCheck.Rego ||
+		!reflect.DeepEqual(apiCheck.Category, fileCheck.Output.Category) ||
+		!reflect.DeepEqual(apiCheck.Remediation, fileCheck.Output.Remediation) ||
+		!reflect.DeepEqual(apiCheck.Severity, fileCheck.Output.Severity) ||
+		!reflect.DeepEqual(apiCheck.Title, fileCheck.Output.Title)
 }
 
 func targetsNotEqual(apiTarget []string, fileTarget []models.KubernetesTarget) bool {
