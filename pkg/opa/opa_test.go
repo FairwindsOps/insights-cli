@@ -34,6 +34,12 @@ func TestCompareCheck(t *testing.T) {
 	checks := []models.CustomCheckModel{
 		{
 			CheckName: "Check1",
+			Instances: []models.CustomCheckInstanceModel{
+				{
+					CheckName:    "Check1",
+					InstanceName: "instance2",
+				},
+			},
 		},
 	}
 	results = compareChecks(checks, nil, nil)
@@ -41,7 +47,7 @@ func TestCompareCheck(t *testing.T) {
 	assert.Equal(t, 1, len(results.CheckInsert))
 	assert.Equal(t, 0, len(results.CheckUpdate))
 	assert.Equal(t, 0, len(results.InstanceDelete))
-	assert.Equal(t, 0, len(results.InstanceInsert))
+	assert.Equal(t, 1, len(results.InstanceInsert))
 	assert.Equal(t, 0, len(results.InstanceUpdate))
 	apiChecks := []opa.OPACustomCheck{
 		{
@@ -53,9 +59,31 @@ func TestCompareCheck(t *testing.T) {
 	assert.Equal(t, 0, len(results.CheckInsert))
 	assert.Equal(t, 0, len(results.CheckUpdate))
 	assert.Equal(t, 0, len(results.InstanceDelete))
+	assert.Equal(t, 1, len(results.InstanceInsert))
+	assert.Equal(t, 0, len(results.InstanceUpdate))
+	results = compareChecks(nil, apiChecks, nil)
+	assert.Equal(t, 1, len(results.CheckDelete))
+	assert.Equal(t, 0, len(results.CheckInsert))
+	assert.Equal(t, 0, len(results.CheckUpdate))
+	assert.Equal(t, 0, len(results.InstanceDelete))
 	assert.Equal(t, 0, len(results.InstanceInsert))
 	assert.Equal(t, 0, len(results.InstanceUpdate))
-	// TODO implement checks for updates and instances
+	apiInstances := []opa.CheckSetting{
+		{
+			CheckName: "Check1",
+		},
+		{
+			CheckName: "Check2",
+		},
+	}
+	results = compareChecks(nil, apiChecks, apiInstances)
+	assert.Equal(t, 1, len(results.CheckDelete))
+	assert.Equal(t, 0, len(results.CheckInsert))
+	assert.Equal(t, 0, len(results.CheckUpdate))
+	assert.Equal(t, 1, len(results.InstanceDelete))
+	assert.Equal(t, 0, len(results.InstanceInsert))
+	assert.Equal(t, 0, len(results.InstanceUpdate))
+	// TODO implement checks for updates, deletes, and instances
 }
 
 func TestTargetsNotEqual(t *testing.T) {
