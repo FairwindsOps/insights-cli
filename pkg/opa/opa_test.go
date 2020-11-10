@@ -73,11 +73,22 @@ func TestCompareCheck(t *testing.T) {
 			CheckName: "Check1",
 		},
 		{
+			CheckName: "Check1",
+		},
+		{
 			CheckName: "Check2",
 		},
 	}
+	apiInstances[0].AdditionalData.Name = "instance2"
 	results = compareChecks(nil, apiChecks, apiInstances)
 	assert.Equal(t, 1, len(results.CheckDelete))
+	assert.Equal(t, 0, len(results.CheckInsert))
+	assert.Equal(t, 0, len(results.CheckUpdate))
+	assert.Equal(t, 2, len(results.InstanceDelete))
+	assert.Equal(t, 0, len(results.InstanceInsert))
+	assert.Equal(t, 0, len(results.InstanceUpdate))
+	results = compareChecks(checks, apiChecks, apiInstances)
+	assert.Equal(t, 0, len(results.CheckDelete))
 	assert.Equal(t, 0, len(results.CheckInsert))
 	assert.Equal(t, 0, len(results.CheckUpdate))
 	assert.Equal(t, 1, len(results.InstanceDelete))
