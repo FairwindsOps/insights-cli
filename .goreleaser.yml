@@ -1,3 +1,12 @@
+brews:
+- name: insights
+  github:
+    owner: FairwindsOps
+    name: homebrew-tap
+  folder: Formula
+  description: Command Line utility for Fairwinds Insights
+  test: |
+    system "#{bin}/insights version"
 builds:
 - ldflags:
   - -X main.version={{.Version}} -X main.commit={{.Commit}} -s -w
