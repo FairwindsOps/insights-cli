@@ -28,7 +28,7 @@ var dryrun bool
 
 func init() {
 	syncCmd.PersistentFlags().StringVarP(&syncDir, "directory", "d", ".", "Directory to sync.")
-	syncCmd.PersistentFlags().BoolVarP(&gitOps, "fullsync", "", true, "Delete any checks not found in this repository.")
+	syncCmd.PersistentFlags().BoolVarP(&gitOps, "fullsync", "", false, "Delete any checks not found in this repository.")
 	syncCmd.PersistentFlags().BoolVarP(&dryrun, "dry-run", "", false, "Simulates a sync.")
 	policyCmd.AddCommand(syncCmd)
 }
