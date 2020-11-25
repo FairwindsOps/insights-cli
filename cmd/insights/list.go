@@ -37,16 +37,16 @@ var listCmd = &cobra.Command{
 			panic(err)
 		}
 		logrus.Info("opa")
-		logrus.Info("|")
 		for _, check := range checks {
-			logrus.Infof("- %s", check.Name)
+			logrus.Info("|")
+			logrus.Infof("+ %s", check.Name)
 			instances, err := insights.GetInstances(org, check.Name, insightsToken, host)
 			if err != nil {
 				panic(err)
 			}
 			for _, instance := range instances {
-				logrus.Info("  |")
-				logrus.Infof("  - %s", instance.AdditionalData.Name)
+				logrus.Info("| |")
+				logrus.Infof("| + %s", instance.AdditionalData.Name)
 			}
 
 		}
