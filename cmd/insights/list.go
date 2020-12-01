@@ -15,8 +15,10 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
+	"fmt"
+
 	"github.com/spf13/cobra"
+	"github.com/xlab/treeprint"
 
 	"github.com/fairwindsops/insights-cli/pkg/insights"
 )
@@ -36,19 +38,19 @@ var listCmd = &cobra.Command{
 		if err != nil {
 			panic(err)
 		}
-		logrus.Info("opa")
+		tree := treeprint.New()
+		opa := tree.AddBranch("opa")
 		for _, check := range checks {
-			logrus.Info("|")
-			logrus.Infof("+ %s", check.Name)
+			branch := opa.AddBranch(check.Name)
 			instances, err := insights.GetInstances(org, check.Name, insightsToken, host)
 			if err != nil {
 				panic(err)
 			}
 			for _, instance := range instances {
-				logrus.Info("| |")
-				logrus.Infof("| + %s", instance.AdditionalData.Name)
+				branch.AddNode(instance.AdditionalData.Name)
 			}
 
 		}
+		fmt.Println(tree.String())
 	},
 }

@@ -57,16 +57,11 @@ Lists OPA policies currently applied to a Fairwinds Insights Organization.
 
 The list function will show the names of all OPA policies currently applied and any instances applied to that policy.
 
-Example output below.
+Running the command `insights policy list` would display output like the following:
 
 ```
-+ OPA
-|
-+ policy1
-| |
-| + instance1
-|
-+ policy2
-| |
-| + instance1
+.
+└── opa
+    └── no-name
+        └── deployments
 ```
