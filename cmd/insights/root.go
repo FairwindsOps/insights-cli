@@ -16,12 +16,12 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"io/ioutil"
 	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v3"
 )
 
@@ -73,47 +73,52 @@ func exitWithError(message string, err error) {
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", logrus.InfoLevel.String(), "Logrus log level.")
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./fairwinds-insights.yaml", "Configuration file")
-	flag.Parse()
-	//pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	pflag.Parse()
+}
+
+func preRun(cmd *cobra.Command, args []string) {
+	// If this is the root command don't try to parse config
+	if cmd.Use == "insights" {
+		return
+	}
+	parsedLevel, err := logrus.ParseLevel(logLevel)
+	if err != nil {
+		logrus.Errorf("log-level flag has invalid value %s", logLevel)
+	} else {
+		logrus.SetLevel(parsedLevel)
+	}
+	insightsToken = os.Getenv("FAIRWINDS_TOKEN")
+	if insightsToken == "" {
+		exitWithError("FAIRWINDS_TOKEN must be set.", nil)
+	}
+
+	configHandler, err := os.Open(configFile)
+	if err == nil {
+		configContents, err := ioutil.ReadAll(configHandler)
+		if err != nil {
+			exitWithError("Could not read fairwinds-insights.yaml", err)
+		}
+		err = yaml.Unmarshal(configContents, &configurationObject)
+		if err != nil {
+			exitWithError("Could not parse fairwinds-insights.yaml", err)
+		}
+	} else if !os.IsNotExist(err) {
+		exitWithError("Could not open fairwinds-insights.yaml", err)
+	} else {
+		exitWithError("Please add fairwinds-insights.yaml to the base of your repository.", nil)
+	}
+	configurationObject.SetDefaults()
+	err = configurationObject.CheckForErrors()
+	if err != nil {
+		exitWithError("Error parsing fairwinds-insights.yaml", err)
+	}
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "insights",
-	Short: "insights",
-	Long:  `Interact with Fairwinds Insights.`,
-	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		parsedLevel, err := logrus.ParseLevel(logLevel)
-		if err != nil {
-			logrus.Errorf("log-level flag has invalid value %s", logLevel)
-		} else {
-			logrus.SetLevel(parsedLevel)
-		}
-		insightsToken = os.Getenv("FAIRWINDS_TOKEN")
-		if insightsToken == "" {
-			exitWithError("FAIRWINDS_TOKEN must be set.", nil)
-		}
-
-		configHandler, err := os.Open(configFile)
-		if err == nil {
-			configContents, err := ioutil.ReadAll(configHandler)
-			if err != nil {
-				exitWithError("Could not read fairwinds-insights.yaml", err)
-			}
-			err = yaml.Unmarshal(configContents, &configurationObject)
-			if err != nil {
-				exitWithError("Could not parse fairwinds-insights.yaml", err)
-			}
-		} else if !os.IsNotExist(err) {
-			exitWithError("Could not open fairwinds-insights.yaml", err)
-		} else {
-			exitWithError("Please add fairwinds-insights.yaml to the base of your repository.", nil)
-		}
-		configurationObject.SetDefaults()
-		err = configurationObject.CheckForErrors()
-		if err != nil {
-			exitWithError("Error parsing fairwinds-insights.yaml", err)
-		}
-	},
+	Use:              "insights",
+	Short:            "insights",
+	Long:             `Interact with Fairwinds Insights.`,
+	PersistentPreRun: preRun,
 	Run: func(cmd *cobra.Command, args []string) {
 		logrus.Error("You must specify a sub-command.")
 		err := cmd.Help()
