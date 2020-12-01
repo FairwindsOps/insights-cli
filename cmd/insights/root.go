@@ -22,7 +22,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v3"
 )
 
@@ -75,7 +74,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", logrus.InfoLevel.String(), "Logrus log level.")
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./fairwinds-insights.yaml", "Configuration file")
 	flag.Parse()
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
+	//pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
 
 var rootCmd = &cobra.Command{
