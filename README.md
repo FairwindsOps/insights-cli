@@ -51,4 +51,17 @@ The sync functionality expects a directory structure like the following.
 
 This will create two policies, one called `policy1` the other called `policy2` which each have an instance named `instance1`. The rego for these policies will be pulled from the `policy.x` file inside that folder. See the [examples](https://github.com/FairwindsOps/insights-plugins/tree/master/plugins/opa/examples) folder for more examples.
 
+#### List
 
+Lists OPA policies currently applied to a Fairwinds Insights Organization.
+
+The list function will show the names of all OPA policies currently applied and any instances applied to that policy.
+
+Running the command `insights policy list` would display output like the following:
+
+```
+.
+└── opa
+    └── no-name
+        └── deployments
+```
