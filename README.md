@@ -29,7 +29,7 @@ go get -u github.com/fairwindsops/insights-cli/cmd/insights
 
 The Insights CLI requires a configuration file which by default is named `fairwinds-insights.yaml` in your current directory. You can overwrite this with the `--config` flag. You will also need the admin token from your organization in Fairwinds Insights stored in the `FAIRWINDS_TOKEN` environment variable.
 
-At a minimum the `fairwinds-insights.yaml` file must contain the following.
+At a minimum the `fairwinds-insights.yaml` file must contain the following. Any additional values will be ignored.
 
 ```yaml
 options:
@@ -38,7 +38,7 @@ options:
 
 ### Global flags
 
-`insights --config` will let you look in a different location other than `./fairwinds-insights.yaml` for the configuration file.
+`insights --config <filename>` will let you point to a different location for the configuration file other than `./fairwinds-insights.yaml`.
 
 `insights --log-level warn` will omit any info level log messages.
 
