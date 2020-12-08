@@ -36,6 +36,5 @@ var policyCmd = &cobra.Command{
 			logrus.Error(err)
 		}
 		os.Exit(1)
-
 	},
 }

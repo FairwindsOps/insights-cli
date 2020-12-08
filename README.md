@@ -27,7 +27,20 @@ go get -u github.com/fairwindsops/insights-cli/cmd/insights
 
 ## Usage
 
-The Insights CLI requires a configuration file which by default is named `fairwinds-insights.yaml` in your current directory. You can overwrite this with the `--config` flag.
+The Insights CLI requires a configuration file which by default is named `fairwinds-insights.yaml` in your current directory. You can overwrite this with the `--config` flag. You will also need the admin token from your organization in Fairwinds Insights stored in the `FAIRWINDS_TOKEN` environment variable.
+
+At a minimum the `fairwinds-insights.yaml` file must contain the following. Any additional values will be ignored.
+
+```yaml
+options:
+  organization: <org Name>
+```
+
+### Global flags
+
+`insights --config <filename>` will let you point to a different location for the configuration file other than `./fairwinds-insights.yaml`.
+
+`insights --log-level warn` will omit any info level log messages.
 
 ### Policy
 
@@ -49,7 +62,11 @@ The sync functionality expects a directory structure like the following.
 |   +-- instance1.yaml
 ```
 
-This will create two policies, one called `policy1` the other called `policy2` which each have an instance named `instance1`. The rego for these policies will be pulled from the `policy.x` file inside that folder. See the [examples](https://github.com/FairwindsOps/insights-plugins/tree/master/plugins/opa/examples) folder for more examples.
+Running `insights policy sync -d ./examples` will create two policies, one called `policy1` the other called `policy2` which each have an instance named `instance1`. The rego for these policies will be pulled from the `policy.x` file inside that folder. See the [examples](https://github.com/FairwindsOps/insights-plugins/tree/master/plugins/opa/examples) folder for more examples.
+
+Running `insights policy sync -d ./examples --dry-run` will print out a message telling you that it would create/update/delete policies but it won't actually save any changes. This can be very useful for checking a repository for changes.
+
+Running `insights policy sync -d ./examples --fullsync` will delete any policies not present in the `examples` folder. Without `--fullsync` policies could still be deleted if the `policy.rego` file or the `rego` field of the `policy.yaml` are empty.
 
 #### List
 
