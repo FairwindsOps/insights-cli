@@ -15,6 +15,12 @@ PRs welcome! Check out the [Contributing Guidelines](CONTRIBUTING.md) and
 
 ## Installation
 
+### Homebrew Tap
+
+```
+brew install FairwindsOps/tap/insights
+```
+
 ### Binary
 
 Install the binary from our [releases](https://github.com/FairwindsOps/insights-cli/releases) page.
