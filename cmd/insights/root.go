@@ -74,6 +74,7 @@ func exitWithError(message string, err error) {
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", logrus.InfoLevel.String(), "Logrus log level.")
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./fairwinds-insights.yaml", "Configuration file")
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	flag.Parse()
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
