@@ -16,6 +16,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"io/ioutil"
 	"os"
 
@@ -29,7 +30,8 @@ var logLevel string
 var insightsToken string
 var configFile string
 var version string
-var versionCommit string
+var commit string
+var organization string
 
 var configurationObject configuration
 
@@ -73,7 +75,10 @@ func exitWithError(message string, err error) {
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", logrus.InfoLevel.String(), "Logrus log level.")
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./fairwinds-insights.yaml", "Configuration file")
-	pflag.Parse()
+	rootCmd.PersistentFlags().StringVarP(&organization, "organization", "", "", "Fairwinds Insights Organization name")
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	flag.Parse()
+	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
 
 func preRun(cmd *cobra.Command, args []string) {
@@ -104,10 +109,13 @@ func preRun(cmd *cobra.Command, args []string) {
 		}
 	} else if !os.IsNotExist(err) {
 		exitWithError("Could not open fairwinds-insights.yaml", err)
-	} else {
+	} else if organization == "" {
 		exitWithError("Please add fairwinds-insights.yaml to the base of your repository.", nil)
 	}
 	configurationObject.SetDefaults()
+	if organization != "" {
+		configurationObject.Options.Organization = organization
+	}
 	err = configurationObject.CheckForErrors()
 	if err != nil {
 		exitWithError("Error parsing fairwinds-insights.yaml", err)

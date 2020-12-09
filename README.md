@@ -15,6 +15,12 @@ PRs welcome! Check out the [Contributing Guidelines](CONTRIBUTING.md) and
 
 ## Installation
 
+### Homebrew Tap
+
+```
+brew install FairwindsOps/tap/insights
+```
+
 ### Binary
 
 Install the binary from our [releases](https://github.com/FairwindsOps/insights-cli/releases) page.
@@ -27,7 +33,7 @@ go get -u github.com/fairwindsops/insights-cli/cmd/insights
 
 ## Usage
 
-The Insights CLI requires a configuration file which by default is named `fairwinds-insights.yaml` in your current directory. You can overwrite this with the `--config` flag. You will also need the admin token from your organization in Fairwinds Insights stored in the `FAIRWINDS_TOKEN` environment variable.
+The Insights CLI requires either an organization name `--organization <org name>` or a configuration file which by default is named `fairwinds-insights.yaml` in your current directory. You can overwrite this with the `--config <filename>` flag. You will also need the admin token from your organization in Fairwinds Insights stored in the `FAIRWINDS_TOKEN` environment variable.
 
 At a minimum the `fairwinds-insights.yaml` file must contain the following. Any additional values will be ignored.
 
