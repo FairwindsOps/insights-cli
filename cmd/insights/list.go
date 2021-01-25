@@ -17,6 +17,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/xlab/treeprint"
 
@@ -36,7 +37,7 @@ var listCmd = &cobra.Command{
 		host := configurationObject.Options.Hostname
 		checks, err := insights.GetChecks(org, insightsToken, host)
 		if err != nil {
-			panic(err)
+			logrus.Fatalf("Unable to get checks from insights: %s", err)
 		}
 		tree := treeprint.New()
 		opa := tree.AddBranch("opa")
@@ -44,7 +45,7 @@ var listCmd = &cobra.Command{
 			branch := opa.AddBranch(check.Name)
 			instances, err := insights.GetInstances(org, check.Name, insightsToken, host)
 			if err != nil {
-				panic(err)
+				logrus.Fatalf("Unable to get instances from insights: %s", err)
 			}
 			for _, instance := range instances {
 				branch.AddNode(instance.AdditionalData.Name)
