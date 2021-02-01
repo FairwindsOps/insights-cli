@@ -26,10 +26,10 @@ import (
 	"github.com/fairwindsops/insights-plugins/opa/pkg/opa"
 	"github.com/sirupsen/logrus"
 	"github.com/thoas/go-funk"
+	"github.com/xlab/treeprint"
 	"gopkg.in/yaml.v3"
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
-	"github.com/fairwindsops/insights-cli/pkg/insights"
 	"github.com/fairwindsops/insights-cli/pkg/models"
 )
 
@@ -57,7 +57,7 @@ func CompareChecks(folder, org, token, hostName string, gitops bool) (CompareRes
 		logrus.Error("Error Reading checks from files")
 		return results, err
 	}
-	apiChecks, err := insights.GetChecks(org, token, hostName)
+	apiChecks, err := GetChecks(org, token, hostName)
 	if err != nil {
 		logrus.Error("Error getting checks from Insights")
 		return results, err
@@ -75,7 +75,7 @@ func CompareChecks(folder, org, token, hostName string, gitops bool) (CompareRes
 	var apiInstances []opa.CheckSetting
 	// TODO replace with org wide get.
 	for _, check := range apiChecks {
-		newInstances, err := insights.GetInstances(org, check.Name, token, hostName)
+		newInstances, err := GetInstances(org, check.Name, token, hostName)
 		if err != nil {
 			logrus.Error("Error getting instances from Insights")
 			return results, err
@@ -249,4 +249,23 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 		checks = append(checks, check)
 	}
 	return checks, nil
+}
+
+func BuildChecksTree(org, token, hostName string, tree treeprint.Tree) error {
+	checks, err := GetChecks(org, token, hostName)
+	if err != nil {
+		return err
+	}
+	opaBranch := tree.AddBranch("opa")
+	for _, check := range checks {
+		branch := opaBranch.AddBranch(check.Name)
+		instances, err := GetInstances(org, check.Name, token, hostName)
+		if err != nil {
+			return nil
+		}
+		for _, instance := range instances {
+			branch.AddNode(instance.AdditionalData.Name)
+		}
+	}
+	return nil
 }

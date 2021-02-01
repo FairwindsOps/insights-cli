@@ -18,18 +18,20 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/fairwindsops/insights-cli/pkg/insights"
 	"github.com/fairwindsops/insights-cli/pkg/opa"
+	"github.com/fairwindsops/insights-cli/pkg/rules"
 )
 
 var syncDir string
 var gitOps bool
 var dryrun bool
+var forRules bool
 
 func init() {
 	syncCmd.PersistentFlags().StringVarP(&syncDir, "directory", "d", ".", "Directory to sync.")
 	syncCmd.PersistentFlags().BoolVarP(&gitOps, "fullsync", "", false, "Delete any checks not found in this repository.")
 	syncCmd.PersistentFlags().BoolVarP(&dryrun, "dry-run", "", false, "Simulates a sync.")
+	syncCmd.PersistentFlags().BoolVarP(&forRules, "rules", "", false, "Sync rules. OPA checks are synced by default otherwise.")
 	policyCmd.AddCommand(syncCmd)
 }
 
@@ -40,62 +42,15 @@ var syncCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		results, err := opa.CompareChecks(syncDir, org, insightsToken, host, gitOps)
-		if err != nil {
-			logrus.Fatalf("Unable to compare checks - %s", err)
-		}
-		for _, instance := range results.InstanceDelete {
-			logrus.Infof("Deleting instance: %s:%s", instance.CheckName, instance.InstanceName)
-			if !dryrun {
-				err := insights.DeleteInstance(instance, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to delete instance %s:%s - %s", instance.CheckName, instance.InstanceName, err)
-				}
+		if forRules {
+			err := rules.SyncRules(syncDir, org, insightsToken, host, dryrun)
+			if err != nil {
+				logrus.Fatalf("Unable to sync rules: %v", err)
 			}
-		}
-		for _, check := range results.CheckDelete {
-			logrus.Infof("Deleting check: %s", check.CheckName)
-			if !dryrun {
-				err := insights.DeleteCheck(check, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to delete check %s - %s", check.CheckName, err)
-				}
-			}
-		}
-		for _, check := range results.CheckInsert {
-			logrus.Infof("Adding check: %s", check.CheckName)
-			if !dryrun {
-				err := insights.PutCheck(check, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to add check %s - %s", check.CheckName, err)
-				}
-			}
-		}
-		for _, check := range results.CheckUpdate {
-			logrus.Infof("Updating check: %s", check.CheckName)
-			if !dryrun {
-				err := insights.PutCheck(check, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to update check %s - %s", check.CheckName, err)
-				}
-			}
-		}
-		for _, instance := range results.InstanceInsert {
-			logrus.Infof("Adding instance: %s:%s", instance.CheckName, instance.InstanceName)
-			if !dryrun {
-				err := insights.PutInstance(instance, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to add instance %s:%s - %s", instance.CheckName, instance.InstanceName, err)
-				}
-			}
-		}
-		for _, instance := range results.InstanceUpdate {
-			logrus.Infof("Updating instance: %s:%s", instance.CheckName, instance.InstanceName)
-			if !dryrun {
-				err := insights.PutInstance(instance, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to update instance %s:%s - %s", instance.CheckName, instance.InstanceName, err)
-				}
+		} else {
+			err := opa.SyncOPAChecks(syncDir, org, insightsToken, host, gitOps, dryrun)
+			if err != nil {
+				logrus.Fatalf("Unable to sync OPA Checks: %v", err)
 			}
 		}
 	},
