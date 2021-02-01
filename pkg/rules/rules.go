@@ -54,6 +54,7 @@ func getRules(org, token, hostName string) ([]Rule, error) {
 	logrus.Infof("Rules URL: %s", url)
 	resp, err := req.Get(url, getHeaders(token))
 	if err != nil {
+		logrus.Errorf("Unable to get rules from insights: %v", err)
 		return nil, err
 	}
 	var rules []Rule
@@ -63,6 +64,7 @@ func getRules(org, token, hostName string) ([]Rule, error) {
 	}
 	err = resp.ToJSON(&rules)
 	if err != nil {
+		logrus.Errorf("Unable to convert response to json for rules: %v", err)
 		return nil, err
 	}
 	return rules, nil
@@ -73,6 +75,7 @@ func insertRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatCreate, hostName, org)
 	resp, err := req.Post(url, getHeaders(token), req.BodyJSON(&rule))
 	if err != nil {
+		logrus.Errorf("Unable to add rule %s to insights: %v", rule.Name, err)
 		return err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
@@ -87,6 +90,7 @@ func updateRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
 	resp, err := req.Post(url, getHeaders(token), req.BodyJSON(&rule))
 	if err != nil {
+		logrus.Errorf("Unable to update rule %s to insights: %v", rule.Name, err)
 		return err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
@@ -101,6 +105,7 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
 	resp, err := req.Delete(url, getHeaders(token), nil)
 	if err != nil {
+		logrus.Errorf("Unable to delete rule %s from insights: %v", rule.Name, err)
 		return err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
@@ -113,6 +118,7 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 func BuildRulesTree(org, token, hostName string, tree treeprint.Tree) error {
 	rules, err := getRules(org, token, hostName)
 	if err != nil {
+		logrus.Errorf("Unable to get rules from insights: %v", err)
 		return err
 	}
 
@@ -247,6 +253,7 @@ func compareRules(folder, org, token, hostName string) (CompareResults, error) {
 func SyncRules(syncDir, org, insightsToken, host string, dryRun bool) error {
 	results, err := compareRules(syncDir, org, insightsToken, host)
 	if err != nil {
+		logrus.Errorf("Unable to get sync rules to insights: %v", err)
 		return err
 	}
 
@@ -255,6 +262,7 @@ func SyncRules(syncDir, org, insightsToken, host string, dryRun bool) error {
 		if !dryRun {
 			err = insertRule(org, insightsToken, host, ruleForInsert)
 			if err != nil {
+				logrus.Errorf("Error while adding rule %s to insights: %v", ruleForInsert.Name, err)
 				return err
 			}
 		}
@@ -265,6 +273,7 @@ func SyncRules(syncDir, org, insightsToken, host string, dryRun bool) error {
 		if !dryRun {
 			err = updateRule(org, insightsToken, host, ruleForUpdate)
 			if err != nil {
+				logrus.Errorf("Error while updating rule %s to insights: %v", ruleForUpdate.Name, err)
 				return err
 			}
 		}
@@ -275,6 +284,7 @@ func SyncRules(syncDir, org, insightsToken, host string, dryRun bool) error {
 		if !dryRun {
 			err = deleteRule(org, insightsToken, host, ruleForDelete)
 			if err != nil {
+				logrus.Errorf("Error while deleting rule %s from insights: %v", ruleForDelete.Name, err)
 				return err
 			}
 		}

@@ -39,11 +39,11 @@ var listCmd = &cobra.Command{
 		tree := treeprint.New()
 		err := opa.BuildChecksTree(org, insightsToken, host, tree)
 		if err != nil {
-			logrus.Fatalf("Unable to get checks from insights for OPA: %v", err)
+			logrus.Fatalf("Unable to get OPA checks from insights: %v", err)
 		}
 		err = rules.BuildRulesTree(org, insightsToken, host, tree)
 		if err != nil {
-			logrus.Fatalf("Unable to get checks from insights for rules: %v", err)
+			logrus.Fatalf("Unable to get rules from insights: %v", err)
 		}
 		fmt.Println(tree.String())
 	},

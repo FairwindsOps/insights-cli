@@ -254,6 +254,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 func BuildChecksTree(org, token, hostName string, tree treeprint.Tree) error {
 	checks, err := GetChecks(org, token, hostName)
 	if err != nil {
+		logrus.Errorf("Unable to get checks from insights: %v", err)
 		return err
 	}
 	opaBranch := tree.AddBranch("opa")
@@ -261,7 +262,8 @@ func BuildChecksTree(org, token, hostName string, tree treeprint.Tree) error {
 		branch := opaBranch.AddBranch(check.Name)
 		instances, err := GetInstances(org, check.Name, token, hostName)
 		if err != nil {
-			return nil
+			logrus.Errorf("Unable to get instances from insights: %v", err)
+			return err
 		}
 		for _, instance := range instances {
 			branch.AddNode(instance.AdditionalData.Name)
