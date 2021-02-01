@@ -42,14 +42,14 @@ var syncCmd = &cobra.Command{
 		host := configurationObject.Options.Hostname
 		results, err := opa.CompareChecks(syncDir, org, insightsToken, host, gitOps)
 		if err != nil {
-			panic(err)
+			logrus.Fatalf("Unable to compare checks - %s", err)
 		}
 		for _, instance := range results.InstanceDelete {
 			logrus.Infof("Deleting instance: %s:%s", instance.CheckName, instance.InstanceName)
 			if !dryrun {
 				err := insights.DeleteInstance(instance, org, insightsToken, host)
 				if err != nil {
-					panic(err)
+					logrus.Fatalf("Unable to delete instance %s:%s - %s", instance.CheckName, instance.InstanceName, err)
 				}
 			}
 		}
@@ -58,7 +58,7 @@ var syncCmd = &cobra.Command{
 			if !dryrun {
 				err := insights.DeleteCheck(check, org, insightsToken, host)
 				if err != nil {
-					panic(err)
+					logrus.Fatalf("Unable to delete check %s - %s", check.CheckName, err)
 				}
 			}
 		}
@@ -67,7 +67,7 @@ var syncCmd = &cobra.Command{
 			if !dryrun {
 				err := insights.PutCheck(check, org, insightsToken, host)
 				if err != nil {
-					panic(err)
+					logrus.Fatalf("Unable to add check %s - %s", check.CheckName, err)
 				}
 			}
 		}
@@ -76,7 +76,7 @@ var syncCmd = &cobra.Command{
 			if !dryrun {
 				err := insights.PutCheck(check, org, insightsToken, host)
 				if err != nil {
-					panic(err)
+					logrus.Fatalf("Unable to update check %s - %s", check.CheckName, err)
 				}
 			}
 		}
@@ -85,7 +85,7 @@ var syncCmd = &cobra.Command{
 			if !dryrun {
 				err := insights.PutInstance(instance, org, insightsToken, host)
 				if err != nil {
-					panic(err)
+					logrus.Fatalf("Unable to add instance %s:%s - %s", instance.CheckName, instance.InstanceName, err)
 				}
 			}
 		}
@@ -94,7 +94,7 @@ var syncCmd = &cobra.Command{
 			if !dryrun {
 				err := insights.PutInstance(instance, org, insightsToken, host)
 				if err != nil {
-					panic(err)
+					logrus.Fatalf("Unable to update instance %s:%s - %s", instance.CheckName, instance.InstanceName, err)
 				}
 			}
 		}
