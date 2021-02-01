@@ -17,20 +17,23 @@ package rules
 import (
 	"errors"
 	"fmt"
-	"github.com/fairwindsops/insights-cli/pkg/directory"
+	"gopkg.in/yaml.v3"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/imroc/req"
 	"github.com/sirupsen/logrus"
 	"github.com/thoas/go-funk"
 	"github.com/xlab/treeprint"
-	"gopkg.in/yaml.v3"
-	"io/ioutil"
-	"net/http"
+
+	"github.com/fairwindsops/insights-cli/pkg/directory"
 )
 
 const rulesURLFormat = "%s/v0/organizations/%s/rules"
 const rulesURLFormatCreate = "%s/v0/organizations/%s/rules/create"
 const rulesURLFormatUpdateDelete = "%s/v0/organizations/%s/rules/%d"
 
+// Rule is the struct to hold the information for a rule
 type Rule struct {
 	ID          int
 	Cluster     string
@@ -42,6 +45,7 @@ type Rule struct {
 	Action      string
 }
 
+// CompareResults holds the rules for inserting, updating, and deleting
 type CompareResults struct {
 	RuleInsert []Rule
 	RuleUpdate []Rule
@@ -115,6 +119,7 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 	return nil
 }
 
+// BuildRulesTree builds a tree for rules
 func BuildRulesTree(org, token, hostName string, tree treeprint.Tree) error {
 	rules, err := getRules(org, token, hostName)
 	if err != nil {
@@ -250,6 +255,7 @@ func compareRules(folder, org, token, hostName string) (CompareResults, error) {
 	return results, nil
 }
 
+// SyncRules syncs rules to insights
 func SyncRules(syncDir, org, insightsToken, host string, dryRun bool) error {
 	results, err := compareRules(syncDir, org, insightsToken, host)
 	if err != nil {
