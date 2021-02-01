@@ -135,15 +135,15 @@ func BuildRulesTree(org, token, hostName string, tree treeprint.Tree) error {
 			rulesNode.AddNode(value)
 		}
 		if rule.Context != "" {
-			value := fmt.Sprintf("Context: %s", rule.Context)
+			value := fmt.Sprintf("Repository: %s", rule.Repository)
 			rulesNode.AddNode(value)
 		}
 		if rule.Repository != "" {
-			value := fmt.Sprintf("Cluster: %s", rule.Repository)
+			value := fmt.Sprintf("Repository: %s", rule.Repository)
 			rulesNode.AddNode(value)
 		}
 		if rule.ReportType != "" {
-			value := fmt.Sprintf("Cluster: %s", rule.ReportType)
+			value := fmt.Sprintf("Report Type: %s", rule.ReportType)
 			rulesNode.AddNode(value)
 		}
 	}
