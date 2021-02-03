@@ -256,7 +256,7 @@ func compareRules(folder, org, token, hostName string) (CompareResults, error) {
 }
 
 // SyncRules syncs rules to insights
-func SyncRules(syncDir, org, insightsToken, host string, dryRun bool) error {
+func SyncRules(syncDir, org, insightsToken, host string, fullsync, dryrun bool) error {
 	results, err := compareRules(syncDir, org, insightsToken, host)
 	if err != nil {
 		logrus.Errorf("Unable to get sync rules to insights: %v", err)
@@ -265,7 +265,7 @@ func SyncRules(syncDir, org, insightsToken, host string, dryRun bool) error {
 
 	for _, ruleForInsert := range results.RuleInsert {
 		logrus.Infof("Adding rule: %s", ruleForInsert.Name)
-		if !dryRun {
+		if !dryrun {
 			err = insertRule(org, insightsToken, host, ruleForInsert)
 			if err != nil {
 				logrus.Errorf("Error while adding rule %s to insights: %v", ruleForInsert.Name, err)
@@ -276,7 +276,7 @@ func SyncRules(syncDir, org, insightsToken, host string, dryRun bool) error {
 
 	for _, ruleForUpdate := range results.RuleUpdate {
 		logrus.Infof("Updating rule: %s", ruleForUpdate.Name)
-		if !dryRun {
+		if !dryrun {
 			err = updateRule(org, insightsToken, host, ruleForUpdate)
 			if err != nil {
 				logrus.Errorf("Error while updating rule %s to insights: %v", ruleForUpdate.Name, err)
@@ -285,13 +285,15 @@ func SyncRules(syncDir, org, insightsToken, host string, dryRun bool) error {
 		}
 	}
 
-	for _, ruleForDelete := range results.RuleDelete {
-		logrus.Infof("Deleting rule: %s", ruleForDelete.Name)
-		if !dryRun {
-			err = deleteRule(org, insightsToken, host, ruleForDelete)
-			if err != nil {
-				logrus.Errorf("Error while deleting rule %s from insights: %v", ruleForDelete.Name, err)
-				return err
+	if fullsync {
+		for _, ruleForDelete := range results.RuleDelete {
+			logrus.Infof("Deleting rule: %s", ruleForDelete.Name)
+			if !dryrun {
+				err = deleteRule(org, insightsToken, host, ruleForDelete)
+				if err != nil {
+					logrus.Errorf("Error while deleting rule %s from insights: %v", ruleForDelete.Name, err)
+					return err
+				}
 			}
 		}
 	}

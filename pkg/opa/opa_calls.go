@@ -129,8 +129,8 @@ func PutInstance(instance models.CustomCheckInstanceModel, org, token, hostName 
 }
 
 // SyncOPAChecks syncs OPA checks
-func SyncOPAChecks(syncDir, org, insightsToken, host string, gitOps, dryrun bool) error {
-	results, err := CompareChecks(syncDir, org, insightsToken, host, gitOps)
+func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bool) error {
+	results, err := CompareChecks(syncDir, org, insightsToken, host, fullsync)
 	if err != nil {
 		return err
 	}

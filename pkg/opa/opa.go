@@ -44,7 +44,7 @@ type CompareResults struct {
 }
 
 // CompareChecks compares a folder vs the checks returned by the API.
-func CompareChecks(folder, org, token, hostName string, gitops bool) (CompareResults, error) {
+func CompareChecks(folder, org, token, hostName string, fullsync bool) (CompareResults, error) {
 	var results CompareResults
 	files, err := directory.ScanFolder(folder)
 	if err != nil {
@@ -62,7 +62,7 @@ func CompareChecks(folder, org, token, hostName string, gitops bool) (CompareRes
 		logrus.Error("Error getting checks from Insights")
 		return results, err
 	}
-	if !gitops {
+	if !fullsync {
 		apiChecks = funk.Filter(apiChecks, func(c opa.OPACustomCheck) bool {
 			return len(funk.Filter(fileChecks, func(fc models.CustomCheckModel) bool {
 				return fc.CheckName == c.Name
