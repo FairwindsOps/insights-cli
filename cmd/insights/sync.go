@@ -26,12 +26,14 @@ var syncDir string
 var fullsync bool
 var dryrun bool
 var forRules bool
+var forChecks bool
 
 func init() {
 	syncCmd.PersistentFlags().StringVarP(&syncDir, "directory", "d", ".", "Directory to sync.")
 	syncCmd.PersistentFlags().BoolVarP(&fullsync, "fullsync", "", false, "Delete any checks not found in this repository.")
 	syncCmd.PersistentFlags().BoolVarP(&dryrun, "dry-run", "", false, "Simulates a sync.")
-	syncCmd.PersistentFlags().BoolVarP(&forRules, "rules", "", false, "Sync rules. OPA checks are synced by default otherwise.")
+	syncCmd.PersistentFlags().BoolVarP(&forRules, "rules", "", false, "Sync only rules.")
+	syncCmd.PersistentFlags().BoolVarP(&forChecks, "checks", "", false, "Sync only OPA checks.")
 	policyCmd.AddCommand(syncCmd)
 }
 
@@ -42,16 +44,20 @@ var syncCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		if forRules {
-			err := rules.SyncRules(syncDir, org, insightsToken, host, fullsync, dryrun)
-			if err != nil {
-				logrus.Fatalf("Unable to sync rules: %v", err)
-			}
-		} else {
-			err := opa.SyncOPAChecks(syncDir, org, insightsToken, host, fullsync, dryrun)
+		if !forRules || forChecks {
+			opaDir := syncDir + "/checks"
+			err := opa.SyncOPAChecks(opaDir, org, insightsToken, host, fullsync, dryrun)
 			if err != nil {
 				logrus.Fatalf("Unable to sync OPA Checks: %v", err)
 			}
 		}
+		if !forChecks || forRules {
+			rulesDir := syncDir + "/rules"
+			err := rules.SyncRules(rulesDir, org, insightsToken, host, fullsync, dryrun)
+			if err != nil {
+				logrus.Fatalf("Unable to sync rules: %v", err)
+			}
+		}
+
 	},
 }
