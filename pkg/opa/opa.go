@@ -26,10 +26,10 @@ import (
 	"github.com/fairwindsops/insights-plugins/opa/pkg/opa"
 	"github.com/sirupsen/logrus"
 	"github.com/thoas/go-funk"
+	"github.com/xlab/treeprint"
 	"gopkg.in/yaml.v3"
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
-	"github.com/fairwindsops/insights-cli/pkg/insights"
 	"github.com/fairwindsops/insights-cli/pkg/models"
 )
 
@@ -44,7 +44,7 @@ type CompareResults struct {
 }
 
 // CompareChecks compares a folder vs the checks returned by the API.
-func CompareChecks(folder, org, token, hostName string, gitops bool) (CompareResults, error) {
+func CompareChecks(folder, org, token, hostName string, fullsync bool) (CompareResults, error) {
 	var results CompareResults
 	files, err := directory.ScanFolder(folder)
 	if err != nil {
@@ -57,12 +57,12 @@ func CompareChecks(folder, org, token, hostName string, gitops bool) (CompareRes
 		logrus.Error("Error Reading checks from files")
 		return results, err
 	}
-	apiChecks, err := insights.GetChecks(org, token, hostName)
+	apiChecks, err := GetChecks(org, token, hostName)
 	if err != nil {
 		logrus.Error("Error getting checks from Insights")
 		return results, err
 	}
-	if !gitops {
+	if !fullsync {
 		apiChecks = funk.Filter(apiChecks, func(c opa.OPACustomCheck) bool {
 			return len(funk.Filter(fileChecks, func(fc models.CustomCheckModel) bool {
 				return fc.CheckName == c.Name
@@ -75,7 +75,7 @@ func CompareChecks(folder, org, token, hostName string, gitops bool) (CompareRes
 	var apiInstances []opa.CheckSetting
 	// TODO replace with org wide get.
 	for _, check := range apiChecks {
-		newInstances, err := insights.GetInstances(org, check.Name, token, hostName)
+		newInstances, err := GetInstances(org, check.Name, token, hostName)
 		if err != nil {
 			logrus.Error("Error getting instances from Insights")
 			return results, err
@@ -249,4 +249,26 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 		checks = append(checks, check)
 	}
 	return checks, nil
+}
+
+// BuildChecksTree builds the tree for OPA checks
+func BuildChecksTree(org, token, hostName string, tree treeprint.Tree) error {
+	checks, err := GetChecks(org, token, hostName)
+	if err != nil {
+		logrus.Errorf("Unable to get checks from insights: %v", err)
+		return err
+	}
+	opaBranch := tree.AddBranch("opa")
+	for _, check := range checks {
+		branch := opaBranch.AddBranch(check.Name)
+		instances, err := GetInstances(org, check.Name, token, hostName)
+		if err != nil {
+			logrus.Errorf("Unable to get instances from insights: %v", err)
+			return err
+		}
+		for _, instance := range instances {
+			branch.AddNode(instance.AdditionalData.Name)
+		}
+	}
+	return nil
 }

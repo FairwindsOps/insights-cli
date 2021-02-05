@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package insights
+package opa
 
 import (
 	"errors"
 	"fmt"
 	"net/http"
 
-	"github.com/fairwindsops/insights-plugins/opa/pkg/opa"
+	opaPlugin "github.com/fairwindsops/insights-plugins/opa/pkg/opa"
 	"github.com/imroc/req"
 	"github.com/sirupsen/logrus"
 
@@ -34,14 +34,14 @@ const opaCheckInstancesURLFormat = opaCheckURLFormat + "/instances"
 const opaInstanceURLFormat = opaCheckInstancesURLFormat + "/%s"
 
 // GetChecks queries Fairwinds Insights to retrieve all of the Checks for an organization
-func GetChecks(org, token, hostName string) ([]opa.OPACustomCheck, error) {
+func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) {
 	url := fmt.Sprintf(opaURLFormat, hostName, org)
-	logrus.Infof("Url: %s", url)
+	logrus.Infof("OPA URL: %s", url)
 	resp, err := req.Get(url, getHeaders(token))
 	if err != nil {
 		return nil, err
 	}
-	var checks []opa.OPACustomCheck
+	var checks []opaPlugin.OPACustomCheck
 	if resp.Response().StatusCode != http.StatusOK {
 		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
 		return nil, errors.New("invalid response code")
@@ -54,7 +54,7 @@ func GetChecks(org, token, hostName string) ([]opa.OPACustomCheck, error) {
 }
 
 // GetInstances queries Fairwinds Insights to retrieve all of the instances for a given check
-func GetInstances(org, checkName, token, hostName string) ([]opa.CheckSetting, error) {
+func GetInstances(org, checkName, token, hostName string) ([]opaPlugin.CheckSetting, error) {
 	url := fmt.Sprintf(opaCheckInstancesURLFormat, hostName, org, checkName)
 	resp, err := req.Get(url, getHeaders(token))
 	if err != nil {
@@ -64,7 +64,7 @@ func GetInstances(org, checkName, token, hostName string) ([]opa.CheckSetting, e
 		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
 		return nil, errors.New("invalid response code")
 	}
-	var instances []opa.CheckSetting
+	var instances []opaPlugin.CheckSetting
 	err = resp.ToJSON(&instances)
 	if err != nil {
 		return nil, err
@@ -124,6 +124,69 @@ func PutInstance(instance models.CustomCheckInstanceModel, org, token, hostName 
 	if resp.Response().StatusCode != http.StatusOK {
 		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
 		return errors.New("invalid response code")
+	}
+	return nil
+}
+
+// SyncOPAChecks syncs OPA checks
+func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bool) error {
+	results, err := CompareChecks(syncDir, org, insightsToken, host, fullsync)
+	if err != nil {
+		return err
+	}
+	for _, instance := range results.InstanceDelete {
+		logrus.Infof("Deleting instance: %s:%s", instance.CheckName, instance.InstanceName)
+		if !dryrun {
+			err := DeleteInstance(instance, org, insightsToken, host)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	for _, check := range results.CheckDelete {
+		logrus.Infof("Deleting check: %s", check.CheckName)
+		if !dryrun {
+			err := DeleteCheck(check, org, insightsToken, host)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	for _, check := range results.CheckInsert {
+		logrus.Infof("Adding check: %s", check.CheckName)
+		if !dryrun {
+			err := PutCheck(check, org, insightsToken, host)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	for _, check := range results.CheckUpdate {
+		logrus.Infof("Updating check: %s", check.CheckName)
+		if !dryrun {
+			err := PutCheck(check, org, insightsToken, host)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	for _, instance := range results.InstanceInsert {
+		logrus.Infof("Adding instance: %s:%s", instance.CheckName, instance.InstanceName)
+		if !dryrun {
+			err := PutInstance(instance, org, insightsToken, host)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	for _, instance := range results.InstanceUpdate {
+		logrus.Infof("Updating instance: %s:%s", instance.CheckName, instance.InstanceName)
+		if !dryrun {
+			err := PutInstance(instance, org, insightsToken, host)
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

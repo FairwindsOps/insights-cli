@@ -17,19 +17,24 @@ package main
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"os"
 
-	"github.com/fairwindsops/insights-cli/pkg/insights"
 	"github.com/fairwindsops/insights-cli/pkg/opa"
+	"github.com/fairwindsops/insights-cli/pkg/rules"
 )
 
 var syncDir string
-var gitOps bool
+var fullsync bool
 var dryrun bool
+var forRules bool
+var forChecks bool
 
 func init() {
 	syncCmd.PersistentFlags().StringVarP(&syncDir, "directory", "d", ".", "Directory to sync.")
-	syncCmd.PersistentFlags().BoolVarP(&gitOps, "fullsync", "", false, "Delete any checks not found in this repository.")
+	syncCmd.PersistentFlags().BoolVarP(&fullsync, "fullsync", "", false, "Delete any checks not found in this repository.")
 	syncCmd.PersistentFlags().BoolVarP(&dryrun, "dry-run", "", false, "Simulates a sync.")
+	syncCmd.PersistentFlags().BoolVarP(&forRules, "rules", "", false, "Sync only rules.")
+	syncCmd.PersistentFlags().BoolVarP(&forChecks, "checks", "", false, "Sync only OPA checks.")
 	policyCmd.AddCommand(syncCmd)
 }
 
@@ -40,63 +45,29 @@ var syncCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		results, err := opa.CompareChecks(syncDir, org, insightsToken, host, gitOps)
-		if err != nil {
-			logrus.Fatalf("Unable to compare checks - %s", err)
+		if !forRules || forChecks {
+			opaDir := syncDir + "/checks"
+			_, err := os.Stat(opaDir)
+			if os.IsNotExist(err) {
+				logrus.Fatal("Folder for OPA checks doesn't exist. All OPA checks must be in a folder wih the name checks.")
+			}
+			err = opa.SyncOPAChecks(opaDir, org, insightsToken, host, fullsync, dryrun)
+			if err != nil {
+				logrus.Fatalf("Unable to sync OPA Checks: %v", err)
+			}
+
 		}
-		for _, instance := range results.InstanceDelete {
-			logrus.Infof("Deleting instance: %s:%s", instance.CheckName, instance.InstanceName)
-			if !dryrun {
-				err := insights.DeleteInstance(instance, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to delete instance %s:%s - %s", instance.CheckName, instance.InstanceName, err)
-				}
+		if !forChecks || forRules {
+			rulesDir := syncDir + "/rules"
+			_, err := os.Stat(rulesDir)
+			if os.IsNotExist(err) {
+				logrus.Fatal("Folder for rules doesn't exist. All rules must be in a folder wih the name rules.")
+			}
+			err = rules.SyncRules(rulesDir, org, insightsToken, host, fullsync, dryrun)
+			if err != nil {
+				logrus.Fatalf("Unable to sync rules: %v", err)
 			}
 		}
-		for _, check := range results.CheckDelete {
-			logrus.Infof("Deleting check: %s", check.CheckName)
-			if !dryrun {
-				err := insights.DeleteCheck(check, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to delete check %s - %s", check.CheckName, err)
-				}
-			}
-		}
-		for _, check := range results.CheckInsert {
-			logrus.Infof("Adding check: %s", check.CheckName)
-			if !dryrun {
-				err := insights.PutCheck(check, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to add check %s - %s", check.CheckName, err)
-				}
-			}
-		}
-		for _, check := range results.CheckUpdate {
-			logrus.Infof("Updating check: %s", check.CheckName)
-			if !dryrun {
-				err := insights.PutCheck(check, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to update check %s - %s", check.CheckName, err)
-				}
-			}
-		}
-		for _, instance := range results.InstanceInsert {
-			logrus.Infof("Adding instance: %s:%s", instance.CheckName, instance.InstanceName)
-			if !dryrun {
-				err := insights.PutInstance(instance, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to add instance %s:%s - %s", instance.CheckName, instance.InstanceName, err)
-				}
-			}
-		}
-		for _, instance := range results.InstanceUpdate {
-			logrus.Infof("Updating instance: %s:%s", instance.CheckName, instance.InstanceName)
-			if !dryrun {
-				err := insights.PutInstance(instance, org, insightsToken, host)
-				if err != nil {
-					logrus.Fatalf("Unable to update instance %s:%s - %s", instance.CheckName, instance.InstanceName, err)
-				}
-			}
-		}
+
 	},
 }
