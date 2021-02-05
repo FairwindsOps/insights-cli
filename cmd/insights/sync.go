@@ -17,6 +17,7 @@ package main
 import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"os"
 
 	"github.com/fairwindsops/insights-cli/pkg/opa"
 	"github.com/fairwindsops/insights-cli/pkg/rules"
@@ -46,14 +47,23 @@ var syncCmd = &cobra.Command{
 		host := configurationObject.Options.Hostname
 		if !forRules || forChecks {
 			opaDir := syncDir + "/checks"
-			err := opa.SyncOPAChecks(opaDir, org, insightsToken, host, fullsync, dryrun)
+			_, err := os.Stat(opaDir)
+			if os.IsNotExist(err) {
+				logrus.Fatal("Folder for OPA checks doesn't exist. All OPA checks must be in a folder wih the name checks.")
+			}
+			err = opa.SyncOPAChecks(opaDir, org, insightsToken, host, fullsync, dryrun)
 			if err != nil {
 				logrus.Fatalf("Unable to sync OPA Checks: %v", err)
 			}
+
 		}
 		if !forChecks || forRules {
 			rulesDir := syncDir + "/rules"
-			err := rules.SyncRules(rulesDir, org, insightsToken, host, fullsync, dryrun)
+			_, err := os.Stat(rulesDir)
+			if os.IsNotExist(err) {
+				logrus.Fatal("Folder for rules doesn't exist. All rules must be in a folder wih the name rules.")
+			}
+			err = rules.SyncRules(rulesDir, org, insightsToken, host, fullsync, dryrun)
 			if err != nil {
 				logrus.Fatalf("Unable to sync rules: %v", err)
 			}
