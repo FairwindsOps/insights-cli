@@ -6,7 +6,10 @@ jobs:
       - image: cimg/go:1.15
     steps:
       - checkout
-      - run: curl -sL https://git.io/goreleaser | bash
+      - run: |
+          curl -fsSLo goreleaser.deb https://github.com/goreleaser/goreleaser/releases/download/v0.149.0/goreleaser_amd64.deb
+          sudo dpkg -i goreleaser.deb
+
   test:
     docker:
       - image: cimg/go:1.15
