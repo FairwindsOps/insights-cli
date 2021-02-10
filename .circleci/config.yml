@@ -9,6 +9,7 @@ jobs:
       - run: |
           curl -fsSLo goreleaser.deb https://github.com/goreleaser/goreleaser/releases/download/v0.149.0/goreleaser_amd64.deb
           sudo dpkg -i goreleaser.deb
+          git checkout -- .
           goreleaser
 
   test:
