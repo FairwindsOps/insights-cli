@@ -16,7 +16,7 @@ A command line tool for interacting with Fairwinds Insights.
 **Want to learn more?** Reach out on [the Slack channel](https://fairwindscommunity.slack.com/messages/fairwinds-insights) ([request invite](https://join.slack.com/t/fairwindscommunity/shared_invite/zt-e3c6vj4l-3lIH6dvKqzWII5fSSFDi1g)), send an email to `opensource@fairwinds.com`, or join us for [office hours on Zoom](https://fairwindscommunity.slack.com/messages/office-hours)
 
 ## Documentation
-Check out the docs at [docs.fairwinds.com](https://insights.docs.fairwinds.com/features/cli).
+Check out the docs at [docs.fairwinds.com](https://insights.docs.fairwinds.com/configure/policy/cli/).
 
 ## Contributing
 
