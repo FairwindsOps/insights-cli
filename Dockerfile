@@ -10,3 +10,5 @@ RUN mkdir -p /build && cd build && \
     tar -xvf insights-cli_${INSIGHTS_CLI_VERSION}_linux_amd64.tar.gz insights-cli -C /usr/local/bin/ && \
     chmod a+x /usr/local/bin/insights-cli && \
     rm -rf /build
+
+CMD /usr/local/bin/insights-cli
