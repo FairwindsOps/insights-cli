@@ -1,6 +1,6 @@
 brews:
 - name: insights
-  github:
+  tap:
     owner: FairwindsOps
     name: homebrew-tap
   folder: Formula
