@@ -1,5 +1,6 @@
 brews:
 - name: insights
+  goarm: 6
   tap:
     owner: FairwindsOps
     name: homebrew-tap
