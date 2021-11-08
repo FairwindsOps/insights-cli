@@ -2,6 +2,7 @@ version: 2.1
 
 jobs:
   release:
+    resource_class: large
     docker:
       - image: cimg/go:1.17
     steps:
