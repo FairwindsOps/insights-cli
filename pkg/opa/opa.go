@@ -260,7 +260,7 @@ func BuildChecksTree(org, token, hostName string, tree treeprint.Tree) error {
 	}
 	opaBranch := tree.AddBranch("opa")
 	for _, check := range checks {
-		branch := opaBranch.AddBranch(check.Name)
+		branch := opaBranch.AddBranch(fmt.Sprintf("%s (v%.0f)", check.Name, check.Version))
 		instances, err := GetInstances(org, check.Name, token, hostName)
 		if err != nil {
 			logrus.Errorf("Unable to get instances from insights: %v", err)
