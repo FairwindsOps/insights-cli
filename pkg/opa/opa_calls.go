@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"net/http"
 
-	opaPlugin "github.com/fairwindsops/insights-plugins/opa/pkg/opa"
+	opaPlugin "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/opa"
 	"github.com/imroc/req"
 	"github.com/sirupsen/logrus"
 

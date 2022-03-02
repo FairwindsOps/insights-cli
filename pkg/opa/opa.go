@@ -23,7 +23,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/fairwindsops/insights-plugins/opa/pkg/opa"
+	"github.com/fairwindsops/insights-plugins/plugins/opa/pkg/opa"
 	"github.com/sirupsen/logrus"
 	"github.com/thoas/go-funk"
 	"github.com/xlab/treeprint"
