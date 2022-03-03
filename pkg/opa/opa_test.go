@@ -17,7 +17,7 @@ package opa
 import (
 	"testing"
 
-	"github.com/fairwindsops/insights-plugins/opa/pkg/opa"
+	"github.com/fairwindsops/insights-plugins/plugins/opa/pkg/opa"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/fairwindsops/insights-cli/pkg/models"
