@@ -245,7 +245,12 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 			}
 		}
 		check.CheckName = checkName
-		check.Instances = instances
+		if len(instances) == 0 {
+			check.Version = 2.0
+			logrus.Infof("%q will be processed as a V2 check as it has no accompanying instances.", checkName)
+		} else {
+			check.Instances = instances
+		}
 		checks = append(checks, check)
 	}
 	return checks, nil
