@@ -209,6 +209,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 	for checkName, checkFiles := range files {
 		var check models.CustomCheckModel
 		var instances []models.CustomCheckInstanceModel
+		var onlyRegoFormat bool
 		check.Version = 1.0
 		for _, filePath := range checkFiles {
 			fileContents, err := ioutil.ReadFile(filePath)
@@ -219,6 +220,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 			if strings.HasPrefix(filepath.Base(filePath), "policy.") {
 				extension := filepath.Ext(filePath)
 				if extension == ".rego" {
+					onlyRegoFormat = true
 					check.Rego = string(fileContents)
 				} else if extension == ".yaml" {
 					err = yaml.Unmarshal(fileContents, &check)
@@ -245,7 +247,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 			}
 		}
 		check.CheckName = checkName
-		if len(instances) == 0 {
+		if len(instances) == 0 && onlyRegoFormat {
 			check.Version = 2.0
 		} else {
 			check.Instances = instances
