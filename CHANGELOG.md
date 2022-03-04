@@ -1,4 +1,5 @@
 # Changelog
+Please see [Github releases][] for a list of changes.
 
-## 0.1.0
-* Initial release
+[Github releases]: https://github.com/FairWindsOps/insights-cli/releases
+
