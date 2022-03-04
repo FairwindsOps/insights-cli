@@ -29,6 +29,7 @@ import (
 const opaURLFormat = "%s/v0/organizations/%s/opa/customChecks"
 
 const opaCheckURLFormat = opaURLFormat + "/%s"
+const opaPutCheckURLFormat = opaCheckURLFormat + "?version=%.1f"
 const opaCheckInstancesURLFormat = opaCheckURLFormat + "/instances"
 
 const opaInstanceURLFormat = opaCheckInstancesURLFormat + "/%s"
@@ -88,7 +89,7 @@ func DeleteCheck(check models.CustomCheckModel, org, token, hostName string) err
 
 // PutCheck upserts an OPA Check to Fairwinds Insights
 func PutCheck(check models.CustomCheckModel, org, token, hostName string) error {
-	url := fmt.Sprintf(opaCheckURLFormat, hostName, org, check.CheckName)
+	url := fmt.Sprintf(opaPutCheckURLFormat, hostName, org, check.CheckName, check.Version)
 	resp, err := req.Put(url, getHeaders(token), req.BodyJSON(&check))
 	if err != nil {
 		return err
@@ -153,7 +154,7 @@ func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bo
 		}
 	}
 	for _, check := range results.CheckInsert {
-		logrus.Infof("Adding check: %s", check.CheckName)
+		logrus.Infof("Adding v%.0f check: %s", check.Version, check.CheckName)
 		if !dryrun {
 			err := PutCheck(check, org, insightsToken, host)
 			if err != nil {
@@ -162,7 +163,7 @@ func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bo
 		}
 	}
 	for _, check := range results.CheckUpdate {
-		logrus.Infof("Updating check: %s", check.CheckName)
+		logrus.Infof("Updating v%.0f check: %s", check.Version, check.CheckName)
 		if !dryrun {
 			err := PutCheck(check, org, insightsToken, host)
 			if err != nil {

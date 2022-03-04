@@ -209,6 +209,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 	for checkName, checkFiles := range files {
 		var check models.CustomCheckModel
 		var instances []models.CustomCheckInstanceModel
+		check.Version = 1.0
 		for _, filePath := range checkFiles {
 			fileContents, err := ioutil.ReadFile(filePath)
 			if err != nil {
@@ -220,7 +221,6 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 				if extension == ".rego" {
 					check.Rego = string(fileContents)
 				} else if extension == ".yaml" {
-
 					err = yaml.Unmarshal(fileContents, &check)
 					if err != nil {
 						logrus.Error(err, "Error Unmarshalling check YAML", filePath)
@@ -247,7 +247,6 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 		check.CheckName = checkName
 		if len(instances) == 0 {
 			check.Version = 2.0
-			logrus.Infof("%q will be processed as a V2 check as it has no accompanying instances.", checkName)
 		} else {
 			check.Instances = instances
 		}
