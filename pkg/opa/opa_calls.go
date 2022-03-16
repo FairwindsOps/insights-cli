@@ -24,6 +24,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/fairwindsops/insights-cli/pkg/models"
+	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
 )
 
 const opaURLFormat = "%s/v0/organizations/%s/opa/customChecks"
@@ -194,7 +195,8 @@ func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bo
 
 func getHeaders(token string) req.Header {
 	return req.Header{
-		"Authorization": fmt.Sprintf("Bearer %s", token),
-		"Accept":        "application/json",
+		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
+		"Authorization":           fmt.Sprintf("Bearer %s", token),
+		"Accept":                  "application/json",
 	}
 }
