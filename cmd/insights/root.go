@@ -29,8 +29,6 @@ import (
 var logLevel string
 var insightsToken string
 var configFile string
-var version string
-var commit string
 var organization string
 
 var configurationObject configuration

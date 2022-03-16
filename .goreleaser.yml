@@ -10,7 +10,7 @@ brews:
     system "#{bin}/insights version"
 builds:
 - ldflags:
-  - -X main.version={{.Version}} -X main.commit={{.Commit}} -s -w
+  - -X github.com/fairwindsops/insights-cli/pkg/version.version={{.Version}} -X github.com/fairwindsops/insights-cli/pkg/version.commit={{.Commit}} -s -w
   # golang.org/x/sys/windows
   # ../go/pkg/mod/golang.org/x/sys@v0.0.0-20200803210538-64077c9b5642/windows/zsyscall_windows.go:2852:38: undefined: WSAData
   # ../go/pkg/mod/golang.org/x/sys@v0.0.0-20200803210538-64077c9b5642/windows/zsyscall_windows.go:3125:51: undefined: Servent
