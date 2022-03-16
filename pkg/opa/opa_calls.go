@@ -195,7 +195,7 @@ func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bo
 
 func getHeaders(token string) req.Header {
 	return req.Header{
-		"X-FAIRWINDS-CLI-VERSION": cliversion.GetVersion(),
+		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
 		"Authorization":           fmt.Sprintf("Bearer %s", token),
 		"Accept":                  "application/json",
 	}
