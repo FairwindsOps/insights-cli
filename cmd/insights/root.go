@@ -80,8 +80,8 @@ func init() {
 }
 
 func preRun(cmd *cobra.Command, args []string) {
-	// If this is the root or version command don't try to parse config
-	if cmd.Use == "insights" || cmd.Use == "version" {
+	// If  we do not need to contact Insights, don't try to parse config
+	if cmd.Use != "list" && cmd.Use != "sync" {
 		return
 	}
 	parsedLevel, err := logrus.ParseLevel(logLevel)
