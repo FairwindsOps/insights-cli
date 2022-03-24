@@ -56,7 +56,7 @@ jobs:
       #- *enable_experimental_docker_features
       - run: goreleaser --snapshot
       # Avoid copying both archive files and the directories used to create them.
-      - run: mkdir snapshot-artifacts && cp dist/*.tar.gz *checksums.txt insights.rb artifacts.json metadata.json snapshot-artifacts
+      - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.rb dist/*.json snapshot-artifacts
       - store_artifacts:
           path: snapshot-artifacts
   release:
