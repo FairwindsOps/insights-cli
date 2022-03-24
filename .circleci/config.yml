@@ -42,8 +42,8 @@ jobs:
       - run:
           name: test
           command: |
-            go test ./pkg/...
-            go vet
+            go test ./...
+            go vet ./...
   snapshot:
     working_directory: /go/src/github.com/fairwindsops/insights-cli
     resource_class: large
