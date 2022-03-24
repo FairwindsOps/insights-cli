@@ -1,5 +1,7 @@
 brews:
 - name: insights
+  # Do not update our tap repo if the git tag indicates prerelease. E.G. 1.0.0-rc1
+  skip_upload: auto
   goarm: 6
   tap:
     owner: FairwindsOps
@@ -11,21 +13,16 @@ brews:
 builds:
 - ldflags:
   - -X github.com/fairwindsops/insights-cli/pkg/version.version={{.Version}} -X github.com/fairwindsops/insights-cli/pkg/version.commit={{.Commit}} -s -w
-  # golang.org/x/sys/windows
-  # ../go/pkg/mod/golang.org/x/sys@v0.0.0-20200803210538-64077c9b5642/windows/zsyscall_windows.go:2852:38: undefined: WSAData
-  # ../go/pkg/mod/golang.org/x/sys@v0.0.0-20200803210538-64077c9b5642/windows/zsyscall_windows.go:3125:51: undefined: Servent
-  # ../go/pkg/mod/golang.org/x/sys@v0.0.0-20200803210538-64077c9b5642/windows/zsyscall_windows.go:3139:50: undefined: Servent
-  ignore:
-  - goos: windows
-    goarch: arm64
+  env:
+  - CGO_ENABLED=0
   main: ./cmd/insights
+  # goreleaser builds a matrix of the GOOS, GOArch, and GOARM listed below,
+  # minus those under `ignore`.
   goarch:
+  - 386
   - amd64
   - arm
   - arm64
-  - 386
-  env:
-  - CGO_ENABLED=0
   goos:
   - linux
   - darwin
@@ -33,9 +30,98 @@ builds:
   goarm:
   - 6
   - 7
+  ignore:
+  - goos: windows
+    goarch: arm64
 changelog:
   sort: asc
   filters:
     exclude:
       - '^docs:'
       - '^test:'
+      - '^Managed by Terraform$'
+dockers:
+  # There are multiple images to match the `--platform` docker build flag with
+  # combinations of `GOOS`, `GOARCH`, and `GOARM`
+  # Also, some images are broken out to avoid pushing them for pre-release git
+  # tags. E.G. VX.Y.Z-rc1 should not docker-push latest.
+- image_templates:
+  - "quay.io/fairwinds/insights-cli:{{ .Tag }}-amd64"
+  use: buildx
+  build_flag_templates:
+  - "--platform=linux/amd64"
+- image_templates:
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}-amd64"
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-amd64"
+  use: buildx
+  # Do not push images if the git tag indicates prerelease. E.G. 1.0.0-rc1
+  skip_push: auto
+  build_flag_templates:
+  - "--platform=linux/amd64"
+- image_templates:
+  - "quay.io/fairwinds/insights-cli:{{ .Tag }}-arm64v8"
+  use: buildx
+  goarch: arm64
+  goos: linux
+  build_flag_templates:
+  - "--platform=linux/arm64/v8"
+- image_templates:
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}-arm64v8"
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-arm64v8"
+  use: buildx
+  # Do not push images if the git tag indicates prerelease. E.G. 1.0.0-rc1
+  skip_push: auto
+  goarch: arm64
+  goos: linux
+  build_flag_templates:
+  - "--platform=linux/arm64/v8"
+- image_templates:
+  - "quay.io/fairwinds/insights-cli:{{ .Tag }}-armv7"
+  use: buildx
+  goarch: arm
+  goarm: 7
+  goos: linux
+  build_flag_templates:
+  - "--platform=linux/arm/v7"
+- image_templates:
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}-armv7"
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-armv7"
+  use: buildx
+  # Do not push images if the git tag indicates prerelease. E.G. 1.0.0-rc1
+  skip_push: auto
+  goarch: arm
+  goarm: 7
+  goos: linux
+  build_flag_templates:
+  - "--platform=linux/arm/v7"
+docker_manifests:
+# Combine images of the same tag into a single Docker manifest.
+# E.G. An insights-cli:v1.2.3 manifest includes images
+# insights-cli:v1.2.3-amd64, ...:v1.2.3-arm64v8, ...:v1.2.3-armv7, Etc.
+- name_template: quay.io/fairwinds/insights-cli:latest
+  # Do not push manifests if the git tag indicates prerelease. E.G. 1.0.0-rc1
+  skip_push: auto
+  image_templates:
+  - "quay.io/fairwinds/insights-cli:{{ .Tag }}-amd64"
+  - "quay.io/fairwinds/insights-cli:{{ .Tag }}-arm64v8"
+  - "quay.io/fairwinds/insights-cli:{{ .Tag }}-armv7"
+- name_template: quay.io/fairwinds/insights-cli:{{ .Tag }}
+  image_templates:
+  - "quay.io/fairwinds/insights-cli:{{ .Tag }}-amd64"
+  - "quay.io/fairwinds/insights-cli:{{ .Tag }}-arm64v8"
+  - "quay.io/fairwinds/insights-cli:{{ .Tag }}-armv7"
+- name_template: quay.io/fairwinds/insights-cli:v{{ .Major }}
+  # Do not push manifests if the git tag indicates prerelease. E.G. 1.0.0-rc1
+  skip_push: auto
+  image_templates:
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}-amd64"
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}-arm64v8"
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}-armv7"
+- name_template: quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}
+  # Do not push manifests if the git tag indicates prerelease. E.G. 1.0.0-rc1
+  skip_push: auto
+  image_templates:
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-amd64"
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-arm64v8"
+  - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-armv7"
+
