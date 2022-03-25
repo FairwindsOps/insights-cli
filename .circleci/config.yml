@@ -77,7 +77,7 @@ jobs:
           registry: "quay.io"
           username: $FAIRWINDS_QUAY_USER
           password-variable: FAIRWINDS_QUAY_TOKEN
-      - run: echo "size of docker config: $(wc -l ~/.docker/config.json)"
+      - run: wc -l ~/.docker/config.json
       - run: echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
       - run: goreleaser
 
