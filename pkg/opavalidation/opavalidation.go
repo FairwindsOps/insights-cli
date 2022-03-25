@@ -31,24 +31,30 @@ type actionItem struct {
 	Category          string
 }
 
-// validateAndPrintActionItems validates and prints the slice of actionItems, including
-// errors with each invalid actionItem. IF any ActionITems are invalid, a
-// general error is returned stating how many were invalid.
-func validateAndPrintActionItems(AIs []actionItem) error {
+type actionItems []actionItem
+
+// StringWithValidation validates and prints the slice of actionItems, including
+// errors with each invalid actionItem. IF any ActionItems are invalid, a
+// general error is returned stating how many were invalid, but
+// per-action-item errors are contained in the returned string output for
+// context.
+func (AIs actionItems) StringWithValidation() (string, error) {
 	var numInvalidActionItems int
+	var sb strings.Builder
+
 	for n, AI := range AIs {
 		valid, AIErrs := AI.valid()
 		if !valid {
 			numInvalidActionItems++
-			fmt.Printf("*INVALID* ")
+			sb.WriteString("X ")
 		}
-		fmt.Printf("Action Item")
+		sb.WriteString("Action Item")
 		if len(AIs) > 1 {
-			fmt.Printf(" #%d", n+1)
+			fmt.Fprintf(&sb, " #%d", n+1)
 		}
-		fmt.Printf(":\n")
+		fmt.Fprintf(&sb, ":\n")
 
-		fmt.Printf(`	Title: %s
+		fmt.Fprintf(&sb, `	Title: %s
 	Category: %s
 	Severity: %.1f
 	Description: %s
@@ -59,18 +65,29 @@ func validateAndPrintActionItems(AIs []actionItem) error {
 	Event Type: %s
 	`, AI.Title, AI.Category, AI.Severity, AI.Description, AI.ResourceNamespace, AI.ResourceKind, AI.ResourceName, AI.Remediation, AI.EventType)
 		if !valid {
-			fmt.Println(AIErrs)
+			fmt.Fprintln(&sb, AIErrs)
 		}
-		fmt.Println()
+		fmt.Fprintln(&sb)
 	}
 	// Per-actionItem errors were already displayed above.
 	if numInvalidActionItems == 1 {
-		return errors.New("1 action item is invalid")
+		return sb.String(), errors.New("1 action item is invalid")
 	}
 	if numInvalidActionItems > 1 {
-		return fmt.Errorf("%d action items are invalid", numInvalidActionItems)
+		return sb.String(), fmt.Errorf("%d action items are invalid", numInvalidActionItems)
 	}
-	return nil
+	return sb.String(), nil
+}
+
+func (AIs actionItems) NumInvalid() int {
+	var numInvalidActionItems int
+	for _, AI := range AIs {
+		valid, _ := AI.valid()
+		if !valid {
+			numInvalidActionItems++
+		}
+	}
+	return numInvalidActionItems
 }
 
 // setFieldsFromobject sets the resourceName, resourceNamespace, and resourceKind,
@@ -124,6 +141,9 @@ func (AI actionItem) valid() (bool, error) {
 // via the upstream rego pkg. This includes validating signatures for
 // Insights-provided rego functions.
 func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte, eventType string, objectNamespaceOverride string) error {
+	if !strings.Contains(regoAsString, "package fairwinds") {
+		return errors.New("policy must be within a fairwinds package. The policy must contain the statement: package fairwinds")
+	}
 	objectAsMap, err := objectBytesToMap(objectAsBytes)
 	if err != nil {
 		return err
@@ -136,8 +156,7 @@ func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte
 	if err != nil {
 		return err
 	}
-	regoResultAsArray := getOutputArray(regoResult)
-	actionItems, err := actionItemsFromRegoResult(regoResultAsArray)
+	actionItems, err := actionItemsFromRegoResult(regoResult)
 	if err != nil {
 		return err
 	}
@@ -146,7 +165,8 @@ func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte
 		return err
 	}
 	updateActionItemsWithEventType(actionItems, eventType)
-	err = validateAndPrintActionItems(actionItems)
+	actionItemsAsString, err := actionItems.StringWithValidation()
+	fmt.Println(actionItemsAsString)
 	if err != nil {
 		return err
 	}
@@ -198,7 +218,7 @@ func validateInsightsInfoFunctionArgs() func(rego.BuiltinContext, *ast.Term) (*a
 		}
 		switch strings.ToLower(reqInfo) {
 		case "context", "cluster":
-			// Actually return an ast string instead.
+			// Actually return an ast string instead?
 			return nil, nil
 		default:
 			return nil, rego.NewHaltError(fmt.Errorf("cannot return unknown Insights Info %q", reqInfo))
@@ -222,7 +242,7 @@ func getStringFromAST(astTerm *ast.Term) (string, error) {
 	return strings.Trim(astString.String(), "\""), nil
 }
 
-func getOutputArray(results rego.ResultSet) []interface{} {
+func arrayFromRegoOutput(results rego.ResultSet) []interface{} {
 	returnSet := make([]interface{}, 0)
 
 	for _, result := range results {
@@ -239,9 +259,10 @@ func getOutputArray(results rego.ResultSet) []interface{} {
 
 // actionItemsFromRegoResults converts rego execution output into a slice of
 // actionItem.
-func actionItemsFromRegoResult(results []interface{}) ([]actionItem, error) {
-	actionItems := make([]actionItem, 0)
-	for _, result := range results {
+func actionItemsFromRegoResult(results rego.ResultSet) (actionItems, error) {
+	actionItems := make(actionItems, 0)
+	resultsAsArray := arrayFromRegoOutput(results)
+	for _, result := range resultsAsArray {
 		var AI actionItem
 		resultAsMap, ok := result.(map[string]interface{})
 		if ok {
@@ -306,7 +327,7 @@ func updateObjectWithNamespaceOverride(obj map[string]interface{}, NS string) er
 	return nil
 }
 
-func updateActionItemsWithObjectFields(AIs []actionItem, obj map[string]interface{}) error {
+func updateActionItemsWithObjectFields(AIs actionItems, obj map[string]interface{}) error {
 	for n, _ := range AIs {
 		err := AIs[n].setFieldsFromObject(obj)
 		if err != nil {
@@ -316,7 +337,7 @@ func updateActionItemsWithObjectFields(AIs []actionItem, obj map[string]interfac
 	return nil
 }
 
-func updateActionItemsWithEventType(AIs []actionItem, ET string) {
+func updateActionItemsWithEventType(AIs actionItems, ET string) {
 	if ET == "" {
 		return
 	}
