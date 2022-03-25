@@ -21,7 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
-// ActionItem represents an action item from a report
+// Type actionItem represents an Insights action item.
 type actionItem struct {
 	ResourceNamespace string
 	ResourceKind      string
@@ -34,9 +34,10 @@ type actionItem struct {
 	Category          string
 }
 
+// Type actionItems represents multiple actionItem types.
 type actionItems []actionItem
 
-// StringWithValidation validates and prints the slice of actionItems, including
+// StringWithValidation validates and returns a string representation of the slice of actionItems, including
 // errors with each invalid actionItem. IF any ActionItems are invalid, a
 // general error is returned stating how many were invalid, but
 // per-action-item errors are contained in the returned string output for
@@ -51,7 +52,7 @@ func (AIs actionItems) StringWithValidation() (string, error) {
 			numInvalidActionItems++
 			sb.WriteString(color.RedString("X "))
 		} else {
-			sb.WriteString(color.GreenString("✔"))
+			sb.WriteString(color.GreenString("✔ "))
 		}
 		sb.WriteString("Action Item")
 		if len(AIs) > 1 {
@@ -67,8 +68,9 @@ func (AIs actionItems) StringWithValidation() (string, error) {
 	Resource Kind: %s
 	Resource Name: %s
 	Remediation: %s
-	Event Type: %s
-	`, AI.Title, AI.Category, AI.Severity, AI.Description, AI.ResourceNamespace, AI.ResourceKind, AI.ResourceName, AI.Remediation, AI.EventType)
+	Event Type: %s`,
+			AI.Title, AI.Category, AI.Severity, AI.Description, AI.ResourceNamespace, AI.ResourceKind, AI.ResourceName, AI.Remediation, AI.EventType)
+		fmt.Fprintln(&sb)
 		if !valid {
 			fmt.Fprintln(&sb, strings.TrimSpace(AIErrs.Error())) // hashicorp/multierror adds too many newlines
 		}
@@ -84,6 +86,7 @@ func (AIs actionItems) StringWithValidation() (string, error) {
 	return sb.String(), nil
 }
 
+// NumInvalid returns the number of actionItems that do not pass validation.
 func (AIs actionItems) NumInvalid() int {
 	var numInvalidActionItems int
 	for _, AI := range AIs {
@@ -93,6 +96,28 @@ func (AIs actionItems) NumInvalid() int {
 		}
 	}
 	return numInvalidActionItems
+}
+
+// Valid returns true if an actionItem has required fields set, or false and
+// an error describing which fields are missing.
+func (AI actionItem) valid() (bool, error) {
+	var allErrs *multierror.Error = new(multierror.Error)
+	if AI.ResourceKind == "" {
+		allErrs = multierror.Append(allErrs, errors.New("ResourceKind is not set. Perhaps the input Kubernetes manifest has no `kind` field?"))
+	}
+	if AI.ResourceName == "" {
+		allErrs = multierror.Append(allErrs, errors.New("ResourceName is not set. Perhaps the input Kubernetes manifest has no `metadata.name` field?"))
+	}
+	if AI.Title == "" {
+		allErrs = multierror.Append(allErrs, errors.New("Title is not set."))
+	}
+	categoryIsValid := AI.Category == "Efficiency" ||
+		AI.Category == "Security" ||
+		AI.Category == "Reliability"
+	if !categoryIsValid {
+		allErrs = multierror.Append(allErrs, fmt.Errorf("Category %q is invalid. Category must be set to one of Efficiency, Security, or Reliability, including the uppercase first letter.", AI.Category))
+	}
+	return (allErrs.Len() == 0), allErrs.ErrorOrNil()
 }
 
 // setFieldsFromobject sets the resourceName, resourceNamespace, and resourceKind,
@@ -120,28 +145,8 @@ func (AI *actionItem) setFieldsFromObject(obj map[string]interface{}) error {
 	return nil
 }
 
-// Valid returns true if an actionItem has required fields set, or false and
-// an error describing which fields are missing.
-func (AI actionItem) valid() (bool, error) {
-	var allErrs *multierror.Error = new(multierror.Error)
-	if AI.ResourceKind == "" {
-		allErrs = multierror.Append(allErrs, errors.New("ResourceKind is not set. Perhaps the input Kubernetes manifest has no `kind` field?"))
-	}
-	if AI.ResourceName == "" {
-		allErrs = multierror.Append(allErrs, errors.New("ResourceName is not set. Perhaps the input Kubernetes manifest has no `metadata.name` field?"))
-	}
-	if AI.Title == "" {
-		allErrs = multierror.Append(allErrs, errors.New("Title is not set."))
-	}
-	categoryIsValid := AI.Category == "Efficiency" ||
-		AI.Category == "Security" ||
-		AI.Category == "Reliability"
-	if !categoryIsValid {
-		allErrs = multierror.Append(allErrs, fmt.Errorf("Category %q is invalid. Category must be set to one of Efficiency, Security, or Reliability, including the uppercase first letter.", AI.Category))
-	}
-	return (allErrs.Len() == 0), allErrs.ErrorOrNil()
-}
-
+// Run is a ValidateRego() wrapper that prints resulting actionItems. This is
+// meant to be called from a cobra.Command{}.
 func Run(regoFileName, objectFileName, objectNamespaceOverride string) error {
 	b, err := ioutil.ReadFile(regoFileName)
 	if err != nil {
@@ -167,9 +172,8 @@ func Run(regoFileName, objectFileName, objectNamespaceOverride string) error {
 	return nil
 }
 
-// ValidateRego validates rego by parsing inputs, modules, and query arguments
-// via the upstream rego pkg. This includes validating signatures for
-// Insights-provided rego functions.
+// ValidateRego validates rego by executing rego with an input object.
+// Validation includes signatures for Insights-provided rego functions.
 func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte, eventType string, objectNamespaceOverride string) (actionItems, error) {
 	if !strings.Contains(regoAsString, "package fairwinds") {
 		return nil, errors.New("policy must be within a fairwinds package. The policy must contain the statement: package fairwinds")
@@ -233,8 +237,8 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 
 // validateInsightsInfoFunctionArgs validates the argument that would be
 // passed to our rego InsightsInfo function without executing code provided by
-// the real InsightsInfo function. This function returns a function that is
-// called from rego.Function().
+// the real InsightsInfo function used elsewhere in Insights.
+// This function returns a function that is called from rego.Function().
 func validateInsightsInfoFunctionArgs() func(rego.BuiltinContext, *ast.Term) (*ast.Term, error) {
 	return func(bc rego.BuiltinContext, inf *ast.Term) (*ast.Term, error) {
 		reqInfo, err := getStringFromAST(inf)
@@ -259,6 +263,8 @@ func validateInsightsInfoFunctionArgs() func(rego.BuiltinContext, *ast.Term) (*a
 	}
 }
 
+// getStringFromAST converts the ast.Term type used by the rego pkg, into a
+// string.
 func getStringFromAST(astTerm *ast.Term) (string, error) {
 	astString, ok := astTerm.Value.(ast.String)
 	if !ok {
@@ -267,6 +273,8 @@ func getStringFromAST(astTerm *ast.Term) (string, error) {
 	return strings.Trim(astString.String(), "\""), nil
 }
 
+// arrayFromRegoOutput converts rego output into an array of interface{}, to
+// make rego output iteratable.
 func arrayFromRegoOutput(results rego.ResultSet) []interface{} {
 	returnSet := make([]interface{}, 0)
 
@@ -332,6 +340,8 @@ func actionItemFromMap(m map[string]interface{}) (actionItem, error) {
 	return AI, nil
 }
 
+// objectBytesToMap converts a slice of bytes to a map[string]interface{},
+// suitable for passing into runRegoForObject().
 func objectBytesToMap(objectAsBytes []byte) (map[string]interface{}, error) {
 	objectAsMap := make(map[string]interface{}, 0)
 	err := yaml.Unmarshal(objectAsBytes, &objectAsMap)
@@ -341,6 +351,8 @@ func objectBytesToMap(objectAsBytes []byte) (map[string]interface{}, error) {
 	return objectAsMap, nil
 }
 
+// updateObjectWithNamespaceOverride sets the metadata.namespace field of a
+// Kubernetes object.
 func updateObjectWithNamespaceOverride(obj map[string]interface{}, NS string) error {
 	if NS == "" {
 		return nil
@@ -352,6 +364,8 @@ func updateObjectWithNamespaceOverride(obj map[string]interface{}, NS string) er
 	return nil
 }
 
+// updateActionItemsWithObjectFields adds the Kind, name, and namespace of a
+// Kubernetes object to  all actionItems in the slice of actionItems.
 func updateActionItemsWithObjectFields(AIs actionItems, obj map[string]interface{}) error {
 	for n, _ := range AIs {
 		err := AIs[n].setFieldsFromObject(obj)
@@ -362,6 +376,8 @@ func updateActionItemsWithObjectFields(AIs actionItems, obj map[string]interface
 	return nil
 }
 
+// updateActionItemsWithEventType adds the EventType to all actionItems in the
+// slice of actionItems.
 func updateActionItemsWithEventType(AIs actionItems, ET string) {
 	if ET == "" {
 		return
@@ -371,6 +387,7 @@ func updateActionItemsWithEventType(AIs actionItems, ET string) {
 	}
 }
 
+// getMapField attempts to get a sub-map at the provided key of a map[string]interface{}.
 func getMapField(m map[string]interface{}, key string) (map[string]interface{}, error) {
 	if m[key] == nil {
 		return nil, fmt.Errorf("key %q not found", key)
@@ -383,6 +400,8 @@ func getMapField(m map[string]interface{}, key string) (map[string]interface{}, 
 	return subMap, nil
 }
 
+// getStringField attempts to get a string at the provided key of a
+// map[string]interface{}.
 func getStringField(m map[string]interface{}, key string) (string, error) {
 	if m[key] == nil {
 		return "", fmt.Errorf("key %q not found", key)
@@ -394,6 +413,8 @@ func getStringField(m map[string]interface{}, key string) (string, error) {
 	return str, nil
 }
 
+// getStringField attempts to get a float at the provided key of a
+// map[string]interface{}.
 func getFloatField(m map[string]interface{}, key string) (float64, error) {
 	if m[key] == nil {
 		return 0.0, fmt.Errorf("key %q not found", key)
