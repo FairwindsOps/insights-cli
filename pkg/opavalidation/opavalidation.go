@@ -100,21 +100,21 @@ func (AIs actionItems) NumInvalid() int {
 func (AI *actionItem) setFieldsFromObject(obj map[string]interface{}) error {
 	objKind, err := getStringField(obj, "kind")
 	if err != nil {
-		return err
+		return fmt.Errorf("while getting the Kind from the Kubernetes object: %v", err)
 	}
 	AI.ResourceKind = objKind
 	objMetadata, err := getMapField(obj, "metadata")
 	if err != nil {
-		return err
+		return fmt.Errorf("while getting the metadata from the Kubernetes object: %v", err)
 	}
 	objName, err := getStringField(objMetadata, "name")
 	if err != nil {
-		return fmt.Errorf("while parsing metadata: %v", err)
+		return fmt.Errorf("while getting the metadata.name from the Kubernetes object: %v", err)
 	}
 	AI.ResourceName = objName
 	objNamespace, err := getStringField(objMetadata, "namespace")
 	if err != nil {
-		return fmt.Errorf("while parsing metadata: %v", err)
+		return fmt.Errorf("while getting the metadata.namespace from the Kubernetes object: %v", err)
 	}
 	AI.ResourceNamespace = objNamespace
 	return nil
@@ -311,23 +311,23 @@ func actionItemFromMap(m map[string]interface{}) (actionItem, error) {
 	var err error
 	AI.Description, err = getStringField(m, "description")
 	if err != nil {
-		return AI, err
+		return AI, fmt.Errorf("while getting description from action item: %v", err)
 	}
 	AI.Title, err = getStringField(m, "title")
 	if err != nil {
-		return AI, err
+		return AI, fmt.Errorf("while getting title from action item: %v", err)
 	}
 	AI.Category, err = getStringField(m, "category")
 	if err != nil {
-		return AI, err
+		return AI, fmt.Errorf("while getting category from action item: %v", err)
 	}
 	AI.Remediation, err = getStringField(m, "remediation")
 	if err != nil {
-		return AI, err
+		return AI, fmt.Errorf("while getting remediation from action item: %v", err)
 	}
 	AI.Severity, err = getFloatField(m, "severity")
 	if err != nil {
-		return AI, err
+		return AI, fmt.Errorf("while getting severity from action item: %v", err)
 	}
 	return AI, nil
 }
