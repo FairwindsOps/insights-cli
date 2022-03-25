@@ -5,12 +5,8 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package main
 
 import (
-	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"path/filepath"
-	"strings"
 
 	"github.com/fairwindsops/insights-cli/pkg/opavalidation"
 	"github.com/spf13/cobra"
@@ -24,22 +20,9 @@ var validateCmd = &cobra.Command{
 	Short: "Validate the syntax and output of a V2 Insights OPA policy",
 	Long:  `Validate checks a V2 format Insights OPA policy for rego syntax and proper action item output.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		b, err := ioutil.ReadFile(regoFileName)
+		err := opavalidation.Run(regoFileName, objectFileName, objectNamespaceOverride)
 		if err != nil {
-			fmt.Printf("error reading %s: %v\n", regoFileName, err)
-			os.Exit(1)
-		}
-		regoContent := string(b)
-		b, err = ioutil.ReadFile(objectFileName)
-		if err != nil {
-			fmt.Printf("error reading %s: %v\n", objectFileName, err)
-			os.Exit(1)
-		}
-		baseRegoFileName := filepath.Base(regoFileName)
-		eventType := strings.TrimSuffix(baseRegoFileName, filepath.Ext(baseRegoFileName))
-		err = opavalidation.ValidateRego(context.TODO(), regoContent, b, eventType, objectNamespaceOverride)
-		if err != nil {
-			fmt.Printf("Policy failed validation: %v\n", err)
+			fmt.Println(err)
 			os.Exit(1)
 		}
 		fmt.Println("Policy validated successfully.")

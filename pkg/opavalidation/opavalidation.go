@@ -6,9 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path/filepath"
 	"strings"
 
+	"github.com/fatih/color"
 	"github.com/hashicorp/go-multierror"
 	"github.com/open-policy-agent/opa/ast"
 	"github.com/open-policy-agent/opa/rego"
@@ -46,7 +49,9 @@ func (AIs actionItems) StringWithValidation() (string, error) {
 		valid, AIErrs := AI.valid()
 		if !valid {
 			numInvalidActionItems++
-			sb.WriteString("X ")
+			sb.WriteString(color.RedString("X "))
+		} else {
+			sb.WriteString(color.GreenString("✔"))
 		}
 		sb.WriteString("Action Item")
 		if len(AIs) > 1 {
@@ -65,7 +70,7 @@ func (AIs actionItems) StringWithValidation() (string, error) {
 	Event Type: %s
 	`, AI.Title, AI.Category, AI.Severity, AI.Description, AI.ResourceNamespace, AI.ResourceKind, AI.ResourceName, AI.Remediation, AI.EventType)
 		if !valid {
-			fmt.Fprintln(&sb, AIErrs)
+			fmt.Fprintln(&sb, strings.TrimSpace(AIErrs.Error())) // hashicorp/multierror adds too many newlines
 		}
 		fmt.Fprintln(&sb)
 	}
@@ -137,40 +142,60 @@ func (AI actionItem) valid() (bool, error) {
 	return (allErrs.Len() == 0), allErrs.ErrorOrNil()
 }
 
-// ValidateRego validates rego by parsing inputs, modules, and query arguments
-// via the upstream rego pkg. This includes validating signatures for
-// Insights-provided rego functions.
-func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte, eventType string, objectNamespaceOverride string) error {
-	if !strings.Contains(regoAsString, "package fairwinds") {
-		return errors.New("policy must be within a fairwinds package. The policy must contain the statement: package fairwinds")
-	}
-	objectAsMap, err := objectBytesToMap(objectAsBytes)
+func Run(regoFileName, objectFileName, objectNamespaceOverride string) error {
+	b, err := ioutil.ReadFile(regoFileName)
 	if err != nil {
-		return err
+		return fmt.Errorf("error reading %s: %v\n", regoFileName, err)
 	}
-	err = updateObjectWithNamespaceOverride(objectAsMap, objectNamespaceOverride)
+	regoContent := string(b)
+	b, err = ioutil.ReadFile(objectFileName)
 	if err != nil {
-		return fmt.Errorf("while overriding object namespace with %q: %v", objectNamespaceOverride, err)
+		return fmt.Errorf("error reading %s: %v\n", objectFileName, err)
 	}
-	regoResult, err := runRegoForObject(ctx, regoAsString, objectAsMap)
+	baseRegoFileName := filepath.Base(regoFileName)
+	eventType := strings.TrimSuffix(baseRegoFileName, filepath.Ext(baseRegoFileName))
+	actionItems, err := ValidateRego(context.TODO(), regoContent, b, eventType, objectNamespaceOverride)
 	if err != nil {
-		return err
+		return fmt.Errorf("Policy failed validation: %v\n", err)
 	}
-	actionItems, err := actionItemsFromRegoResult(regoResult)
-	if err != nil {
-		return err
-	}
-	err = updateActionItemsWithObjectFields(actionItems, objectAsMap)
-	if err != nil {
-		return err
-	}
-	updateActionItemsWithEventType(actionItems, eventType)
 	actionItemsAsString, err := actionItems.StringWithValidation()
 	fmt.Println(actionItemsAsString)
 	if err != nil {
-		return err
+		return fmt.Errorf("Policy failed validation: %v\n", err)
 	}
+	fmt.Println("Policy validated successfully.")
 	return nil
+}
+
+// ValidateRego validates rego by parsing inputs, modules, and query arguments
+// via the upstream rego pkg. This includes validating signatures for
+// Insights-provided rego functions.
+func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte, eventType string, objectNamespaceOverride string) (actionItems, error) {
+	if !strings.Contains(regoAsString, "package fairwinds") {
+		return nil, errors.New("policy must be within a fairwinds package. The policy must contain the statement: package fairwinds")
+	}
+	objectAsMap, err := objectBytesToMap(objectAsBytes)
+	if err != nil {
+		return nil, err
+	}
+	err = updateObjectWithNamespaceOverride(objectAsMap, objectNamespaceOverride)
+	if err != nil {
+		return nil, fmt.Errorf("while overriding object namespace with %q: %v", objectNamespaceOverride, err)
+	}
+	regoResult, err := runRegoForObject(ctx, regoAsString, objectAsMap)
+	if err != nil {
+		return nil, err
+	}
+	actionItems, err := actionItemsFromRegoResult(regoResult)
+	if err != nil {
+		return actionItems, err
+	}
+	err = updateActionItemsWithObjectFields(actionItems, objectAsMap)
+	if err != nil {
+		return actionItems, err
+	}
+	updateActionItemsWithEventType(actionItems, eventType)
+	return actionItems, nil
 }
 
 // runRegoForObject executes rego with a Kubernetes object as input.
