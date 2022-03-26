@@ -109,13 +109,13 @@ func (AI actionItem) valid() (bool, error) {
 		allErrs = multierror.Append(allErrs, errors.New("ResourceName is not set. Perhaps the input Kubernetes manifest has no `metadata.name` field?"))
 	}
 	if AI.Title == "" {
-		allErrs = multierror.Append(allErrs, errors.New("Title is not set."))
+		allErrs = multierror.Append(allErrs, errors.New("title is not set"))
 	}
 	categoryIsValid := AI.Category == "Efficiency" ||
 		AI.Category == "Security" ||
 		AI.Category == "Reliability"
 	if !categoryIsValid {
-		allErrs = multierror.Append(allErrs, fmt.Errorf("Category %q is invalid. Category must be set to one of Efficiency, Security, or Reliability, including the uppercase first letter.", AI.Category))
+		allErrs = multierror.Append(allErrs, fmt.Errorf("category %q is invalid. Category must be set to one of Efficiency, Security, or Reliability, including the uppercase first letter", AI.Category))
 	}
 	return (allErrs.Len() == 0), allErrs.ErrorOrNil()
 }
@@ -150,25 +150,26 @@ func (AI *actionItem) setFieldsFromObject(obj map[string]interface{}) error {
 func Run(regoFileName, objectFileName, objectNamespaceOverride string) error {
 	b, err := ioutil.ReadFile(regoFileName)
 	if err != nil {
-		return fmt.Errorf("error reading %s: %v\n", regoFileName, err)
+		return fmt.Errorf("error reading %s: %v", regoFileName, err)
 	}
 	regoContent := string(b)
 	b, err = ioutil.ReadFile(objectFileName)
 	if err != nil {
-		return fmt.Errorf("error reading %s: %v\n", objectFileName, err)
+		return fmt.Errorf("error reading %s: %v", objectFileName, err)
 	}
 	baseRegoFileName := filepath.Base(regoFileName)
 	eventType := strings.TrimSuffix(baseRegoFileName, filepath.Ext(baseRegoFileName))
 	actionItems, err := ValidateRego(context.TODO(), regoContent, b, eventType, objectNamespaceOverride)
 	if err != nil {
-		return fmt.Errorf("Policy failed validation: %v\n", err)
+		return err
 	}
 	actionItemsAsString, err := actionItems.StringWithValidation()
+	// If actionItems have errors, output the actionItems first to display more
+	// specific inline errors.
 	fmt.Println(actionItemsAsString)
 	if err != nil {
-		return fmt.Errorf("Policy failed validation: %v\n", err)
+		return err
 	}
-	fmt.Println("Policy validated successfully.")
 	return nil
 }
 
@@ -247,12 +248,11 @@ func validateInsightsInfoFunctionArgs() func(rego.BuiltinContext, *ast.Term) (*a
 		}
 		switch strings.ToLower(reqInfo) {
 		case "context", "cluster":
-			// Actually return an ast string instead?
 			return nil, nil
 		default:
 			return nil, rego.NewHaltError(fmt.Errorf("cannot return unknown Insights Info %q", reqInfo))
 		}
-		/*
+		/* Potentially return a value to the policy instead of nil?
 		   retInfoAsValue, err := ast.InterfaceToValue(retInfo)
 		   		if err != nil {
 		   			return nil, rego.NewHaltError(fmt.Errorf("unable to convert information %q to ast value: %w", retInfo, err))
@@ -268,7 +268,7 @@ func validateInsightsInfoFunctionArgs() func(rego.BuiltinContext, *ast.Term) (*a
 func getStringFromAST(astTerm *ast.Term) (string, error) {
 	astString, ok := astTerm.Value.(ast.String)
 	if !ok {
-		return "", errors.New("Expected a string")
+		return "", errors.New("expected a string")
 	}
 	return strings.Trim(astString.String(), "\""), nil
 }
@@ -281,9 +281,7 @@ func arrayFromRegoOutput(results rego.ResultSet) []interface{} {
 	for _, result := range results {
 		for _, pack := range result.Bindings["results"].(map[string]interface{}) {
 			for _, outputArray := range pack.(map[string]interface{}) {
-				for _, output := range outputArray.([]interface{}) {
-					returnSet = append(returnSet, output)
-				}
+				returnSet = append(returnSet, outputArray.([]interface{})...)
 			}
 		}
 	}
@@ -367,7 +365,7 @@ func updateObjectWithNamespaceOverride(obj map[string]interface{}, NS string) er
 // updateActionItemsWithObjectFields adds the Kind, name, and namespace of a
 // Kubernetes object to  all actionItems in the slice of actionItems.
 func updateActionItemsWithObjectFields(AIs actionItems, obj map[string]interface{}) error {
-	for n, _ := range AIs {
+	for n := range AIs {
 		err := AIs[n].setFieldsFromObject(obj)
 		if err != nil {
 			return err
@@ -382,7 +380,7 @@ func updateActionItemsWithEventType(AIs actionItems, ET string) {
 	if ET == "" {
 		return
 	}
-	for n, _ := range AIs {
+	for n := range AIs {
 		AIs[n].EventType = ET
 	}
 }
@@ -392,7 +390,6 @@ func getMapField(m map[string]interface{}, key string) (map[string]interface{}, 
 	if m[key] == nil {
 		return nil, fmt.Errorf("key %q not found", key)
 	}
-	subMap := make(map[string]interface{}, 0)
 	subMap, ok := m[key].(map[string]interface{})
 	if !ok {
 		return nil, errors.New(key + " was not a map")

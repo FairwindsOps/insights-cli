@@ -22,7 +22,7 @@ var validateCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		err := opavalidation.Run(regoFileName, objectFileName, objectNamespaceOverride)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Printf("Policy failed validation: %v\n", err)
 			os.Exit(1)
 		}
 		fmt.Println("Policy validated successfully.")
