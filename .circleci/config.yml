@@ -35,10 +35,8 @@ jobs:
           name: lint
           command: |
             test -z $(go fmt ./...)
-            go install golang.org/x/lint/golint@latest
-            golint -set_exit_status ./...
-            go get honnef.co/go/tools/cmd/staticcheck
-            staticcheck ./pkg/...
+            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
+            golangci-lint run -v --timeout 2m0s
       - run:
           name: test
           command: |
