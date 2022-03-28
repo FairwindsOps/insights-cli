@@ -249,9 +249,6 @@ func validateInsightsInfoFunctionArgs() func(rego.BuiltinContext, *ast.Term) (*a
 		switch strings.ToLower(reqInfo) {
 		case "context", "cluster":
 			return nil, nil
-		default:
-			return nil, rego.NewHaltError(fmt.Errorf("cannot return unknown Insights Info %q", reqInfo))
-		}
 		/* Potentially return a value to the policy instead of nil?
 		   retInfoAsValue, err := ast.InterfaceToValue(retInfo)
 		   		if err != nil {
@@ -259,7 +256,9 @@ func validateInsightsInfoFunctionArgs() func(rego.BuiltinContext, *ast.Term) (*a
 		   		}
 		   		return ast.NewTerm(retInfoAsValue), nil
 		*/
-		return nil, nil
+		default:
+			return nil, rego.NewHaltError(fmt.Errorf("cannot return unknown Insights Info %q", reqInfo))
+		}
 	}
 }
 
