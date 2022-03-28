@@ -340,7 +340,7 @@ func actionItemFromMap(m map[string]interface{}) (actionItem, error) {
 // objectBytesToMap converts a slice of bytes to a map[string]interface{},
 // suitable for passing into runRegoForObject().
 func objectBytesToMap(objectAsBytes []byte) (map[string]interface{}, error) {
-	objectAsMap := make(map[string]interface{}, 0)
+	objectAsMap := make(map[string]interface{})
 	err := yaml.Unmarshal(objectAsBytes, &objectAsMap)
 	if err != nil {
 		return nil, fmt.Errorf("cannot process input object: %v", err)

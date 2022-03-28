@@ -34,5 +34,8 @@ func init() {
 	opaCmd.Flags().StringVarP(&regoFileName, "rego-file", "r", "policy.rego", "The rego file to validate.")
 	opaCmd.Flags().StringVarP(&objectFileName, "kube-object-file", "k", "", "A Kubernetes manifest to provide as input to the rego policy.")
 	opaCmd.Flags().StringVarP(&objectNamespaceOverride, "object-namespace", "N", "", "A Kubernetes namespace to override any defined in the object-file.")
-	opaCmd.MarkFlagRequired("kube-object-file")
+	err := opaCmd.MarkFlagRequired("kube-object-file")
+	if err != nil {
+		panic(fmt.Errorf("unable to mark flag persistent: %v", err))
+	}
 }
