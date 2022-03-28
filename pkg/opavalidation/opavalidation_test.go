@@ -28,6 +28,7 @@ func TestValidateRego(t *testing.T) {
 			description:    "invalid rego",
 			regoFileName:   "invalidrego.rego",
 			objectFileName: "invalidrego.yaml",
+			expectError:    true,
 		},
 		{
 			description:                 "invalid action item",
