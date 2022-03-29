@@ -37,7 +37,7 @@ func init() {
 	opaCmd.Flags().StringVarP(&objectFileName, "kube-object-file", "k", "", "A Kubernetes manifest to provide as input to the rego policy.")
 	opaCmd.Flags().StringVarP(&objectNamespaceOverride, "object-namespace", "N", "", "A Kubernetes namespace to override any defined in the object-file.")
 	opaCmd.Flags().StringVarP(&insightsInfoCluster, "insightsinfo-cluster", "l", "test", "A Kubernetes cluster name returned by the Insights-provided insightsinfo() rego function.")
-	opaCmd.Flags().StringVarP(&insightsInfoContext, "insightsinfo-context", "t", "test", "An Insights context returned by the Insights-provided insightsinfo() rego function. The context returned by Insights is typially one of  CI/CD, Admission, or Agent.")
+	opaCmd.Flags().StringVarP(&insightsInfoContext, "insightsinfo-context", "t", "Agent", "An Insights context returned by the Insights-provided insightsinfo() rego function. The context returned by Insights plugins is typically one of: CI/CD, Admission, or Agent.")
 	err := opaCmd.MarkFlagRequired("kube-object-file")
 	if err != nil {
 		panic(fmt.Errorf("unable to mark flag persistent: %v", err))
