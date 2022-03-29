@@ -292,49 +292,85 @@ func arrayFromRegoOutput(results rego.ResultSet) []interface{} {
 func actionItemsFromRegoResult(results rego.ResultSet) (actionItems, error) {
 	actionItems := make(actionItems, 0)
 	resultsAsArray := arrayFromRegoOutput(results)
-	for _, result := range resultsAsArray {
+	var allErrs *multierror.Error = new(multierror.Error)
+	for n, result := range resultsAsArray {
 		var AI actionItem
 		resultAsMap, ok := result.(map[string]interface{})
 		if ok {
 			var err error
 			AI, err = actionItemFromMap(resultAsMap)
 			if err != nil {
-				return nil, err
+				allErrs = multierror.Append(allErrs, fmt.Errorf("action item %d: %v", n+1, err))
+				continue
 			}
 		} else {
-			return nil, fmt.Errorf("could not decipher output format of %+v %T", result, result)
+			allErrs = multierror.Append(allErrs, fmt.Errorf("action item %d: could not decipher output format of %+v %T", n+1, result, result))
+			continue
 		}
 		actionItems = append(actionItems, AI)
 	}
-	return actionItems, nil
+	return actionItems, allErrs.ErrorOrNil()
 }
 
 // actionItemFromMap converts a map[string]interface{} to a type actionItem.
+// ANy missing actionItem fields are returned in an error.
 // This is used while converting rego results to actionItems.
 func actionItemFromMap(m map[string]interface{}) (actionItem, error) {
 	var AI actionItem
+	missingFields := make(map[string]error) // Store errors from get*Field functions
 	var err error
 	AI.Description, err = getStringField(m, "description")
 	if err != nil {
-		return AI, fmt.Errorf("while getting description from action item: %v", err)
+		missingFields["description"] = err
 	}
 	AI.Title, err = getStringField(m, "title")
 	if err != nil {
-		return AI, fmt.Errorf("while getting title from action item: %v", err)
+		missingFields["title"] = err
 	}
 	AI.Category, err = getStringField(m, "category")
 	if err != nil {
-		return AI, fmt.Errorf("while getting category from action item: %v", err)
+		missingFields["category"] = err
 	}
 	AI.Remediation, err = getStringField(m, "remediation")
 	if err != nil {
-		return AI, fmt.Errorf("while getting remediation from action item: %v", err)
+		missingFields["remediation"] = err
 	}
 	AI.Severity, err = getFloatField(m, "severity")
 	if err != nil {
-		return AI, fmt.Errorf("while getting severity from action item: %v", err)
+		missingFields["severity"] = err
+	}
+	if len(missingFields) > 0 {
+		return AI, errors.New(humanizeMapOutput(missingFields, "missing field"))
 	}
 	return AI, nil
+}
+
+// humanizeMapOutput returns a humanized string listing a maps keys with its
+// error values
+// in parenthesis. The supplied keyNoun will be pluralized if there are more
+// than one key in the map.
+func humanizeMapOutput(m map[string]error, keyNoun string) string {
+	var message strings.Builder
+	fmt.Fprintf(&message, "%d %s", len(m), keyNoun)
+	if len(m) > 1 {
+		message.WriteString("s")
+	}
+	message.WriteString(": ")
+	var n int = 1 // counter of keys processed
+	for k, v := range m {
+		if n == len(m) && len(m) == 2 {
+			message.WriteString(" and ")
+		}
+		if n == len(m) && len(m) > 2 {
+			message.WriteString("and ") // the comma logic will provide a l eading space
+		}
+		fmt.Fprintf(&message, "%s (%v)", k, v)
+		if n < len(m) && len(m) > 2 {
+			message.WriteString(", ")
+		}
+		n++
+	}
+	return message.String()
 }
 
 // objectBytesToMap converts a slice of bytes to a map[string]interface{},
