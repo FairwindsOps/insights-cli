@@ -1,19 +1,8 @@
 version: 2.1
-
 orbs:
   rok8s: fairwinds/rok8s-scripts@11
 
 references:
-  enable_experimental_features: &enable_experimental_docker_features
-    run:
-      name: enable experimental features
-      command: |
-        set -ex
-        apk --update add openssh
-        ssh remote-docker \<<EOF
-          sudo bash -c 'echo "{\"experimental\": true}" > /etc/docker/daemon.json'
-          sudo systemctl restart docker
-        EOF
   install_vault: &install_vault
     run:
       name: install hashicorp vault
@@ -51,7 +40,6 @@ jobs:
       - checkout
       - setup_remote_docker:
           version: 20.10.11
-      #- *enable_experimental_docker_features
       - run: goreleaser --snapshot
       # Avoid copying both archive files and the directories used to create them.
       - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.rb dist/*.json snapshot-artifacts
@@ -67,7 +55,6 @@ jobs:
       - checkout
       - setup_remote_docker:
           version: 20.10.11
-      #- *enable_experimental_docker_features
       - *install_vault
       - rok8s/get_vault_env:
           vault_path: repo/global/env
@@ -75,7 +62,6 @@ jobs:
           registry: "quay.io"
           username: $FAIRWINDS_QUAY_USER
           password-variable: FAIRWINDS_QUAY_TOKEN
-      - run: wc -l ~/.docker/config.json
       - run: echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
       - run: goreleaser
 
