@@ -10,9 +10,10 @@ import (
 
 // validateCmd represents the validate command
 var validateCmd = &cobra.Command{
-	Use:   "validate",
-	Short: "Validate files for use with Insights",
-	Long:  `Validate files used with Insights, before submitting them to the Insights API`,
+	Use:              "validate",
+	Short:            "Validate files for use with Insights",
+	Long:             `Validate files used with Insights, before submitting them to the Insights API`,
+	TraverseChildren: true,
 	Run: func(cmd *cobra.Command, args []string) {
 	},
 }

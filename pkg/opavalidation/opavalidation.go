@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	fwrego "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/rego"
 	"github.com/fatih/color"
 	"github.com/hashicorp/go-multierror"
 	"github.com/open-policy-agent/opa/ast"
@@ -147,7 +148,7 @@ func (AI *actionItem) setFieldsFromObject(obj map[string]interface{}) error {
 
 // Run is a ValidateRego() wrapper that prints resulting actionItems. This is
 // meant to be called from a cobra.Command{}.
-func Run(regoFileName, objectFileName, objectNamespaceOverride string) error {
+func Run(regoFileName, objectFileName string, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) error {
 	b, err := ioutil.ReadFile(regoFileName)
 	if err != nil {
 		return fmt.Errorf("error reading %s: %v", regoFileName, err)
@@ -159,7 +160,7 @@ func Run(regoFileName, objectFileName, objectNamespaceOverride string) error {
 	}
 	baseRegoFileName := filepath.Base(regoFileName)
 	eventType := strings.TrimSuffix(baseRegoFileName, filepath.Ext(baseRegoFileName))
-	actionItems, err := ValidateRego(context.TODO(), regoContent, b, eventType, objectNamespaceOverride)
+	actionItems, err := ValidateRego(context.TODO(), regoContent, b, insightsInfo, eventType, objectNamespaceOverride)
 	if err != nil {
 		return err
 	}
@@ -175,7 +176,7 @@ func Run(regoFileName, objectFileName, objectNamespaceOverride string) error {
 
 // ValidateRego validates rego by executing rego with an input object.
 // Validation includes signatures for Insights-provided rego functions.
-func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte, eventType string, objectNamespaceOverride string) (actionItems, error) {
+func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte, insightsInfo fwrego.InsightsInfo, eventType string, objectNamespaceOverride string) (actionItems, error) {
 	if !strings.Contains(regoAsString, "package fairwinds") {
 		return nil, errors.New("policy must be within a fairwinds package. The policy must contain the statement: package fairwinds")
 	}
@@ -187,7 +188,7 @@ func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte
 	if err != nil {
 		return nil, fmt.Errorf("while overriding object namespace with %q: %v", objectNamespaceOverride, err)
 	}
-	regoResult, err := runRegoForObject(ctx, regoAsString, objectAsMap)
+	regoResult, err := runRegoForObject(ctx, regoAsString, objectAsMap, insightsInfo)
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +205,7 @@ func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte
 }
 
 // runRegoForObject executes rego with a Kubernetes object as input.
-func runRegoForObject(ctx context.Context, regoAsString string, object map[string]interface{}) (rego.ResultSet, error) {
+func runRegoForObject(ctx context.Context, regoAsString string, object map[string]interface{}, insightsInfo fwrego.InsightsInfo) (rego.ResultSet, error) {
 	query, err := rego.New(rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stdout)),
 		rego.Query("results = data"),
 		rego.Module("fairwinds", regoAsString),
@@ -224,7 +225,7 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 				Name: "insightsinfo",
 				Decl: types.NewFunction(types.Args(types.S), types.A),
 			},
-			validateInsightsInfoFunctionArgs())).PrepareForEval(ctx)
+			fwrego.GetInsightsInfoFunction(&insightsInfo))).PrepareForEval(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -234,32 +235,6 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 		return nil, err
 	}
 	return rs, nil
-}
-
-// validateInsightsInfoFunctionArgs validates the argument that would be
-// passed to our rego InsightsInfo function without executing code provided by
-// the real InsightsInfo function used elsewhere in Insights.
-// This function returns a function that is called from rego.Function().
-func validateInsightsInfoFunctionArgs() func(rego.BuiltinContext, *ast.Term) (*ast.Term, error) {
-	return func(bc rego.BuiltinContext, inf *ast.Term) (*ast.Term, error) {
-		reqInfo, err := getStringFromAST(inf)
-		if err != nil {
-			return nil, rego.NewHaltError(fmt.Errorf("unable to convert requested InsightsInfo to string: %w", err))
-		}
-		switch strings.ToLower(reqInfo) {
-		case "context", "cluster":
-			return nil, nil
-		/* Potentially return a value to the policy instead of nil?
-		   retInfoAsValue, err := ast.InterfaceToValue(retInfo)
-		   		if err != nil {
-		   			return nil, rego.NewHaltError(fmt.Errorf("unable to convert information %q to ast value: %w", retInfo, err))
-		   		}
-		   		return ast.NewTerm(retInfoAsValue), nil
-		*/
-		default:
-			return nil, rego.NewHaltError(fmt.Errorf("cannot return unknown Insights Info %q", reqInfo))
-		}
-	}
 }
 
 // getStringFromAST converts the ast.Term type used by the rego pkg, into a
