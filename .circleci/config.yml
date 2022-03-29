@@ -1,49 +1,89 @@
 version: 2.1
+orbs:
+  rok8s: fairwinds/rok8s-scripts@11
+
+references:
+  install_vault: &install_vault
+    run:
+      name: install hashicorp vault
+      command: |
+        apk --update add curl yq
+        cd /tmp
+        curl -LO https://releases.hashicorp.com/vault/1.9.2/vault_1.9.2_linux_amd64.zip
+        unzip vault_1.9.2_linux_amd64.zip
+        mv vault /usr/bin/vault
 
 jobs:
-  release:
+  test:
+    working_directory: /go/src/github.com/fairwindsops/insights-cli
+    docker:
+      - image: circleci/golang:1.17
+    steps:
+      - checkout
+      - run:
+          name: lint
+          command: |
+            test -z $(go fmt ./...)
+            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
+            golangci-lint run -v --timeout 2m0s
+      - run:
+          name: test
+          command: |
+            go test ./...
+            go vet ./...
+  snapshot:
+    working_directory: /go/src/github.com/fairwindsops/insights-cli
     resource_class: large
     docker:
-      - image: cimg/go:1.17
+      - image: goreleaser/goreleaser:v1.6.3
     steps:
       - checkout
-      - run: |
-          curl -fsSLo goreleaser.deb https://github.com/goreleaser/goreleaser/releases/download/v0.184.0/goreleaser_amd64.deb
-          echo "6bddbabef03e51403568b70989c2ea20c5f021d0cba11411255a287e0f3fec3d goreleaser.deb" | sha256sum -c
-          sudo dpkg -i goreleaser.deb
-          git checkout -- .
-          git clean -df .
-          goreleaser
-
-  test:
+      - setup_remote_docker:
+          version: 20.10.11
+      - run: goreleaser --snapshot
+      # Avoid copying both archive files and the directories used to create them.
+      - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.rb dist/*.json snapshot-artifacts
+      - store_artifacts:
+          path: snapshot-artifacts
+  release:
+    working_directory: /go/src/github.com/fairwindsops/insights-cli
+    resource_class: large
+    shell: /bin/bash
     docker:
-      - image: cimg/go:1.17
+      - image: goreleaser/goreleaser:v1.6.3
     steps:
       - checkout
-      - run: |
-              go get -u golang.org/x/lint/golint
-              go get honnef.co/go/tools/cmd/staticcheck
-              go list ./pkg/... | grep -v vendor | xargs golint -set_exit_status
-              go list ./pkg/... | grep -v vendor | xargs go vet
-              staticcheck ./pkg/...
-              go test ./pkg/... -coverprofile=coverage.txt -covermode=count
+      - setup_remote_docker:
+          version: 20.10.11
+      - *install_vault
+      - rok8s/get_vault_env:
+          vault_path: repo/global/env
+      - rok8s/docker_login:
+          registry: "quay.io"
+          username: $FAIRWINDS_QUAY_USER
+          password-variable: FAIRWINDS_QUAY_TOKEN
+      - run: echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
+      - run: goreleaser
 
 workflows:
   version: 2
-  test:
+  test_and_build:
     jobs:
-      - test:
+      - test
+      - snapshot:
+          requires:
+            - test
           filters:
             branches:
               only: /.*/
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
+              ignore: /.*/
+  release:
+    jobs:
       - release:
-          requires:
-          - test
+          context: org-global
           filters:
             branches:
               ignore: /.*/
             tags:
-              only: /v[0-9]+(\.[0-9]+)*(-.*)*/
-
+              only: /.*/
