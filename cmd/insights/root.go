@@ -80,15 +80,14 @@ func init() {
 }
 
 func preRun(cmd *cobra.Command, args []string) {
-	// If  we do not need to contact Insights, don't try to parse config
-	if cmd.Use != "list" && cmd.Use != "sync" {
-		return
-	}
 	parsedLevel, err := logrus.ParseLevel(logLevel)
 	if err != nil {
 		logrus.Errorf("log-level flag has invalid value %s", logLevel)
 	} else {
 		logrus.SetLevel(parsedLevel)
+	}
+	if cmd.Use == "opa" {
+		return
 	}
 	insightsToken = os.Getenv("FAIRWINDS_TOKEN")
 	if insightsToken == "" {
