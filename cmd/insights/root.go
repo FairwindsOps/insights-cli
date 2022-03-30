@@ -16,13 +16,11 @@ package main
 
 import (
 	"errors"
-	"flag"
 	"io/ioutil"
 	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v3"
 )
 
@@ -74,9 +72,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", logrus.InfoLevel.String(), "Logrus log level.")
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./fairwinds-insights.yaml", "Configuration file")
 	rootCmd.PersistentFlags().StringVarP(&organization, "organization", "", "", "Fairwinds Insights Organization name")
-	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-	flag.Parse()
-	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 }
 
 func preRun(cmd *cobra.Command, args []string) {
@@ -121,7 +116,7 @@ func preRun(cmd *cobra.Command, args []string) {
 }
 
 var rootCmd = &cobra.Command{
-	Use:              "insights",
+	Use:              "insights-cli",
 	Short:            "insights",
 	Long:             `Interact with Fairwinds Insights.`,
 	PersistentPreRun: preRun,
