@@ -55,7 +55,7 @@ var syncCmd = &cobra.Command{
 			if err != nil {
 				logrus.Fatalf("Unable to sync OPA Checks: %v", err)
 			}
-
+			logrus.Infoln("Policy sync complete")
 		}
 		if !forChecks || forRules {
 			rulesDir := syncDir + "/rules"
@@ -67,6 +67,7 @@ var syncCmd = &cobra.Command{
 			if err != nil {
 				logrus.Fatalf("Unable to sync rules: %v", err)
 			}
+			logrus.Infoln("Rules sync complete")
 		}
 
 	},
