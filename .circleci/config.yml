@@ -53,6 +53,10 @@ jobs:
       - image: goreleaser/goreleaser:v1.6.3
     steps:
       - checkout
+      - run: |
+              go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
+              golangci-lint run -v --timeout 2m0s
+              go test ./pkg/... -coverprofile=coverage.txt -covermode=count
       - setup_remote_docker:
           version: 20.10.11
       - *install_vault

@@ -1,0 +1,18 @@
+# The accompanying policy does not inspect this object,
+# but validation does require a valid Kind and metadata.name.
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: myapp
+  name: policy-test
+  namespace: default
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: http
+  selector:
+    app: myapp
+  type: LoadBalancer

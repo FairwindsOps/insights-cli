@@ -75,15 +75,16 @@ func init() {
 }
 
 func preRun(cmd *cobra.Command, args []string) {
-	// If this is the root or version command don't try to parse config
-	if cmd.Use == "insights" || cmd.Use == "version" {
-		return
-	}
 	parsedLevel, err := logrus.ParseLevel(logLevel)
 	if err != nil {
 		logrus.Errorf("log-level flag has invalid value %s", logLevel)
 	} else {
 		logrus.SetLevel(parsedLevel)
+	}
+	if cmd.Use == "insights-cli" || cmd.Use == "opa" {
+		// Do not require Insights API options for the root command or others that
+		// do not need to connect to the Insights API.
+		return
 	}
 	insightsToken = os.Getenv("FAIRWINDS_TOKEN")
 	if insightsToken == "" {
