@@ -116,7 +116,7 @@ func preRun(cmd *cobra.Command, args []string) {
 }
 
 var rootCmd = &cobra.Command{
-	Use:              "insights",
+	Use:              "insights-cli",
 	Short:            "insights",
 	Long:             `Interact with Fairwinds Insights.`,
 	PersistentPreRun: preRun,
