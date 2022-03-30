@@ -81,7 +81,9 @@ func preRun(cmd *cobra.Command, args []string) {
 	} else {
 		logrus.SetLevel(parsedLevel)
 	}
-	if cmd.Use == "opa" {
+	if cmd.Use == "insights-cli" || cmd.Use == "opa" {
+		// Do not require Insights API options for the root command or others that
+		// do not need to connect to the Insights API.
 		return
 	}
 	insightsToken = os.Getenv("FAIRWINDS_TOKEN")
