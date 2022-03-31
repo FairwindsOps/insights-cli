@@ -21,6 +21,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/xlab/treeprint"
 	"gopkg.in/yaml.v3"
 )
 
@@ -28,6 +29,7 @@ var logLevel string
 var insightsToken string
 var configFile string
 var organization string
+var noDecoration bool
 
 var configurationObject configuration
 
@@ -68,20 +70,35 @@ func exitWithError(message string, err error) {
 	}
 }
 
+// insightsAPINotRequired returns true if Insights API connectivity is not
+// required for the supplied Cobra.command.
+func insightsAPINotRequired(cmd *cobra.Command) bool {
+	return cmd.Use == "help [command]" ||
+		cmd.Use == "insights-cli" ||
+		cmd.Use == "validate" ||
+		(cmd.Parent().Use == "validate" && cmd.Use == "opa")
+}
+
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", logrus.InfoLevel.String(), "Logrus log level.")
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./fairwinds-insights.yaml", "Configuration file")
 	rootCmd.PersistentFlags().StringVarP(&organization, "organization", "", "", "Fairwinds Insights Organization name")
+	rootCmd.PersistentFlags().BoolVarP(&noDecoration, "no-decoration", "", false, "Do not include decorative characters in output, such as tree visualization.")
 }
 
 func preRun(cmd *cobra.Command, args []string) {
+	if noDecoration {
+		treeprint.EdgeTypeLink = ""
+		treeprint.EdgeTypeMid = ""
+		treeprint.EdgeTypeEnd = ""
+	}
 	parsedLevel, err := logrus.ParseLevel(logLevel)
 	if err != nil {
 		logrus.Errorf("log-level flag has invalid value %s", logLevel)
 	} else {
 		logrus.SetLevel(parsedLevel)
 	}
-	if cmd.Use == "insights-cli" || cmd.Use == "opa" {
+	if insightsAPINotRequired(cmd) {
 		// Do not require Insights API options for the root command or others that
 		// do not need to connect to the Insights API.
 		return
@@ -122,7 +139,7 @@ var rootCmd = &cobra.Command{
 	Long:             `Interact with Fairwinds Insights.`,
 	PersistentPreRun: preRun,
 	Run: func(cmd *cobra.Command, args []string) {
-		logrus.Error("You must specify a sub-command.")
+		logrus.Error("Please specify a command.")
 		err := cmd.Help()
 		if err != nil {
 			logrus.Error(err)

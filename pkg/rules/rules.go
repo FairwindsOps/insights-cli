@@ -17,9 +17,11 @@ package rules
 import (
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"net/http"
+	"os"
+
+	"gopkg.in/yaml.v3"
 
 	"github.com/imroc/req"
 	"github.com/sirupsen/logrus"
@@ -55,7 +57,7 @@ type CompareResults struct {
 // getRules queries Fairwinds Insights to retrieve all of the Rules for an organization
 func getRules(org, token, hostName string) ([]Rule, error) {
 	url := fmt.Sprintf(rulesURLFormat, hostName, org)
-	logrus.Infof("Rules URL: %s", url)
+	logrus.Debugf("Rules URL: %s", url)
 	resp, err := req.Get(url, getHeaders(token))
 	if err != nil {
 		logrus.Errorf("Unable to get rules from insights: %v", err)
@@ -255,16 +257,21 @@ func compareRules(folder, org, token, hostName string) (CompareResults, error) {
 	return results, nil
 }
 
-// SyncRules syncs rules to insights
-func SyncRules(syncDir, org, insightsToken, host string, fullsync, dryrun bool) error {
-	results, err := compareRules(syncDir, org, insightsToken, host)
+// PushRules pushes automation rules to insights
+func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun bool) error {
+	logrus.Debugln("Pushing automation rules")
+	_, err := os.Stat(pushDir)
 	if err != nil {
-		logrus.Errorf("Unable to get sync rules to insights: %v", err)
+		return err
+	}
+	results, err := compareRules(pushDir, org, insightsToken, host)
+	if err != nil {
+		logrus.Errorf("unable to compare and push rules to Insights: %v", err)
 		return err
 	}
 
 	for _, ruleForInsert := range results.RuleInsert {
-		logrus.Infof("Adding rule: %s", ruleForInsert.Name)
+		logrus.Infof("Adding automation rule: %s", ruleForInsert.Name)
 		if !dryrun {
 			err = insertRule(org, insightsToken, host, ruleForInsert)
 			if err != nil {
@@ -275,7 +282,7 @@ func SyncRules(syncDir, org, insightsToken, host string, fullsync, dryrun bool) 
 	}
 
 	for _, ruleForUpdate := range results.RuleUpdate {
-		logrus.Infof("Updating rule: %s", ruleForUpdate.Name)
+		logrus.Infof("Updating automation rule: %s", ruleForUpdate.Name)
 		if !dryrun {
 			err = updateRule(org, insightsToken, host, ruleForUpdate)
 			if err != nil {
@@ -285,9 +292,9 @@ func SyncRules(syncDir, org, insightsToken, host string, fullsync, dryrun bool) 
 		}
 	}
 
-	if fullsync {
+	if deleteMissing {
 		for _, ruleForDelete := range results.RuleDelete {
-			logrus.Infof("Deleting rule: %s", ruleForDelete.Name)
+			logrus.Infof("Deleting automation rule: %s", ruleForDelete.Name)
 			if !dryrun {
 				err = deleteRule(org, insightsToken, host, ruleForDelete)
 				if err != nil {
@@ -297,6 +304,7 @@ func SyncRules(syncDir, org, insightsToken, host string, fullsync, dryrun bool) 
 			}
 		}
 	}
+	logrus.Debugln("Done pushing automation rules")
 	return nil
 }
 

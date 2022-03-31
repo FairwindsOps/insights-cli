@@ -21,14 +21,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var pushDir string
+var pushDryRun bool
+var pushOPASubDir, pushRulesSubDir string // set by opa and rules sub-commands
+
 func init() {
-	rootCmd.AddCommand(listCmd)
+	pushCmd.PersistentFlags().StringVarP(&pushDir, "push-directory", "d", ".", "Directory of content to push to Insights.")
+	pushCmd.PersistentFlags().BoolVarP(&pushDryRun, "dry-run", "z", false, "Explain what would be pushed to Insights, without making changes.")
+	rootCmd.AddCommand(pushCmd)
 }
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List custom configuration resources from Insights",
-	Long:  "List custom configuration such as OPA policies or automation rules from Insights.",
+var pushCmd = &cobra.Command{
+	Use:   "push",
+	Short: "Push local file-based custom configuration resources into Insights.",
+	Long:  "Commands to push custom configuration resources, such as OPA policies and automation rules, into Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
 		logrus.Error("Please specify a sub-command.")
 		err := cmd.Help()

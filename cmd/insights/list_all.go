@@ -15,26 +15,36 @@
 package main
 
 import (
-	"os"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/xlab/treeprint"
+
+	"github.com/fairwindsops/insights-cli/pkg/opa"
+	"github.com/fairwindsops/insights-cli/pkg/rules"
 )
 
 func init() {
-	rootCmd.AddCommand(policyCmd)
+	listCmd.AddCommand(listAllCmd)
 }
 
-var policyCmd = &cobra.Command{
-	Use:   "policy",
-	Short: "Commands related to Policies",
-	Long:  "Commands for managing OPA policies or Rules in Fairwinds Insights",
+var listAllCmd = &cobra.Command{
+	Use:   "all",
+	Short: "List OPA policies and automation rules.",
+	Long:  "List OPA policies and automation rules defined in Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
-		logrus.Error("You must specify a sub-command.")
-		err := cmd.Help()
+		org := configurationObject.Options.Organization
+		host := configurationObject.Options.Hostname
+		tree := treeprint.New()
+		err := opa.BuildChecksTree(org, insightsToken, host, tree)
 		if err != nil {
-			logrus.Error(err)
+			logrus.Fatalf("Unable to get OPA checks from insights: %v", err)
 		}
-		os.Exit(1)
+		err = rules.BuildRulesTree(org, insightsToken, host, tree)
+		if err != nil {
+			logrus.Fatalf("Unable to get rules from insights: %v", err)
+		}
+		fmt.Println(tree.String())
 	},
 }
