@@ -26,7 +26,7 @@ var deleteMissingOPA bool
 func init() {
 	pushOPACmd.PersistentFlags().BoolVarP(&deleteMissingOPA, "delete", "D", false, "Delete any OPA policies from Insights that are not present in the local directory.")
 	// This flag sets a variable defined in the parent `push` command.
-	pushOPACmd.PersistentFlags().StringVarP(&pushOPASubDir, "push-opa-subdirectory", "", "checks", "Sub-directory within push-directory, to contain OPA policies.")
+	pushOPACmd.PersistentFlags().StringVarP(&pushOPASubDir, "push-opa-subdirectory", "", defaultPushOPASubDir, "Sub-directory within push-directory, to contain OPA policies.")
 	pushCmd.AddCommand(pushOPACmd)
 }
 

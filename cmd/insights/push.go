@@ -24,6 +24,10 @@ import (
 var pushDir string
 var pushDryRun bool
 var pushOPASubDir, pushRulesSubDir string // set by opa and rules sub-commands
+const (
+	defaultPushOPASubDir   = "opa"
+	defaultPushRulesSubDir = "rules"
+)
 
 func init() {
 	pushCmd.PersistentFlags().StringVarP(&pushDir, "push-directory", "d", ".", "Directory of content to push to Insights.")

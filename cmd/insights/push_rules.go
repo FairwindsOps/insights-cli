@@ -26,7 +26,7 @@ var deleteMissingRules bool
 func init() {
 	pushRulesCmd.PersistentFlags().BoolVarP(&deleteMissingRules, "delete", "D", false, "Delete any automation rules from Insights that are not present in the local directory.")
 	// This flag sets a variable defined in the parent `push` command.
-	pushRulesCmd.PersistentFlags().StringVarP(&pushRulesSubDir, "push-rules-subdirectory", "", "rules", "Sub-directory within push-directory, to contain automation rules.")
+	pushRulesCmd.PersistentFlags().StringVarP(&pushRulesSubDir, "push-rules-subdirectory", "", defaultPushRulesSubDir, "Sub-directory within push-directory, to contain automation rules.")
 	pushCmd.AddCommand(pushRulesCmd)
 }
 

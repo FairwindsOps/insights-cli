@@ -26,9 +26,9 @@ import (
 
 func init() {
 	// This flag sets a variable defined in the parent `push` command.
-	pushAllCmd.PersistentFlags().StringVarP(&pushOPASubDir, "push-opa-subdirectory", "", "checks", "Sub-directory within push-directory, to contain OPA policies.")
+	pushAllCmd.PersistentFlags().StringVarP(&pushOPASubDir, "push-opa-subdirectory", "", defaultPushOPASubDir, "Sub-directory within push-directory, to contain OPA policies.")
 	// This flag sets a variable defined in the parent `push` command.
-	pushAllCmd.PersistentFlags().StringVarP(&pushRulesSubDir, "push-rules-subdirectory", "", "rules", "Sub-directory within push-directory, to contain automation rules.")
+	pushAllCmd.PersistentFlags().StringVarP(&pushRulesSubDir, "push-rules-subdirectory", "", defaultPushRulesSubDir, "Sub-directory within push-directory, to contain automation rules.")
 	pushCmd.AddCommand(pushAllCmd)
 }
 
