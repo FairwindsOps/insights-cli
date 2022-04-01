@@ -44,7 +44,7 @@ var pushAllCmd = &cobra.Command{
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
 		const (
-			doNotDeleteMissingResources bool = true
+			doNotDeleteMissingResources bool = false
 			numExpectedSuccesses             = 2
 		)
 		var numFailures int
