@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/fairwindsops/insights-plugins/plugins/opa v0.0.0-20220302201751-b63e9de45b7d
 	github.com/fatih/color v1.13.0
-	github.com/hashicorp/go-multierror v1.1.0
+	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imroc/req v0.3.2
 	github.com/open-policy-agent/opa v0.37.0
 	github.com/sirupsen/logrus v1.8.1
