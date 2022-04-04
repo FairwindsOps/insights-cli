@@ -88,9 +88,9 @@ func init() {
 
 func preRun(cmd *cobra.Command, args []string) {
 	if noDecoration {
-		treeprint.EdgeTypeLink = ""
-		treeprint.EdgeTypeMid = ""
-		treeprint.EdgeTypeEnd = ""
+		treeprint.EdgeTypeLink = " "
+		treeprint.EdgeTypeMid = "  "
+		treeprint.EdgeTypeEnd = "  "
 	}
 	parsedLevel, err := logrus.ParseLevel(logLevel)
 	if err != nil {
