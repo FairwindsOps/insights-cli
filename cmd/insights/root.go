@@ -18,6 +18,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -76,10 +77,12 @@ func insightsAPINotRequired(cmd *cobra.Command) bool {
 	return cmd.Use == "help [command]" ||
 		cmd.Use == "insights-cli" ||
 		cmd.Use == "validate" ||
-		(cmd.Parent().Use == "validate" && cmd.Use == "opa")
+		(cmd.Parent().Use == "validate" && strings.HasPrefix(cmd.Use, "opa "))
 }
 
 func init() {
+	logrus.SetFormatter(&logrus.TextFormatter{DisableTimestamp: true, DisableLevelTruncation: true})
+
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", logrus.InfoLevel.String(), "Logrus log level.")
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./fairwinds-insights.yaml", "Configuration file")
 	rootCmd.PersistentFlags().StringVarP(&organization, "organization", "", "", "Fairwinds Insights Organization name")
