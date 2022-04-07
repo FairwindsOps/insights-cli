@@ -18,6 +18,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	opaPlugin "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/opa"
 	"github.com/imroc/req"
@@ -38,7 +39,7 @@ const opaInstanceURLFormat = opaCheckInstancesURLFormat + "/%s"
 // GetChecks queries Fairwinds Insights to retrieve all of the Checks for an organization
 func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) {
 	url := fmt.Sprintf(opaURLFormat, hostName, org)
-	logrus.Infof("OPA URL: %s", url)
+	logrus.Debugf("OPA URL: %s", url)
 	resp, err := req.Get(url, getHeaders(token))
 	if err != nil {
 		return nil, err
@@ -130,14 +131,19 @@ func PutInstance(instance models.CustomCheckInstanceModel, org, token, hostName 
 	return nil
 }
 
-// SyncOPAChecks syncs OPA checks
-func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bool) error {
-	results, err := CompareChecks(syncDir, org, insightsToken, host, fullsync)
+// PushOPAChecks pushes OPA checks to Insights.
+func PushOPAChecks(pushDir, org, insightsToken, host string, deleteMissing, dryrun bool) error {
+	logrus.Debugln("Pushing OPA policies")
+	_, err := os.Stat(pushDir)
+	if err != nil {
+		return err
+	}
+	results, err := CompareChecks(pushDir, org, insightsToken, host, deleteMissing)
 	if err != nil {
 		return err
 	}
 	for _, instance := range results.InstanceDelete {
-		logrus.Infof("Deleting instance: %s:%s", instance.CheckName, instance.InstanceName)
+		logrus.Infof("Deleting instance: %s for OPA policy %s", instance.InstanceName, instance.CheckName)
 		if !dryrun {
 			err := DeleteInstance(instance, org, insightsToken, host)
 			if err != nil {
@@ -146,7 +152,7 @@ func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bo
 		}
 	}
 	for _, check := range results.CheckDelete {
-		logrus.Infof("Deleting check: %s", check.CheckName)
+		logrus.Infof("Deleting OPA policy: %s", check.CheckName)
 		if !dryrun {
 			err := DeleteCheck(check, org, insightsToken, host)
 			if err != nil {
@@ -155,7 +161,7 @@ func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bo
 		}
 	}
 	for _, check := range results.CheckInsert {
-		logrus.Infof("Adding v%.0f check: %s", check.Version, check.CheckName)
+		logrus.Infof("Adding v%.0f OPA policy: %s", check.Version, check.CheckName)
 		if !dryrun {
 			err := PutCheck(check, org, insightsToken, host)
 			if err != nil {
@@ -164,7 +170,7 @@ func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bo
 		}
 	}
 	for _, check := range results.CheckUpdate {
-		logrus.Infof("Updating v%.0f check: %s", check.Version, check.CheckName)
+		logrus.Infof("Updating v%.0f OPA policy: %s", check.Version, check.CheckName)
 		if !dryrun {
 			err := PutCheck(check, org, insightsToken, host)
 			if err != nil {
@@ -173,7 +179,7 @@ func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bo
 		}
 	}
 	for _, instance := range results.InstanceInsert {
-		logrus.Infof("Adding instance: %s:%s", instance.CheckName, instance.InstanceName)
+		logrus.Infof("Adding instance: %s for OPA policy %s", instance.InstanceName, instance.CheckName)
 		if !dryrun {
 			err := PutInstance(instance, org, insightsToken, host)
 			if err != nil {
@@ -182,7 +188,7 @@ func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bo
 		}
 	}
 	for _, instance := range results.InstanceUpdate {
-		logrus.Infof("Updating instance: %s:%s", instance.CheckName, instance.InstanceName)
+		logrus.Infof("Updating instance: %s for OPA policy %s", instance.InstanceName, instance.CheckName)
 		if !dryrun {
 			err := PutInstance(instance, org, insightsToken, host)
 			if err != nil {
@@ -190,6 +196,7 @@ func SyncOPAChecks(syncDir, org, insightsToken, host string, fullsync, dryrun bo
 			}
 		}
 	}
+	logrus.Debugln("Done pushing OPA policies")
 	return nil
 }
 

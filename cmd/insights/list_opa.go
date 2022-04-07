@@ -15,26 +15,31 @@
 package main
 
 import (
-	"os"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/xlab/treeprint"
+
+	"github.com/fairwindsops/insights-cli/pkg/opa"
 )
 
 func init() {
-	rootCmd.AddCommand(listCmd)
+	listCmd.AddCommand(listOPACmd)
 }
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List custom configuration resources from Insights",
-	Long:  "List custom configuration such as OPA policies or automation rules from Insights.",
+var listOPACmd = &cobra.Command{
+	Use:   "opa",
+	Short: "List OPA policies.",
+	Long:  "List OPA policies defined in Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
-		logrus.Error("Please specify a sub-command.")
-		err := cmd.Help()
+		org := configurationObject.Options.Organization
+		host := configurationObject.Options.Hostname
+		tree := treeprint.New()
+		err := opa.BuildChecksTree(org, insightsToken, host, tree)
 		if err != nil {
-			logrus.Error(err)
+			logrus.Fatalf("Unable to get OPA checks from insights: %v", err)
 		}
-		os.Exit(1)
+		fmt.Println(tree.String())
 	},
 }

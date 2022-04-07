@@ -15,26 +15,31 @@
 package main
 
 import (
-	"os"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/xlab/treeprint"
+
+	"github.com/fairwindsops/insights-cli/pkg/rules"
 )
 
 func init() {
-	rootCmd.AddCommand(listCmd)
+	listCmd.AddCommand(listRulesCmd)
 }
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List custom configuration resources from Insights",
-	Long:  "List custom configuration such as OPA policies or automation rules from Insights.",
+var listRulesCmd = &cobra.Command{
+	Use:   "rules",
+	Short: "List automation rules.",
+	Long:  "List automation rules defined in Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
-		logrus.Error("Please specify a sub-command.")
-		err := cmd.Help()
+		org := configurationObject.Options.Organization
+		host := configurationObject.Options.Hostname
+		tree := treeprint.New()
+		err := rules.BuildRulesTree(org, insightsToken, host, tree)
 		if err != nil {
-			logrus.Error(err)
+			logrus.Fatalf("Unable to get rules from insights: %v", err)
 		}
-		os.Exit(1)
+		fmt.Println(tree.String())
 	},
 }

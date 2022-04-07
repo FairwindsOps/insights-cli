@@ -5,6 +5,9 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package main
 
 import (
+	"os"
+
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -15,6 +18,12 @@ var validateCmd = &cobra.Command{
 	Long:             `Validate files used with Insights, before submitting them to the Insights API`,
 	TraverseChildren: true,
 	Run: func(cmd *cobra.Command, args []string) {
+		logrus.Error("Please specify a sub-command.")
+		err := cmd.Help()
+		if err != nil {
+			logrus.Error(err)
+		}
+		os.Exit(1)
 	},
 }
 
