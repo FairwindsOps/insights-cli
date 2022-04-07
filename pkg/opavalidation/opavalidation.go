@@ -18,6 +18,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	DefaultKubeObjectNamespace = "notset" // The namespace to use if one is unspecified
+)
+
 // Run is a ValidateRego() wrapper that validates and prints resulting actionItems. This is
 // meant to be called from a cobra.Command{}.
 func Run(regoFileName, objectFileName string, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) (actionItems, error) {
