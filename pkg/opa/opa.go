@@ -15,7 +15,6 @@
 package opa
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -209,7 +208,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 	for checkName, checkFiles := range files {
 		var check models.CustomCheckModel
 		var instances []models.CustomCheckInstanceModel
-		var onlyRegoFormat bool
+		var onlyRegoFormat bool = true
 		check.Version = 1.0
 		for _, filePath := range checkFiles {
 			fileContents, err := ioutil.ReadFile(filePath)
@@ -217,25 +216,27 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 				logrus.Error(err, "Error reading file", filePath)
 				return nil, err
 			}
-			if strings.HasPrefix(filepath.Base(filePath), "policy.") {
-				extension := filepath.Ext(filePath)
-				if extension == ".rego" {
-					onlyRegoFormat = true
-					check.Rego = string(fileContents)
-				} else if extension == ".yaml" {
-					err = yaml.Unmarshal(fileContents, &check)
-					if err != nil {
-						logrus.Error(err, "Error Unmarshalling check YAML", filePath)
-						return nil, err
-					}
-				} else {
-					logrus.Errorf("policy file is not a rego or yaml file: %s", extension)
-					return nil, errors.New("policy file must be rego or yaml")
+			extension := strings.ToLower(filepath.Ext(filePath))
+			if extension == ".rego" {
+				logrus.Debugf("using content of file %s as rego for OPA policy %s\n", filePath, checkName)
+				check.Rego = string(fileContents)
+				continue
+			}
+			if strings.ToLower(filepath.Base(filePath)) == "policy.yaml" {
+				onlyRegoFormat = false
+				logrus.Debugf("using content of file %s as instance and rego for V1 OPA policy %s\n", filePath, checkName)
+				err = yaml.Unmarshal(fileContents, &check)
+				if err != nil {
+					logrus.Error(err, "Error Unmarshalling check YAML", filePath)
+					return nil, err
 				}
-			} else {
+				continue
+			}
+			if extension == ".yaml" {
+				logrus.Debugf("using content of file %s as instance for V1 OPA policy %s\n", filePath, checkName)
+				onlyRegoFormat = false
 				var instance models.CustomCheckInstanceModel
 				err = yaml.Unmarshal(fileContents, &instance)
-
 				if err != nil {
 					logrus.Error(err, "Error Unmarshalling instance YAML", filePath)
 					return nil, err
@@ -243,7 +244,6 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 				instance.InstanceName = strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
 				instance.CheckName = checkName
 				instances = append(instances, instance)
-
 			}
 		}
 		check.CheckName = checkName
@@ -252,6 +252,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 		} else {
 			check.Instances = instances
 		}
+		logrus.Debugf("processed files %s as v%.1f OPA policy %s\n", checkFiles, check.Version, check.CheckName)
 		checks = append(checks, check)
 	}
 	return checks, nil
