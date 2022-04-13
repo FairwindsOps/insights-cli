@@ -121,9 +121,14 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 				Decl: types.NewFunction(types.Args(types.S, types.S), types.A),
 			},
 			func(_ rego.BuiltinContext, _ *ast.Term, _ *ast.Term) (*ast.Term, error) {
-				// Perhaps do something mroe here to communicate it isn't possible to fetch
-				// cluster resources?
-				return nil, nil
+				logrus.Warnln("NOTE that the rego kubernetes function currently does not return data when validating OPA policies.")
+				returnArray := make([]string, 1)
+				returnArray[0] = "the rego kubernetes function currently does not return data when validating OPA policies"
+				returnData, err := ast.InterfaceToValue(returnArray)
+				if err != nil {
+					return nil, err
+				}
+				return ast.NewTerm(returnData), nil
 			},
 		),
 		rego.Function1(
