@@ -236,7 +236,7 @@ func getRuleDifferences(fileRules, existingRules []Rule) CompareResults {
 // compareRules compares a folder vs the rules returned by the API.
 func compareRules(folder, org, token, hostName string) (CompareResults, error) {
 	var results CompareResults
-	files, err := directory.ScanFolder(folder)
+	files, err := directory.ScanRulesFolder(folder)
 	if err != nil {
 		logrus.Error("Error scanning directory")
 		return results, err
