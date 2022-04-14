@@ -57,7 +57,6 @@ var OPACmd = &cobra.Command{
 
 // checkValidateOPAFlags verifies supplied flags for `validate opa` are valid.
 func checkValidateOPAFlags() bool {
-	var validFlags bool = true
 	if batchDir == "" && regoFileName == "" {
 		logrus.Errorln("Please specify one of the --rego-file or --batch-directory options to validate one or more OPA policies.")
 		return false
@@ -76,7 +75,7 @@ func checkValidateOPAFlags() bool {
 		logrus.Errorln("Please also specify a Kube object file when validating a single OPA policy, using the --kube-object-file option.")
 		return false
 	}
-	return validFlags
+	return true
 }
 
 func init() {

@@ -122,9 +122,7 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 			},
 			func(_ rego.BuiltinContext, _ *ast.Term, _ *ast.Term) (*ast.Term, error) {
 				logrus.Warnln("NOTE: The rego kubernetes function currently does not return data when validating OPA policies.")
-				returnArray := make([]string, 1)
-				returnArray[0] = "the rego kubernetes function currently does not return data when validating OPA policies"
-				returnData, err := ast.InterfaceToValue(returnArray)
+				returnData, err := ast.InterfaceToValue([]string{"the rego kubernetes function currently does not return data when validating OPA policies"})
 				if err != nil {
 					return nil, err
 				}
