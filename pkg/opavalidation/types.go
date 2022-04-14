@@ -7,6 +7,7 @@ import (
 
 	"github.com/fatih/color"
 	"github.com/hashicorp/go-multierror"
+	"github.com/sirupsen/logrus"
 )
 
 // Type actionItem represents an Insights action item.
@@ -63,7 +64,8 @@ func (AI *actionItem) setFieldsFromObject(obj map[string]interface{}) error {
 	AI.ResourceName = objName
 	objNamespace, err := getStringField(objMetadata, "namespace")
 	if err != nil {
-		return fmt.Errorf("while getting the metadata.namespace from the Kubernetes object: %v", err)
+		logrus.Debugf("Using namespace %q, as getting the metadata.namespace from the Kubernetes object returned: %v", DefaultKubeObjectNamespace, err)
+		objNamespace = DefaultKubeObjectNamespace
 	}
 	AI.ResourceNamespace = objNamespace
 	return nil

@@ -15,34 +15,69 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
 	"github.com/open-policy-agent/opa/types"
+	"github.com/sirupsen/logrus"
 )
 
-// Run is a ValidateRego() wrapper that prints resulting actionItems. This is
+const (
+	DefaultKubeObjectNamespace = "notset" // The namespace to use if one is unspecified
+)
+
+// Run is a ValidateRego() wrapper that validates and prints resulting actionItems. This is
 // meant to be called from a cobra.Command{}.
-func Run(regoFileName, objectFileName string, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) error {
+func Run(regoFileName, objectFileName string, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) (actionItems, error) {
 	b, err := ioutil.ReadFile(regoFileName)
 	if err != nil {
-		return fmt.Errorf("error reading %s: %v", regoFileName, err)
+		return nil, fmt.Errorf("error reading OPA policy %s: %v", regoFileName, err)
 	}
 	regoContent := string(b)
 	b, err = ioutil.ReadFile(objectFileName)
 	if err != nil {
-		return fmt.Errorf("error reading %s: %v", objectFileName, err)
+		return nil, fmt.Errorf("error reading Kubernetes manifest %s: %v", objectFileName, err)
 	}
 	baseRegoFileName := filepath.Base(regoFileName)
 	eventType := strings.TrimSuffix(baseRegoFileName, filepath.Ext(baseRegoFileName))
 	actionItems, err := ValidateRego(context.TODO(), regoContent, b, insightsInfo, eventType, objectNamespaceOverride)
 	if err != nil {
-		return err
+		return actionItems, err
 	}
 	actionItemsAsString, err := actionItems.StringWithValidation()
 	// If actionItems have errors, output the actionItems first to display more
 	// specific inline errors.
 	fmt.Println(actionItemsAsString)
 	if err != nil {
-		return err
+		return actionItems, err
 	}
-	return nil
+	if len(actionItems) != 1 {
+		return actionItems, fmt.Errorf("%d action items were returned, but 1 is required", len(actionItems))
+	}
+	return actionItems, nil
+}
+
+// RunBatch is a Run() wrapper that processes multiple OPA policies. It does
+// not return the actionItems from each call to Run(), as there would not be correlation of
+// actionItems to their OPA policy.
+// This is meant to be called from a cobra.Command{}.
+func RunBatch(batchDir string, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) (successfulPolicies, failedPolicies []string, err error) {
+	regoFiles, err := FindFilesWithExtension(batchDir, ".rego")
+	if err != nil {
+		return successfulPolicies, failedPolicies, fmt.Errorf("unable to list .rego files: %v", err)
+	}
+	for _, regoFileName := range regoFiles {
+		objectFileName := strings.TrimSuffix(regoFileName, filepath.Ext(regoFileName)) + ".yaml"
+		logrus.Infof("Starting validation of OPA policy %s with input %s\n", regoFileName, objectFileName)
+		_, err := Run(regoFileName, objectFileName, insightsInfo, objectNamespaceOverride)
+		if err != nil {
+			logrus.Errorf("Failed validation of OPA policy %s: %v\n", regoFileName, err)
+			failedPolicies = append(failedPolicies, regoFileName)
+		} else {
+			logrus.Infof("Success validating OPA policy %s\n", regoFileName)
+			successfulPolicies = append(successfulPolicies, regoFileName)
+		}
+	}
+	if len(failedPolicies) > 0 {
+		return successfulPolicies, failedPolicies, fmt.Errorf("%d failed  and %d succeeded", len(failedPolicies), len(successfulPolicies))
+	}
+	return successfulPolicies, failedPolicies, nil
 }
 
 // ValidateRego validates rego by executing rego with an input object.
@@ -86,9 +121,12 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 				Decl: types.NewFunction(types.Args(types.S, types.S), types.A),
 			},
 			func(_ rego.BuiltinContext, _ *ast.Term, _ *ast.Term) (*ast.Term, error) {
-				// Perhaps do something mroe here to communicate it isn't possible to fetch
-				// cluster resources?
-				return nil, nil
+				logrus.Warnln("NOTE: The rego kubernetes function currently does not return data when validating OPA policies.")
+				returnData, err := ast.InterfaceToValue([]string{"the rego kubernetes function currently does not return data when validating OPA policies"})
+				if err != nil {
+					return nil, err
+				}
+				return ast.NewTerm(returnData), nil
 			},
 		),
 		rego.Function1(

@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
+
+	"io/fs"
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/open-policy-agent/opa/rego"
@@ -80,16 +83,16 @@ func actionItemFromMap(m map[string]interface{}) (actionItem, error) {
 		missingFields["severity"] = err
 	}
 	if len(missingFields) > 0 {
-		return AI, errors.New(humanizeMapOutput(missingFields, "missing field"))
+		return AI, errors.New(HumanizeMapOutput(missingFields, "missing field"))
 	}
 	return AI, nil
 }
 
-// humanizeMapOutput returns a humanized string listing a maps keys with its
+// HumanizeMapOutput returns a Humanized string listing a maps keys with its
 // error values
 // in parenthesis. The supplied keyNoun will be pluralized if there are more
 // than one key in the map.
-func humanizeMapOutput(m map[string]error, keyNoun string) string {
+func HumanizeMapOutput(m map[string]error, keyNoun string) string {
 	var message strings.Builder
 	fmt.Fprintf(&message, "%d %s", len(m), keyNoun)
 	if len(m) > 1 {
@@ -102,10 +105,39 @@ func humanizeMapOutput(m map[string]error, keyNoun string) string {
 			message.WriteString(" and ")
 		}
 		if n == len(m) && len(m) > 2 {
-			message.WriteString("and ") // the comma logic will provide a l eading space
+			message.WriteString("and ") // the comma logic will provide a leading space
 		}
 		fmt.Fprintf(&message, "%s (%v)", k, v)
 		if n < len(m) && len(m) > 2 {
+			message.WriteString(", ")
+		}
+		n++
+	}
+	return message.String()
+}
+
+// HumanizeStringsOutput returns a humanized string listing the slice of
+// strings.
+func HumanizeStringsOutput(s []string, noun string) string {
+	if s == nil {
+		return ""
+	}
+	var message strings.Builder
+	fmt.Fprintf(&message, "%d %s", len(s), noun)
+	if len(s) > 1 {
+		message.WriteString("s")
+	}
+	message.WriteString(": ")
+	var n int = 1 // counter of keys processed
+	for _, v := range s {
+		if n == len(s) && len(s) == 2 {
+			message.WriteString(" and ")
+		}
+		if n == len(s) && len(s) > 2 {
+			message.WriteString("and ") // the comma logic will provide a leading space
+		}
+		fmt.Fprintf(&message, "%s", v)
+		if n < len(s) && len(s) > 2 {
 			message.WriteString(", ")
 		}
 		n++
@@ -177,4 +209,20 @@ func getFloatField(m map[string]interface{}, key string) (float64, error) {
 		return 0.0, err
 	}
 	return f, nil
+}
+
+// FindFilesWithExtension returns a slice of filenames from the given dir,
+// that have the given extension.
+func FindFilesWithExtension(dir, ext string) ([]string, error) {
+	files := make([]string, 0)
+	err := filepath.WalkDir(dir, func(fileName string, d fs.DirEntry, e error) error {
+		if e != nil {
+			return e
+		}
+		if filepath.Ext(d.Name()) == ext {
+			files = append(files, fileName)
+		}
+		return nil
+	})
+	return files, err
 }
