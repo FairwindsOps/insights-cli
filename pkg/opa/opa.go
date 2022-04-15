@@ -45,7 +45,7 @@ type CompareResults struct {
 // CompareChecks compares a folder vs the checks returned by the API.
 func CompareChecks(folder, org, token, hostName string, deleteMissing bool) (CompareResults, error) {
 	var results CompareResults
-	files, err := directory.ScanFolder(folder)
+	files, err := directory.ScanOPAFolder(folder)
 	if err != nil {
 		logrus.Error("Error scanning directory")
 		return results, err

@@ -23,10 +23,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// ScanFolder looks through a given folder and returns a map[string][]string
+// ScanOPAFolder looks through a given folder and returns a map[string][]string
 // keyed on the OPA policy name, and the value listing files providing rego
 // and V1 yaml instances for that policy.
-func ScanFolder(folder string) (map[string][]string, error) {
+func ScanOPAFolder(folder string) (map[string][]string, error) {
 	fileMap := map[string][]string{}
 	regoFiles, err := findRegoFilesOtherThanPolicy(folder)
 	if err != nil {
@@ -62,7 +62,27 @@ func ScanFolder(folder string) (map[string][]string, error) {
 		fileMap[policyName] = append(fileMap[policyName], path)
 		return nil
 	})
-	logrus.Debugf("fileScan returning: %#v\n", fileMap)
+	logrus.Debugf("OPA fileScan returning: %#v\n", fileMap)
+	return fileMap, err
+}
+
+// ScanRulesFolder looks through a given folder and returns a map[string][]string
+// keyed on the directory name, and the value listing files providing automation
+// rules.
+func ScanRulesFolder(folder string) (map[string][]string, error) {
+	fileMap := map[string][]string{}
+	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			return nil
+		}
+		directoryName := filepath.Base(filepath.Dir(path))
+		fileMap[directoryName] = append(fileMap[directoryName], path)
+		return nil
+	})
+	logrus.Debugf("rules fileScan returning: %#v\n", fileMap)
 	return fileMap, err
 }
 
