@@ -76,6 +76,7 @@ func exitWithError(message string, err error) {
 func insightsAPINotRequired(cmd *cobra.Command) bool {
 	return cmd.Use == "help [command]" ||
 		cmd.Use == "insights-cli" ||
+		cmd.Use == "version" ||
 		cmd.Use == "validate" ||
 		(cmd.Parent().Use == "validate" && strings.HasPrefix(cmd.Use, "opa "))
 }
