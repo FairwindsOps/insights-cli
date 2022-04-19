@@ -51,7 +51,7 @@ func PushPolicies(pushDir, org, insightsToken, host string, dryrun bool) error {
 		return errors.New("pushDir cannot be empty")
 	}
 	policiesFileName := pushDir + "/settings.yaml"
-	logrus.Debugln("Pushing policies configuration")
+	logrus.Infof("Pushing policies configuration from %s", policiesFileName)
 	_, err := os.Stat(policiesFileName)
 	if err != nil {
 		return err

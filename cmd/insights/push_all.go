@@ -21,6 +21,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/fairwindsops/insights-cli/pkg/opa"
+	"github.com/fairwindsops/insights-cli/pkg/policies"
 	"github.com/fairwindsops/insights-cli/pkg/rules"
 )
 
@@ -34,8 +35,8 @@ func init() {
 
 var pushAllCmd = &cobra.Command{
 	Use:   "all",
-	Short: "Push OPA policies and automation rules.",
-	Long:  "Push OPA policies and automation rules to Insights.",
+	Short: "Push OPA policies, automation rules, and policies configuration.",
+	Long:  "Push OPA policies, automation rules, and policies configuration to Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
 		_, err := os.Stat(pushDir)
 		if err != nil {
@@ -45,10 +46,10 @@ var pushAllCmd = &cobra.Command{
 		host := configurationObject.Options.Hostname
 		const (
 			doNotDeleteMissingResources bool = false
-			numExpectedSuccesses             = 2
+			numExpectedSuccesses             = 3
 		)
 		var numFailures int
-		logrus.Infoln("Pushing OPA policies and automation rules to Insights.")
+		logrus.Infoln("Pushing OPA policies, automation rules, and policies configuration to Insights.")
 		err = opa.PushOPAChecks(pushDir+"/"+pushOPASubDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
 		if err != nil {
 			logrus.Errorf("Unable to push OPA Checks: %v", err)
@@ -57,6 +58,11 @@ var pushAllCmd = &cobra.Command{
 		err = rules.PushRules(pushDir+"/"+pushRulesSubDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
 		if err != nil {
 			logrus.Errorf("Unable to push rules: %v", err)
+			numFailures++
+		}
+		err = policies.PushPolicies(pushDir, org, insightsToken, host, doNotDeleteMissingResources)
+		if err != nil {
+			logrus.Errorf("Unable to push policies configuration: %v", err)
 			numFailures++
 		}
 		if numFailures > 0 && numFailures < numExpectedSuccesses {
