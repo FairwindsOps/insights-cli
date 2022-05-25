@@ -47,8 +47,8 @@ func Run(regoFileName, objectFileName string, insightsInfo fwrego.InsightsInfo, 
 	if err != nil {
 		return actionItems, err
 	}
-	if len(actionItems) != 1 {
-		return actionItems, fmt.Errorf("%d action items were returned, but 1 is required", len(actionItems))
+	if len(actionItems) > 1 {
+		return actionItems, fmt.Errorf("%d Action Items were returned. At most 1 Action Item can be created by a policy.", len(actionItems))
 	}
 	return actionItems, nil
 }
