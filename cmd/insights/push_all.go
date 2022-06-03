@@ -16,6 +16,7 @@ package main
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -25,11 +26,14 @@ import (
 	"github.com/fairwindsops/insights-cli/pkg/rules"
 )
 
+var warningsAreFatal bool
+
 func init() {
 	// This flag sets a variable defined in the parent `push` command.
 	pushAllCmd.PersistentFlags().StringVarP(&pushOPASubDir, "push-opa-subdirectory", "", defaultPushOPASubDir, "Sub-directory within push-directory, to contain OPA policies.")
 	// This flag sets a variable defined in the parent `push` command.
 	pushAllCmd.PersistentFlags().StringVarP(&pushRulesSubDir, "push-rules-subdirectory", "", defaultPushRulesSubDir, "Sub-directory within push-directory, to contain automation rules.")
+	pushAllCmd.PersistentFlags().BoolVarP(&warningsAreFatal, "warnings-are-fatal", "", false, "Treat warnings as a failure and exit with a non-zero status. For example, if pushing OPA policies and automation rules succeeds, but pushing policies configuration failes because the settings.yaml file is not present.")
 	pushCmd.AddCommand(pushAllCmd)
 }
 
@@ -48,31 +52,60 @@ var pushAllCmd = &cobra.Command{
 			doNotDeleteMissingResources bool = false
 			numExpectedSuccesses             = 3
 		)
-		var numFailures int
+		var numWarnings, numFailures int
 		logrus.Infoln("Pushing OPA policies, automation rules, and policies configuration to Insights.")
-		err = opa.PushOPAChecks(pushDir+"/"+pushOPASubDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
+		absPushOPADir := filepath.Join(pushDir, pushOPASubDir)
+		_, err = os.Stat(absPushOPADir)
 		if err != nil {
-			logrus.Errorf("Unable to push OPA Checks: %v", err)
-			numFailures++
+			logrus.Warnf("Unable to push OPA policies: %v", err)
+			numWarnings++
+		} else {
+			err = opa.PushOPAChecks(absPushOPADir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
+			if err != nil {
+				logrus.Errorf("Unable to push OPA policies: %v", err)
+				numFailures++
+			}
 		}
-		err = rules.PushRules(pushDir+"/"+pushRulesSubDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
+		absPushRulesDir := filepath.Join(pushDir, pushRulesSubDir)
+		_, err = os.Stat(absPushRulesDir)
 		if err != nil {
-			logrus.Errorf("Unable to push rules: %v", err)
-			numFailures++
+			logrus.Warnf("Unable to push automation rules: %v", err)
+			numWarnings++
+		} else {
+			err = rules.PushRules(absPushRulesDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
+			if err != nil {
+				logrus.Errorf("Unable to push automation rules: %v", err)
+				numFailures++
+			}
 		}
-		err = policies.PushPolicies(pushDir, org, insightsToken, host, doNotDeleteMissingResources)
+		absPushPoliciesConfigFile := filepath.Join(pushDir, "settings.yaml")
+		_, err = os.Stat(absPushPoliciesConfigFile)
 		if err != nil {
-			logrus.Errorf("Unable to push policies configuration: %v", err)
-			numFailures++
+			logrus.Warnf("Unable to push policies configuration: %v", err)
+			numWarnings++
+		} else {
+			err = policies.PushPolicies(pushDir, org, insightsToken, host, pushDryRun)
+			if err != nil {
+				logrus.Errorf("Unable to push policies configuration: %v", err)
+				numFailures++
+			}
+		}
+		if numFailures == 0 && numWarnings == 0 {
+			logrus.Infoln("Push succeeded")
+			return
+		}
+		if !warningsAreFatal && numFailures == 0 && numWarnings > 0 {
+			logrus.Warnf("Push failed with %d warning(s)", numWarnings)
+			return
+		}
+		if warningsAreFatal {
+			numFailures += numWarnings
 		}
 		if numFailures > 0 && numFailures < numExpectedSuccesses {
 			logrus.Fatalln("Push partially failed.")
-			return
 		}
 		if numFailures == numExpectedSuccesses {
 			logrus.Fatalln("Push failed.")
-			return
 		}
-		logrus.Infoln("Push succeeded")
 	},
 }
