@@ -3,6 +3,8 @@ package opavalidation
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/fatih/color"
@@ -156,4 +158,58 @@ func (AIs actionItems) setEventType(ET string) {
 	for n := range AIs {
 		AIs[n].EventType = ET
 	}
+}
+
+// ExpectActionItemOptions bundles multiple settings about whether and when
+// OPA policies are expected to output an action item.
+// If a Kubernetes manifest file has the SuccessFileExtension, no action item
+// is expected.
+// If a Kubernetes manifest file has the FailureFileExtension, an action item
+// is expected.
+// The default expectation of an action item is used when the Kubernetes
+// manifest file has neither file extension.
+type ExpectActionItemOptions struct {
+	Default                                    bool // Used if none of the below filename extensions applies.
+	SuccessFileExtension, FailureFileExtension string
+}
+
+// ForFileName returns true if the given Kubernetes manifest file name should
+// expectan OPA policy to output an action item.
+func (o ExpectActionItemOptions) ForFileName(fileName string) bool {
+	LCFileName := strings.ToLower(fileName)
+	LCSuccessExtension := strings.ToLower(o.SuccessFileExtension)
+	LCFailureExtension := strings.ToLower(o.FailureFileExtension)
+	if strings.HasSuffix(LCFileName, LCSuccessExtension) {
+		logrus.Debugf("ExpectActionItem=%v for Kube manifest file %s due to its file extension %q", false, fileName, o.SuccessFileExtension)
+		return false
+	}
+	if strings.HasSuffix(LCFileName, LCFailureExtension) {
+		logrus.Debugf("ExpectActionItem=%v for Kube manifest file %s due to its file extension %q", true, fileName, o.FailureFileExtension)
+		return true
+	}
+	logrus.Debugf("ExpectActionItem=%v for Kube manifest file %s due to the default or the command-line flag.", o.Default, fileName)
+	return o.Default
+}
+
+// getObjectFileNamesForPolicy returns a list of existing file names matching
+// the pattern {base rego file name}.yaml|.success.yaml|.failure.yaml (the
+// latter two being configurable via the expectActionItemOptions struct).
+func (o ExpectActionItemOptions) getObjectFileNamesForPolicy(regoFileName string) (objectFileNames []string, foundAny bool) {
+	baseFileName := strings.TrimSuffix(regoFileName, filepath.Ext(regoFileName))
+	var lookForFileNames []string = []string{
+		baseFileName + ".yaml",
+		baseFileName + o.SuccessFileExtension,
+		baseFileName + o.FailureFileExtension}
+	logrus.Debugf("Looking for these object files for policy %s: %v", regoFileName, lookForFileNames)
+	for _, potentialFileName := range lookForFileNames {
+		_, err := os.Stat(potentialFileName)
+		if err == nil {
+			objectFileNames = append(objectFileNames, potentialFileName)
+			foundAny = true
+		}
+	}
+	if foundAny {
+		logrus.Debugf("Matched these object files for policy %s: %v", regoFileName, objectFileNames)
+	}
+	return
 }

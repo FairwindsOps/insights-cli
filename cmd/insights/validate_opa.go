@@ -15,6 +15,7 @@ import (
 )
 
 var regoFileName, objectFileName, batchDir, objectNamespaceOverride, insightsInfoCluster, insightsInfoContext string
+var expectActionItem opavalidation.ExpectActionItemOptions
 
 // OPACmd represents the validate opa command
 var OPACmd = &cobra.Command{
@@ -34,7 +35,7 @@ var OPACmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if regoFileName != "" {
-			_, err := opavalidation.Run(regoFileName, objectFileName, fwrego.InsightsInfo{InsightsContext: insightsInfoContext, Cluster: insightsInfoCluster}, objectNamespaceOverride)
+			_, err := opavalidation.Run(regoFileName, objectFileName, expectActionItem, fwrego.InsightsInfo{InsightsContext: insightsInfoContext, Cluster: insightsInfoCluster}, objectNamespaceOverride)
 			if err != nil {
 				fmt.Printf("OPA policy failed validation: %v\n", err)
 				os.Exit(1)
@@ -43,7 +44,7 @@ var OPACmd = &cobra.Command{
 		}
 
 		if batchDir != "" {
-			_, failedPolicies, err := opavalidation.RunBatch(batchDir, fwrego.InsightsInfo{InsightsContext: insightsInfoContext, Cluster: insightsInfoCluster}, objectNamespaceOverride)
+			_, failedPolicies, err := opavalidation.RunBatch(batchDir, expectActionItem, fwrego.InsightsInfo{InsightsContext: insightsInfoContext, Cluster: insightsInfoCluster}, objectNamespaceOverride)
 			fmt.Println() // separate output from RunBatch
 			if err != nil {
 				fmt.Printf("OPA policies failed validation: %v\n", err)
@@ -82,8 +83,11 @@ func init() {
 	validateCmd.AddCommand(OPACmd)
 	OPACmd.Flags().StringVarP(&batchDir, "batch-directory", "b", "", "A directory containing OPA policy .rego files and corresponding Kubernetes manifest .yaml input files to validate. This option validates multiple OPA policies at once, and is mutually exclusive with the rego-file option.")
 	OPACmd.Flags().StringVarP(&regoFileName, "rego-file", "r", "", "An OPA policy file containing rego to validate. The --kube-object-file option is also required. This option validates a single policy, and is mutually exclusive with the batch-directory option.")
-	OPACmd.Flags().StringVarP(&objectFileName, "kube-object-file", "k", "", "A Kubernetes manifest to provide as input when validating a single OPA policy. This option is mutually exclusive with the batch-directory option.")
+	OPACmd.Flags().StringVarP(&objectFileName, "kube-object-file", "k", "", "A Kubernetes manifest to provide as input when validating a single OPA policy. This option is mutually exclusive with the batch-directory option. A manifest file ending in a .success.yaml extension is expected to return 0 action items. A manifest file ending in a .failure.yaml extension is expected to output one action item. See also the --expect-action-item option.")
+	OPACmd.Flags().StringVarP(&expectActionItem.SuccessFileExtension, "kube-manifest-success-ext", "e", ".success.yaml", "The extension for a Kubernetes manifest file name which, if found, indicates an OPA policy is NOT expected to return an action item.")
+	OPACmd.Flags().StringVarP(&expectActionItem.FailureFileExtension, "kube-manifest-failure-ext", "E", ".failure.yaml", "The extension for a Kubernetes manifest file name which, if found, indicates an OPA policy is expected to return an action item.")
 	OPACmd.Flags().StringVarP(&objectNamespaceOverride, "object-namespace", "N", "", "A Kubernetes namespace to override any defined in the Kubernetes object being passed as input to an OPA policy.")
 	OPACmd.Flags().StringVarP(&insightsInfoCluster, "insightsinfo-cluster", "l", "test", "A Kubernetes cluster name returned by the Insights-provided insightsinfo() rego function.")
 	OPACmd.Flags().StringVarP(&insightsInfoContext, "insightsinfo-context", "t", "Agent", "An Insights context returned by the Insights-provided insightsinfo() rego function. The context returned by Insights plugins is typically one of: CI/CD, Admission, or Agent.")
+	OPACmd.Flags().BoolVarP(&expectActionItem.Default, "expect-action-item", "i", true, "Whether to expect the OPA policy to output one action item (true) or 0 action items (false). This option is applied to Kubernetes manifest files with no .success.yaml nor .failure.yaml extension.")
 }
