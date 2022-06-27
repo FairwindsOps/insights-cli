@@ -9,7 +9,7 @@ require (
 	github.com/imroc/req v0.3.2
 	github.com/open-policy-agent/opa v0.41.0
 	github.com/sirupsen/logrus v1.8.1
-	github.com/spf13/cobra v1.4.0
+	github.com/spf13/cobra v1.5.0
 	github.com/stretchr/testify v1.7.2
 	github.com/thoas/go-funk v0.9.2
 	github.com/xlab/treeprint v1.1.0
