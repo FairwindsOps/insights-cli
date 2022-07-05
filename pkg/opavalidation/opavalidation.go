@@ -16,6 +16,7 @@ import (
 	"github.com/open-policy-agent/opa/topdown"
 	"github.com/open-policy-agent/opa/types"
 	"github.com/sirupsen/logrus"
+	"github.com/thoas/go-funk"
 )
 
 const (
@@ -24,7 +25,7 @@ const (
 
 // Run is a ValidateRego() wrapper that validates and prints resulting actionItems. This is
 // meant to be called from a cobra.Command{}.
-func Run(regoFileName, objectFileName string, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) (actionItems, error) {
+func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) (actionItems, error) {
 	b, err := ioutil.ReadFile(regoFileName)
 	if err != nil {
 		return nil, fmt.Errorf("error reading OPA policy %s: %v", regoFileName, err)
@@ -47,8 +48,12 @@ func Run(regoFileName, objectFileName string, insightsInfo fwrego.InsightsInfo, 
 	if err != nil {
 		return actionItems, err
 	}
-	if len(actionItems) != 1 {
-		return actionItems, fmt.Errorf("%d action items were returned, but 1 is required", len(actionItems))
+	expectAI := expectAIOptions.ForFileName(objectFileName)
+	if expectAI && len(actionItems) != 1 {
+		return actionItems, fmt.Errorf("%d action items were returned, but 1 is expected", len(actionItems))
+	}
+	if !expectAI && len(actionItems) > 0 {
+		return actionItems, fmt.Errorf("%d action items were returned but none are expected", len(actionItems))
 	}
 	return actionItems, nil
 }
@@ -57,21 +62,34 @@ func Run(regoFileName, objectFileName string, insightsInfo fwrego.InsightsInfo, 
 // not return the actionItems from each call to Run(), as there would not be correlation of
 // actionItems to their OPA policy.
 // This is meant to be called from a cobra.Command{}.
-func RunBatch(batchDir string, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) (successfulPolicies, failedPolicies []string, err error) {
+// Each OPA policy is validated with a Kubernetes manifest file named of the
+// form {base rego filename} and the extensions .yaml, .success.yaml, and
+// .failure.yaml (the last two of which are configurable).
+func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) (successfulPolicies, failedPolicies []string, err error) {
 	regoFiles, err := FindFilesWithExtension(batchDir, ".rego")
 	if err != nil {
 		return successfulPolicies, failedPolicies, fmt.Errorf("unable to list .rego files: %v", err)
 	}
 	for _, regoFileName := range regoFiles {
-		objectFileName := strings.TrimSuffix(regoFileName, filepath.Ext(regoFileName)) + ".yaml"
-		logrus.Infof("Starting validation of OPA policy %s with input %s\n", regoFileName, objectFileName)
-		_, err := Run(regoFileName, objectFileName, insightsInfo, objectNamespaceOverride)
-		if err != nil {
-			logrus.Errorf("Failed validation of OPA policy %s: %v\n", regoFileName, err)
+		objectFileNames, ok := expectAIOptions.getObjectFileNamesForPolicy(regoFileName)
+		if !ok {
+			logrus.Errorf("No Kubernetes manifest files found to use as input for validation of OPA policy %s", regoFileName)
 			failedPolicies = append(failedPolicies, regoFileName)
-		} else {
-			logrus.Infof("Success validating OPA policy %s\n", regoFileName)
+			continue
+		}
+		for _, objectFileName := range objectFileNames {
+			logrus.Infof("Validating OPA policy %s with input %s (expectActionItem=%v)", regoFileName, objectFileName, expectAIOptions.ForFileName(objectFileName))
+			_, err := Run(regoFileName, objectFileName, expectAIOptions, insightsInfo, objectNamespaceOverride)
+			if err != nil {
+				logrus.Errorf("Failed validation of OPA policy %s using input %s: %v\n", regoFileName, objectFileName, err)
+				if !funk.ContainsString(failedPolicies, regoFileName) {
+					failedPolicies = append(failedPolicies, regoFileName)
+				}
+			}
+		}
+		if !funk.ContainsString(failedPolicies, regoFileName) {
 			successfulPolicies = append(successfulPolicies, regoFileName)
+			logrus.Infof("Success validating OPA policy %s\n", regoFileName)
 		}
 	}
 	if len(failedPolicies) > 0 {
