@@ -23,7 +23,12 @@ jobs:
       - run:
           name: lint
           command: |
-            test -z $(go fmt ./...)
+            fmt_output=$(go fmt ./...)
+            if [ ! -z "$fmt_output" ] ; then
+              echo "The go fmt command reports these files need to be formatted, please fix this in the repository."
+              echo "$output"
+              exit 1
+            fi
             go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
             golangci-lint run -v --timeout 2m0s
       - run:
