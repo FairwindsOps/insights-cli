@@ -16,7 +16,7 @@ package main
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 
@@ -114,7 +114,7 @@ func preRun(cmd *cobra.Command, args []string) {
 
 	configHandler, err := os.Open(configFile)
 	if err == nil {
-		configContents, err := ioutil.ReadAll(configHandler)
+		configContents, err := io.ReadAll(configHandler)
 		if err != nil {
 			exitWithError("Could not read fairwinds-insights.yaml", err)
 		}

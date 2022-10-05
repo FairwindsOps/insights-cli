@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,12 +25,12 @@ const (
 // Run is a ValidateRego() wrapper that validates and prints resulting actionItems. This is
 // meant to be called from a cobra.Command{}.
 func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) (actionItems, error) {
-	b, err := ioutil.ReadFile(regoFileName)
+	b, err := os.ReadFile(regoFileName)
 	if err != nil {
 		return nil, fmt.Errorf("error reading OPA policy %s: %v", regoFileName, err)
 	}
 	regoContent := string(b)
-	b, err = ioutil.ReadFile(objectFileName)
+	b, err = os.ReadFile(objectFileName)
 	if err != nil {
 		return nil, fmt.Errorf("error reading Kubernetes manifest %s: %v", objectFileName, err)
 	}

@@ -29,7 +29,7 @@ jobs:
               echo "$output"
               exit 1
             fi
-            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
+            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
             golangci-lint run -v --timeout 2m0s
       - run:
           name: test

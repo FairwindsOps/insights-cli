@@ -17,7 +17,6 @@ package rules
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -158,7 +157,7 @@ func getRulesFromFiles(files map[string][]string) ([]Rule, error) {
 	for _, ruleFiles := range files {
 		var rule Rule
 		for _, filePath := range ruleFiles {
-			fileContents, err := ioutil.ReadFile(filePath)
+			fileContents, err := os.ReadFile(filePath)
 			if err != nil {
 				logrus.Error(err, "Error reading file", filePath)
 				return nil, err
