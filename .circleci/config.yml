@@ -17,7 +17,7 @@ jobs:
   test:
     working_directory: /go/src/github.com/fairwindsops/insights-cli
     docker:
-      - image: circleci/golang:1.19
+      - image: cimg/golang:1.19
     steps:
       - checkout
       - run:
