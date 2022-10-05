@@ -15,7 +15,7 @@ references:
 
 jobs:
   test:
-    working_directory: /go/src/github.com/fairwindsops/insights-cli
+    working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     docker:
       - image: cimg/go:1.19
     steps:
@@ -50,7 +50,7 @@ jobs:
     resource_class: large
     shell: /bin/bash
     docker:
-      - image: goreleaser/goreleaser:v1.6.3
+      - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
       - run: |
