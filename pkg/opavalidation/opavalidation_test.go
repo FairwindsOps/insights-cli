@@ -2,10 +2,11 @@ package opavalidation_test
 
 import (
 	"context"
+	"os"
+	"testing"
+
 	"github.com/fairwindsops/insights-cli/pkg/opavalidation"
 	fwrego "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/rego"
-	"io/ioutil"
-	"testing"
 )
 
 func TestValidateRego(t *testing.T) {
@@ -48,12 +49,12 @@ func TestValidateRego(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			b, err := ioutil.ReadFile("testdata/" + tc.regoFileName)
+			b, err := os.ReadFile("testdata/" + tc.regoFileName)
 			if err != nil {
 				t.Fatalf("error reading %s: %v", tc.regoFileName, err)
 			}
 			regoAsString := string(b)
-			objectAsBytes, err := ioutil.ReadFile("testdata/" + tc.objectFileName)
+			objectAsBytes, err := os.ReadFile("testdata/" + tc.objectFileName)
 			if err != nil {
 				t.Fatalf("error reading %s: %v", tc.objectFileName, err)
 			}
