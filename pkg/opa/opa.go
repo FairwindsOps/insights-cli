@@ -16,7 +16,7 @@ package opa
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -211,7 +211,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 		var onlyRegoFormat bool = true
 		check.Version = 1.0
 		for _, filePath := range checkFiles {
-			fileContents, err := ioutil.ReadFile(filePath)
+			fileContents, err := os.ReadFile(filePath)
 			if err != nil {
 				logrus.Error(err, "Error reading file", filePath)
 				return nil, err

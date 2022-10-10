@@ -15,16 +15,23 @@ references:
 
 jobs:
   test:
-    working_directory: /go/src/github.com/fairwindsops/insights-cli
+    working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     docker:
-      - image: circleci/golang:1.17
+      # Note the Go version is also referenced via the goreleaser image,
+      # in both the snapshot and release jobs.
+      - image: cimg/go:1.19
     steps:
       - checkout
       - run:
           name: lint
           command: |
-            test -z $(go fmt ./...)
-            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
+            fmt_output=$(go fmt ./...)
+            if [ ! -z "$fmt_output" ] ; then
+              echo "The go fmt command reports these files need to be formatted, please fix this in the repository."
+              echo "$output"
+              exit 1
+            fi
+            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
             golangci-lint run -v --timeout 2m0s
       - run:
           name: test
@@ -35,7 +42,8 @@ jobs:
     working_directory: /go/src/github.com/fairwindsops/insights-cli
     resource_class: large
     docker:
-      - image: goreleaser/goreleaser:v1.6.3
+      # Note the goreleaser version is also referenced in the release job.
+      - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
       - setup_remote_docker:
@@ -50,7 +58,8 @@ jobs:
     resource_class: large
     shell: /bin/bash
     docker:
-      - image: goreleaser/goreleaser:v1.6.3
+      # Note the goreleaser version is also referenced in the snapshot job.
+      - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
       - run: |
