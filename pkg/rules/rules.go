@@ -155,16 +155,16 @@ func BuildRulesTree(org, token, hostName string, tree treeprint.Tree) error {
 func getRulesFromFiles(files map[string][]string) ([]Rule, error) {
 	var rules []Rule
 	for _, ruleFiles := range files {
-		var rule Rule
 		for _, filePath := range ruleFiles {
 			fileContents, err := os.ReadFile(filePath)
 			if err != nil {
 				logrus.Error(err, "Error reading file", filePath)
 				return nil, err
 			}
+			var rule Rule
 			err = yaml.Unmarshal(fileContents, &rule)
 			if err != nil {
-				logrus.Error(err, "Error Unmarshalling check YAML", filePath)
+				logrus.Error(err, "Error unmarshalling check YAML", filePath)
 				return nil, err
 			}
 			if rule.Name == "" {
