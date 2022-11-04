@@ -1,0 +1,7 @@
+name: "rule-2"
+description: "Assigns all Action Items in the api namespace to api-team@acme-co.com"
+cluster: null
+action: |
+  if (ActionItem.ResourceNamespace === 'api') {
+    ActionItem.AssigneeEmail = 'api-team@acme-co.com';
+  }
