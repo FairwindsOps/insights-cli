@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 
@@ -33,6 +34,7 @@ import (
 const rulesURLFormat = "%s/v0/organizations/%s/rules"
 const rulesURLFormatCreate = "%s/v0/organizations/%s/rules/create"
 const rulesURLFormatUpdateDelete = "%s/v0/organizations/%s/rules/%d"
+const rulesURLVerify = "%s/v0/organizations/%s/rules/verify"
 
 // Rule is the struct to hold the information for a rule
 type Rule struct {
@@ -51,6 +53,61 @@ type CompareResults struct {
 	RuleInsert []Rule
 	RuleUpdate []Rule
 	RuleDelete []Rule
+}
+
+type VerifyActionItemTicketProvider string
+
+// Defines values for VerifyActionItemTicketProvider.
+const (
+	VerifyActionItemTicketProviderAzure  VerifyActionItemTicketProvider = "Azure"
+	VerifyActionItemTicketProviderGitHub VerifyActionItemTicketProvider = "GitHub"
+	VerifyActionItemTicketProviderJira   VerifyActionItemTicketProvider = "Jira"
+)
+
+type VerifyActionItem struct {
+	TicketCreatedAt   *time.Time                      `json:"TicketCreatedAt,omitempty"`
+	TicketLink        *string                         `json:"TicketLink,omitempty"`
+	TicketProvider    *VerifyActionItemTicketProvider `json:"TicketProvider,omitempty"`
+	AssigneeEmail     *string                         `json:"assigneeEmail,omitempty"`
+	Category          *string                         `json:"category,omitempty"`
+	Cluster           *string                         `json:"cluster,omitempty"`
+	DeletedAt         *time.Time                      `json:"deletedAt,omitempty"`
+	Description       *string                         `json:"description,omitempty"`
+	EventType         *string                         `json:"eventType,omitempty"`
+	FirstSeen         *time.Time                      `json:"firstSeen,omitempty"`
+	Fixed             *bool                           `json:"fixed,omitempty"`
+	IsCustom          *bool                           `json:"isCustom,omitempty"`
+	LastReportedAt    *time.Time                      `json:"lastReportedAt,omitempty"`
+	Notes             *string                         `json:"notes,omitempty"`
+	Organization      *string                         `json:"organization,omitempty"`
+	Remediation       *string                         `json:"remediation,omitempty"`
+	ReportType        *string                         `json:"reportType,omitempty"`
+	Resolution        *string                         `json:"resolution,omitempty"`
+	ResourceContainer *string                         `json:"resourceContainer,omitempty"`
+	ResourceKind      *string                         `json:"resourceKind,omitempty"`
+	ResourceLabels    *map[string]string              `json:"resourceLabels,omitempty"`
+	ResourceName      *string                         `json:"resourceName,omitempty"`
+	ResourceNamespace *string                         `json:"resourceNamespace,omitempty"`
+	Severity          *float32                        `json:"severity,omitempty"`
+	Tags              []string                        `json:"tags"`
+	Title             string                          `json:"title"`
+}
+
+// RuleExecutionContext defines model for RuleExecutionContext.
+type RuleExecutionContext string
+
+// Defines values for RuleExecutionContext.
+const (
+	RuleExecutionContextAdmissionController RuleExecutionContext = "AdmissionController"
+	RuleExecutionContextAgent               RuleExecutionContext = "Agent"
+	RuleExecutionContextCICD                RuleExecutionContext = "CI/CD"
+)
+
+type VerifyRule struct {
+	ActionItem VerifyActionItem     `json:"actionItem"`
+	Context    RuleExecutionContext `json:"context"`
+	ReportType string               `json:"reportType"`
+	Script     string               `json:"script"`
 }
 
 // getRules queries Fairwinds Insights to retrieve all of the Rules for an organization
@@ -118,6 +175,27 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 		return errors.New("invalid response code")
 	}
 	return nil
+}
+
+// verifyRule verifies rule against one action item
+func verifyRule(org, token, hostName string, rule VerifyRule) (*VerifyActionItem, error) {
+	url := fmt.Sprintf(rulesURLVerify, hostName, org)
+	resp, err := req.Post(url, getHeaders(token), req.BodyJSON(&rule))
+	if err != nil {
+		logrus.Errorf("error to verifying rule %v in insights: %v", rule, err)
+		return nil, err
+	}
+	if resp.Response().StatusCode != http.StatusOK {
+		logrus.Errorf("invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return nil, errors.New("invalid response code")
+	}
+	var verify *VerifyActionItem
+	err = resp.ToJSON(&verify)
+	if err != nil {
+		logrus.Errorf("unable to convert response to json to VerifyActionItem: %v", err)
+		return nil, err
+	}
+	return verify, nil
 }
 
 // BuildRulesTree builds a tree for rules
