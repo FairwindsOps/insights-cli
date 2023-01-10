@@ -85,7 +85,7 @@ type VerifyActionItem struct {
 	Resolution        *string                         `yaml:"resolution,omitempty"`
 	ResourceContainer *string                         `yaml:"resourceContainer,omitempty"`
 	ResourceKind      *string                         `yaml:"resourceKind,omitempty"`
-	ResourceLabels    *map[string]string              `yaml:"resourceLabels,omitempty"`
+	ResourceLabels    map[string]string               `yaml:"resourceLabels,omitempty"`
 	ResourceName      *string                         `yaml:"resourceName,omitempty"`
 	ResourceNamespace *string                         `yaml:"resourceNamespace,omitempty"`
 	Severity          *float32                        `yaml:"severity,omitempty"`

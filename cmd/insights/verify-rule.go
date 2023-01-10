@@ -29,7 +29,7 @@ var verifyRuleCmd = &cobra.Command{
 		host := configurationObject.Options.Hostname
 		in, err := os.Open(inputFile)
 		if err != nil {
-			exitWithError(fmt.Sprintf("Error when trying to read file %s", inputFile), err)
+			exitWithError(fmt.Sprintf("Error when trying to open file %s", inputFile), err)
 		}
 		inputContents, err := io.ReadAll(in)
 		if err != nil {
