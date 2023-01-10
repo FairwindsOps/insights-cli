@@ -28,7 +28,7 @@ var verifyRuleCmd = &cobra.Command{
 	Short: "Validates an automation rule",
 	Long:  "Validates an automation rule by applying it against the specified action item",
 	Run: func(cmd *cobra.Command, args []string) {
-		var verifyActionItem rules.ActionItem
+		var actionItem rules.ActionItem
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
 		aiInput, err := os.Open(actionItemFile)
@@ -39,7 +39,7 @@ var verifyRuleCmd = &cobra.Command{
 		if err != nil {
 			exitWithError(fmt.Sprintf("Could not read file %s", actionItemFile), err)
 		}
-		err = yaml.Unmarshal(aiBytes, &verifyActionItem)
+		err = yaml.Unmarshal(aiBytes, &actionItem)
 		if err != nil {
 			exitWithError("Could not parse input file", err)
 		}
@@ -53,7 +53,7 @@ var verifyRuleCmd = &cobra.Command{
 			exitWithError(fmt.Sprintf("Could not read file %s", actionItemFile), err)
 		}
 		verifyRule := rules.VerifyRule{
-			ActionItem: verifyActionItem,
+			ActionItem: actionItem,
 			Context:    rules.RuleExecutionContext(context),
 			ReportType: reportType,
 			Script:     string(ruleBytes),
