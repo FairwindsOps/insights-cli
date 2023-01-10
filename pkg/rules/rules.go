@@ -180,7 +180,7 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 // RunVerifyRule verifies rule against one action item
 func RunVerifyRule(org, token, hostName string, rule VerifyRule) (*VerifyActionItem, error) {
 	url := fmt.Sprintf(rulesURLVerify, hostName, org)
-	resp, err := req.Post(url, getRulesHeaders(token), req.BodyJSON(&rule))
+	resp, err := req.Post(url, getRuleVerifyHeaders(token), req.BodyJSON(&rule))
 	if err != nil {
 		logrus.Errorf("error to verifying rule %v in insights: %v", rule, err)
 		return nil, err
@@ -392,7 +392,7 @@ func getHeaders(token string) req.Header {
 	}
 }
 
-func getRulesHeaders(token string) req.Header {
+func getRuleVerifyHeaders(token string) req.Header {
 	return req.Header{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"Accept":        "application/json",

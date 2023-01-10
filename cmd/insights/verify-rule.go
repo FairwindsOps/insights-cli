@@ -22,7 +22,7 @@ func init() {
 var verifyRuleCmd = &cobra.Command{
 	Use:   "verify-rule",
 	Short: "Verifies a rule against Insights",
-	Long:  "Verifies a rule to provided action item and make sure it will work fine testing it against Insights",
+	Long:  "Verifies a rule to provided the action item and makes sure it will work fine testing it against Insights",
 	Run: func(cmd *cobra.Command, args []string) {
 		var verifyRule rules.VerifyRule
 		org := configurationObject.Options.Organization
