@@ -182,7 +182,7 @@ func RunVerifyRule(org, token, hostName string, rule VerifyRule) (*VerifyActionI
 	url := fmt.Sprintf(rulesURLVerify, hostName, org)
 	resp, err := req.Post(url, getRuleVerifyHeaders(token), req.BodyJSON(&rule))
 	if err != nil {
-		logrus.Errorf("error to verifying rule %v in insights: %v", rule, err)
+		logrus.Errorf("error verifying rule %v in insights: %v", rule, err)
 		return nil, err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
