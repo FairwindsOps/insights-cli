@@ -12,14 +12,14 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-var automationRuleFile, actionItemFile, expectedFileName, reportType, context string
+var automationRuleFile, actionItemFile, expectedActionItem, reportType, insightsContext string
 
 func init() {
 	verifyRuleCmd.PersistentFlags().StringVarP(&automationRuleFile, "automation-rule-file", "r", "./rule.js", "Automation rule JS file path")
 	verifyRuleCmd.PersistentFlags().StringVarP(&actionItemFile, "action-item-file", "a", "./action-item.yaml", "Action Item file path")
-	verifyRuleCmd.PersistentFlags().StringVarP(&context, "insights-context", "t", "", "Insights context: [AdmissionController/Agent/CI/CD]")
+	verifyRuleCmd.PersistentFlags().StringVarP(&insightsContext, "insights-context", "t", "", "Insights context: [AdmissionController/Agent/CI/CD]")
 	verifyRuleCmd.PersistentFlags().StringVarP(&reportType, "report-type", "R", "", "Report type")
-	verifyRuleCmd.PersistentFlags().StringVarP(&expectedFileName, "expected-action-item", "i", "", "Expected file path")
+	verifyRuleCmd.PersistentFlags().StringVarP(&expectedActionItem, "expected-action-item", "i", "", "Expected file path")
 	validateCmd.AddCommand(verifyRuleCmd)
 }
 
@@ -54,7 +54,7 @@ var verifyRuleCmd = &cobra.Command{
 		}
 		verifyRule := rules.VerifyRule{
 			ActionItem: actionItem,
-			Context:    rules.RuleExecutionContext(context),
+			Context:    rules.RuleExecutionContext(insightsContext),
 			ReportType: reportType,
 			Script:     string(ruleBytes),
 		}
@@ -66,12 +66,12 @@ var verifyRuleCmd = &cobra.Command{
 		if err != nil {
 			exitWithError("could not marshal verify result", err)
 		}
-		if expectedFileName == "" {
+		if expectedActionItem == "" {
 			fmt.Println(string(b))
 		} else {
-			expectedFile, err := os.Open(expectedFileName)
+			expectedFile, err := os.Open(expectedActionItem)
 			if err != nil {
-				exitWithError(fmt.Sprintf("Error when trying to open expected file %s", expectedFileName), err)
+				exitWithError(fmt.Sprintf("Error when trying to open expected file %s", expectedActionItem), err)
 			}
 			expectedContent, err := io.ReadAll(expectedFile)
 			if err != nil {
