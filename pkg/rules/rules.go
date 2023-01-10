@@ -65,32 +65,32 @@ const (
 )
 
 type VerifyActionItem struct {
-	TicketCreatedAt   *time.Time                      `json:"TicketCreatedAt,omitempty"`
-	TicketLink        *string                         `json:"TicketLink,omitempty"`
-	TicketProvider    *VerifyActionItemTicketProvider `json:"TicketProvider,omitempty"`
-	AssigneeEmail     *string                         `json:"assigneeEmail,omitempty"`
-	Category          *string                         `json:"category,omitempty"`
-	Cluster           *string                         `json:"cluster,omitempty"`
-	DeletedAt         *time.Time                      `json:"deletedAt,omitempty"`
-	Description       *string                         `json:"description,omitempty"`
-	EventType         *string                         `json:"eventType,omitempty"`
-	FirstSeen         *time.Time                      `json:"firstSeen,omitempty"`
-	Fixed             *bool                           `json:"fixed,omitempty"`
-	IsCustom          *bool                           `json:"isCustom,omitempty"`
-	LastReportedAt    *time.Time                      `json:"lastReportedAt,omitempty"`
-	Notes             *string                         `json:"notes,omitempty"`
-	Organization      *string                         `json:"organization,omitempty"`
-	Remediation       *string                         `json:"remediation,omitempty"`
-	ReportType        *string                         `json:"reportType,omitempty"`
-	Resolution        *string                         `json:"resolution,omitempty"`
-	ResourceContainer *string                         `json:"resourceContainer,omitempty"`
-	ResourceKind      *string                         `json:"resourceKind,omitempty"`
-	ResourceLabels    *map[string]string              `json:"resourceLabels,omitempty"`
-	ResourceName      *string                         `json:"resourceName,omitempty"`
-	ResourceNamespace *string                         `json:"resourceNamespace,omitempty"`
-	Severity          *float32                        `json:"severity,omitempty"`
-	Tags              []string                        `json:"tags"`
-	Title             string                          `json:"title"`
+	TicketCreatedAt   *time.Time                      `yaml:"TicketCreatedAt,omitempty"`
+	TicketLink        *string                         `yaml:"TicketLink,omitempty"`
+	TicketProvider    *VerifyActionItemTicketProvider `yaml:"TicketProvider,omitempty"`
+	AssigneeEmail     *string                         `yaml:"assigneeEmail,omitempty"`
+	Category          *string                         `yaml:"category,omitempty"`
+	Cluster           *string                         `yaml:"cluster,omitempty"`
+	DeletedAt         *time.Time                      `yaml:"deletedAt,omitempty"`
+	Description       *string                         `yaml:"description,omitempty"`
+	EventType         *string                         `yaml:"eventType,omitempty"`
+	FirstSeen         *time.Time                      `yaml:"firstSeen,omitempty"`
+	Fixed             *bool                           `yaml:"fixed,omitempty"`
+	IsCustom          *bool                           `yaml:"isCustom,omitempty"`
+	LastReportedAt    *time.Time                      `yaml:"lastReportedAt,omitempty"`
+	Notes             *string                         `yaml:"notes,omitempty"`
+	Organization      *string                         `yaml:"organization,omitempty"`
+	Remediation       *string                         `yaml:"remediation,omitempty"`
+	ReportType        *string                         `yaml:"reportType,omitempty"`
+	Resolution        *string                         `yaml:"resolution,omitempty"`
+	ResourceContainer *string                         `yaml:"resourceContainer,omitempty"`
+	ResourceKind      *string                         `yaml:"resourceKind,omitempty"`
+	ResourceLabels    *map[string]string              `yaml:"resourceLabels,omitempty"`
+	ResourceName      *string                         `yaml:"resourceName,omitempty"`
+	ResourceNamespace *string                         `yaml:"resourceNamespace,omitempty"`
+	Severity          *float32                        `yaml:"severity,omitempty"`
+	Tags              []string                        `yaml:"tags"`
+	Title             string                          `yaml:"title"`
 }
 
 // RuleExecutionContext defines model for RuleExecutionContext.
@@ -104,10 +104,10 @@ const (
 )
 
 type VerifyRule struct {
-	ActionItem VerifyActionItem     `json:"actionItem"`
-	Context    RuleExecutionContext `json:"context"`
-	ReportType string               `json:"reportType"`
-	Script     string               `json:"script"`
+	ActionItem VerifyActionItem     `yaml:"actionItem"`
+	Context    RuleExecutionContext `yaml:"context"`
+	ReportType string               `yaml:"reportType"`
+	Script     string               `yaml:"script"`
 }
 
 // getRules queries Fairwinds Insights to retrieve all of the Rules for an organization
@@ -177,10 +177,10 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 	return nil
 }
 
-// verifyRule verifies rule against one action item
-func verifyRule(org, token, hostName string, rule VerifyRule) (*VerifyActionItem, error) {
+// RunVerifyRule verifies rule against one action item
+func RunVerifyRule(org, token, hostName string, rule VerifyRule) (*VerifyActionItem, error) {
 	url := fmt.Sprintf(rulesURLVerify, hostName, org)
-	resp, err := req.Post(url, getHeaders(token), req.BodyJSON(&rule))
+	resp, err := req.Post(url, getRulesHeaders(token), req.BodyJSON(&rule))
 	if err != nil {
 		logrus.Errorf("error to verifying rule %v in insights: %v", rule, err)
 		return nil, err
@@ -389,5 +389,13 @@ func getHeaders(token string) req.Header {
 	return req.Header{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"Accept":        "application/json",
+	}
+}
+
+func getRulesHeaders(token string) req.Header {
+	return req.Header{
+		"Authorization": fmt.Sprintf("Bearer %s", token),
+		"Accept":        "application/json",
+		"Content-Type":  "application/yaml",
 	}
 }
