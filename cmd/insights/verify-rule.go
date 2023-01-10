@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/fairwindsops/insights-cli/pkg/rules"
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -98,11 +99,33 @@ var verifyRuleCmd = &cobra.Command{
 
 func compareVerifyActionItem(response, expected rules.VerifyActionItem) []string {
 	msgs := []string{}
-	if *response.Description != *expected.Description {
-		msgs = append(msgs, fmt.Sprintf("Expected description:%s\nActual description:%s", *response.Description, *expected.Description))
+	msg := maybeReturnErrorMsgForStringPtr(expected.Description, response.Description, "description")
+	if msg != nil {
+		msgs = append(msgs, *msg)
 	}
-	if response.Title != expected.Title {
-		msgs = append(msgs, fmt.Sprintf("Expected title:%s\nActual title:%s", response.Title, expected.Title))
+	msg = maybeReturnErrorMsgForString(expected.Title, response.Title, "title")
+	if msg != nil {
+		msgs = append(msgs, *msg)
 	}
 	return msgs
+}
+
+func maybeReturnErrorMsgForStringPtr(expected, actual *string, fieldName string) *string {
+	if expected == nil && actual == nil {
+		return nil
+	}
+	if expected == nil && actual != nil {
+		return lo.ToPtr(fmt.Sprintf("Expected %s is NULL\nActual %s: %s", fieldName, fieldName, *actual))
+	}
+	if expected != nil && actual == nil {
+		return lo.ToPtr(fmt.Sprintf("Expected %s: %s\nActual %s is NULL", fieldName, *expected, fieldName))
+	}
+	return maybeReturnErrorMsgForString(*expected, *actual, fieldName)
+}
+
+func maybeReturnErrorMsgForString(expected, actual, fieldName string) *string {
+	if expected != actual {
+		return lo.ToPtr(fmt.Sprintf("Expected %s: %s\nActual %s: %s", fieldName, expected, fieldName, actual))
+	}
+	return nil
 }
