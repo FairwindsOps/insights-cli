@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/fairwindsops/insights-cli/pkg/rules"
-	"github.com/samber/lo"
+	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
@@ -19,7 +19,7 @@ func init() {
 	verifyRuleCmd.PersistentFlags().StringVarP(&actionItemFile, "action-item-file", "a", "./action-item.yaml", "Action Item file path")
 	verifyRuleCmd.PersistentFlags().StringVarP(&insightsContext, "insights-context", "t", "", "Insights context: [AdmissionController/Agent/CI/CD]")
 	verifyRuleCmd.PersistentFlags().StringVarP(&reportType, "report-type", "R", "", "Report type")
-	verifyRuleCmd.PersistentFlags().StringVarP(&expectedActionItem, "expected-action-item", "i", "", "Expected file path")
+	verifyRuleCmd.PersistentFlags().StringVarP(&expectedActionItem, "expected-action-item", "i", "", "Optional file containing the action item that the automation rule is expected to produce")
 	validateCmd.AddCommand(verifyRuleCmd)
 }
 
@@ -82,50 +82,13 @@ var verifyRuleCmd = &cobra.Command{
 			if err != nil {
 				exitWithError("could not marshal expected response", err)
 			}
-			testErrors := compareVerifyActionItem(*response, expectedActionItem)
-			if len(testErrors) == 0 {
+			diff := cmp.Diff(&expectedActionItem, response)
+			if len(diff) == 0 {
 				logrus.Infoln("Success - actual response matches expected response")
 			} else {
 				logrus.Errorln("Test failed:")
-				for _, msg := range testErrors {
-					fmt.Println(msg)
-				}
+				fmt.Println(diff)
 			}
-
 		}
-
 	},
-}
-
-func compareVerifyActionItem(response, expected rules.ActionItem) []string {
-	msgs := []string{}
-	msg := maybeReturnErrorMsgForStringPtr(expected.Description, response.Description, "description")
-	if msg != nil {
-		msgs = append(msgs, *msg)
-	}
-	msg = maybeReturnErrorMsgForString(expected.Title, response.Title, "title")
-	if msg != nil {
-		msgs = append(msgs, *msg)
-	}
-	return msgs
-}
-
-func maybeReturnErrorMsgForStringPtr(expected, actual *string, fieldName string) *string {
-	if expected == nil && actual == nil {
-		return nil
-	}
-	if expected == nil && actual != nil {
-		return lo.ToPtr(fmt.Sprintf("Expected %s is NULL\nActual %s: %s", fieldName, fieldName, *actual))
-	}
-	if expected != nil && actual == nil {
-		return lo.ToPtr(fmt.Sprintf("Expected %s: %s\nActual %s is NULL", fieldName, *expected, fieldName))
-	}
-	return maybeReturnErrorMsgForString(*expected, *actual, fieldName)
-}
-
-func maybeReturnErrorMsgForString(expected, actual, fieldName string) *string {
-	if expected != actual {
-		return lo.ToPtr(fmt.Sprintf("Expected %s: %s\nActual %s: %s", fieldName, expected, fieldName, actual))
-	}
-	return nil
 }
