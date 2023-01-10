@@ -64,7 +64,7 @@ const (
 	VerifyActionItemTicketProviderJira   VerifyActionItemTicketProvider = "Jira"
 )
 
-type VerifyActionItem struct {
+type ActionItem struct {
 	TicketCreatedAt   *time.Time                      `yaml:"TicketCreatedAt,omitempty"`
 	TicketLink        *string                         `yaml:"TicketLink,omitempty"`
 	TicketProvider    *VerifyActionItemTicketProvider `yaml:"TicketProvider,omitempty"`
@@ -104,7 +104,7 @@ const (
 )
 
 type VerifyRule struct {
-	ActionItem VerifyActionItem     `yaml:"actionItem"`
+	ActionItem ActionItem           `yaml:"actionItem"`
 	Context    RuleExecutionContext `yaml:"context"`
 	ReportType string               `yaml:"reportType"`
 	Script     string               `yaml:"script"`
@@ -178,7 +178,7 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 }
 
 // RunVerifyRule verifies rule against one action item
-func RunVerifyRule(org, token, hostName string, rule VerifyRule) (*VerifyActionItem, error) {
+func RunVerifyRule(org, token, hostName string, rule VerifyRule) (*ActionItem, error) {
 	url := fmt.Sprintf(rulesURLVerify, hostName, org)
 	resp, err := req.Post(url, getRuleVerifyHeaders(token), req.BodyJSON(&rule))
 	if err != nil {
@@ -189,7 +189,7 @@ func RunVerifyRule(org, token, hostName string, rule VerifyRule) (*VerifyActionI
 		logrus.Errorf("invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
 		return nil, errors.New("invalid response code")
 	}
-	var verify *VerifyActionItem
+	var verify *ActionItem
 	err = resp.ToJSON(&verify)
 	if err != nil {
 		logrus.Errorf("unable to convert response to json to VerifyActionItem: %v", err)

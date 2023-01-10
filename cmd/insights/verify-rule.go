@@ -15,20 +15,20 @@ import (
 var automationRuleFile, actionItemFile, expectedFileName, reportType, context string
 
 func init() {
-	verifyRuleCmd.PersistentFlags().StringVarP(&automationRuleFile, "automation-rule-file", "r", "./rule.js", "Automation rule JS file")
-	verifyRuleCmd.PersistentFlags().StringVarP(&actionItemFile, "action-item-file", "a", "./action-item.yaml", "Action Item file")
-	verifyRuleCmd.PersistentFlags().StringVarP(&context, "insights-context", "t", "", "Insights context")
+	verifyRuleCmd.PersistentFlags().StringVarP(&automationRuleFile, "automation-rule-file", "r", "./rule.js", "Automation rule JS file path")
+	verifyRuleCmd.PersistentFlags().StringVarP(&actionItemFile, "action-item-file", "a", "./action-item.yaml", "Action Item file path")
+	verifyRuleCmd.PersistentFlags().StringVarP(&context, "insights-context", "t", "", "Insights context: [AdmissionController/Agent/CI/CD]")
 	verifyRuleCmd.PersistentFlags().StringVarP(&reportType, "report-type", "R", "", "Report type")
-	verifyRuleCmd.PersistentFlags().StringVarP(&expectedFileName, "expected-action-item", "i", "", "Expected file")
+	verifyRuleCmd.PersistentFlags().StringVarP(&expectedFileName, "expected-action-item", "i", "", "Expected file path")
 	validateCmd.AddCommand(verifyRuleCmd)
 }
 
 var verifyRuleCmd = &cobra.Command{
 	Use:   "rule -t  <insights context> {-r <rule file> -a <action item file>} [-i <expected output file>]",
-	Short: "Verifies a rule against Insights",
-	Long:  "Verifies a rule to provided the action item and makes sure it will work fine testing it against Insights",
+	Short: "Validates an automation rule",
+	Long:  "Validates an automation rule by applying it against the specified action item",
 	Run: func(cmd *cobra.Command, args []string) {
-		var verifyActionItem rules.VerifyActionItem
+		var verifyActionItem rules.ActionItem
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
 		aiInput, err := os.Open(actionItemFile)
@@ -77,7 +77,7 @@ var verifyRuleCmd = &cobra.Command{
 			if err != nil {
 				exitWithError("Failed to read output file", err)
 			}
-			var expectedActionItem rules.VerifyActionItem
+			var expectedActionItem rules.ActionItem
 			err = yaml.Unmarshal(expectedContent, &expectedActionItem)
 			if err != nil {
 				exitWithError("could not marshal expected response", err)
@@ -97,7 +97,7 @@ var verifyRuleCmd = &cobra.Command{
 	},
 }
 
-func compareVerifyActionItem(response, expected rules.VerifyActionItem) []string {
+func compareVerifyActionItem(response, expected rules.ActionItem) []string {
 	msgs := []string{}
 	msg := maybeReturnErrorMsgForStringPtr(expected.Description, response.Description, "description")
 	if msg != nil {
