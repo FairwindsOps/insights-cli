@@ -33,24 +33,24 @@ var verifyRuleCmd = &cobra.Command{
 		host := configurationObject.Options.Hostname
 		aiInput, err := os.Open(actionItemFile)
 		if err != nil {
-			exitWithError(fmt.Sprintf("Error when trying to open file %s", actionItemFile), err)
+			exitWithError(fmt.Sprintf("Error when trying to open action item file %s", actionItemFile), err)
 		}
 		aiBytes, err := io.ReadAll(aiInput)
 		if err != nil {
-			exitWithError(fmt.Sprintf("Could not read file %s", actionItemFile), err)
+			exitWithError(fmt.Sprintf("Could not read action item file %s", actionItemFile), err)
 		}
 		err = yaml.Unmarshal(aiBytes, &actionItem)
 		if err != nil {
-			exitWithError("Could not parse input file", err)
+			exitWithError(fmt.Sprintf("Could not parse action item file %s", actionItemFile), err)
 		}
 
 		ruleInput, err := os.Open(automationRuleFile)
 		if err != nil {
-			exitWithError(fmt.Sprintf("Error when trying to open file %s", actionItemFile), err)
+			exitWithError(fmt.Sprintf("Error when trying to open file %s", automationRuleFile), err)
 		}
 		ruleBytes, err := io.ReadAll(ruleInput)
 		if err != nil {
-			exitWithError(fmt.Sprintf("Could not read file %s", actionItemFile), err)
+			exitWithError(fmt.Sprintf("Could not read rule file %s", automationRuleFile), err)
 		}
 		verifyRule := rules.VerifyRule{
 			ActionItem: actionItem,
