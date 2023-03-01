@@ -157,8 +157,8 @@ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/onsi/ginkgo/v2 v2.6.0 h1:9t9b9vRUbFq3C4qKFCGkVuq/fIHji802N1nrtkh1mNc=
 github.com/onsi/gomega v1.24.1 h1:KORJXNNTzJXzu4ScJWssJfJMnJ+2QJqhoQSRwNlze9E=
-github.com/open-policy-agent/opa v0.49.0 h1:TIlpCT1B5FSm8Dqo/a4t23gKmHkQysC3+7W77F99P4k=
-github.com/open-policy-agent/opa v0.49.0/go.mod h1:WTLWtu498/QNTDkiHx76Xj7jaJUPvLJAPtdMkCcst0w=
+github.com/open-policy-agent/opa v0.49.2 h1:n8ntRq/yDWy+cmYaqSLrHXmrT3tX8WlK28vjFQdC6W8=
+github.com/open-policy-agent/opa v0.49.2/go.mod h1:7L3lN5qe8xboRmEHxC5lGjo5KsRMdK+CCLiFoOCP7rU=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1 h1:FEBLx1zS214owpjy7qsBeixbURkuhQAwrK5UwLGTwt4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
