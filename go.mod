@@ -13,7 +13,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/stretchr/testify v1.8.2
 	github.com/thoas/go-funk v0.9.3
-	github.com/xlab/treeprint v1.1.0
+	github.com/xlab/treeprint v1.2.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.26.3
 )
