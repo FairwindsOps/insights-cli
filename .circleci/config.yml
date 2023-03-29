@@ -17,8 +17,7 @@ jobs:
   test:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     docker:
-      # Note the Go version is also referenced via the goreleaser image,
-      # in both the snapshot and release jobs.
+      # Note the goreleaser version is also referenced in the release and snapshot jobs.
       - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
@@ -46,7 +45,7 @@ jobs:
     working_directory: /go/src/github.com/fairwindsops/insights-cli
     resource_class: large
     docker:
-      # Note the goreleaser version is also referenced in the release job.
+      # Note the goreleaser version is also referenced in the release and test jobs.
       - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
@@ -62,7 +61,7 @@ jobs:
     resource_class: large
     shell: /bin/bash
     docker:
-      # Note the goreleaser version is also referenced in the snapshot job.
+      # Note the goreleaser version is also referenced in the snapshot and test jobs.
       - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
