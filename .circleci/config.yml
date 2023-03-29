@@ -19,7 +19,7 @@ jobs:
     docker:
       # Note the Go version is also referenced via the goreleaser image,
       # in both the snapshot and release jobs.
-      - image: cimg/go:1.19
+      - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
       - run:
