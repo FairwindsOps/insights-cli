@@ -33,6 +33,9 @@ jobs:
             fi
             go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
             golangci-lint run -v --timeout 2m0s
+      - *install_vault
+      - rok8s/get_vault_env:
+          vault_path: repo/insights-cli/env
       - run:
           name: test
           command: |
@@ -63,17 +66,17 @@ jobs:
     steps:
       - checkout
       - run: ./.circleci/scripts/e2e-env.sh
+      - *install_vault
+      - rok8s/get_vault_env:
+          vault_path: repo/global/env
+      - rok8s/get_vault_env:
+          vault_path: repo/insights-cli/env
       - run: |
               go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
               golangci-lint run -v --timeout 2m0s
               go test -tags e2e ./pkg/...
       - setup_remote_docker:
           version: 20.10.11
-      - *install_vault
-      - rok8s/get_vault_env:
-          vault_path: repo/global/env
-      - rok8s/get_vault_env:
-          vault_path: repo/insights-cli/env
       - rok8s/docker_login:
           registry: "quay.io"
           username: $FAIRWINDS_QUAY_USER
