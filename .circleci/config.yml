@@ -36,7 +36,7 @@ jobs:
       - run:
           name: test
           command: |
-            go test ./...
+            go test -tags e2e ./...
             go vet ./...
   snapshot:
     working_directory: /go/src/github.com/fairwindsops/insights-cli
@@ -62,15 +62,18 @@ jobs:
       - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
+      - run: ./.circleci/scripts/e2e-env.sh
       - run: |
               go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
               golangci-lint run -v --timeout 2m0s
-              go test ./pkg/...
+              go test -tags e2e ./pkg/...
       - setup_remote_docker:
           version: 20.10.11
       - *install_vault
       - rok8s/get_vault_env:
           vault_path: repo/global/env
+      - rok8s/get_vault_env:
+          vault_path: repo/insights-cli/env
       - rok8s/docker_login:
           registry: "quay.io"
           username: $FAIRWINDS_QUAY_USER

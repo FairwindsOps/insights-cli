@@ -1,0 +1,7 @@
+# The version command should always return something,
+# even if unable to communicate with our API.
+exec insights-cli version
+stdout 'Version: unknown'
+stdout 'Commit: unknown'
+# Nothing should be returned on standard error
+! stderr .

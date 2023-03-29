@@ -1,0 +1,132 @@
+# Validate a single policy against a Kube manifest that expects success; no
+# action item (based on the manifest file name).
+# See also inline files, denoted by a double dash, below.
+exec insights-cli validate opa -r policy.rego -k manifest.success.yaml
+stdout 'OPA policy validated successfully'
+! stderr .
+
+# Validate a single policy against a Kube manifest that expects failure; an
+# action item (based on the manifest file name).
+exec insights-cli validate opa -r policy.rego -k manifest.failure.yaml
+stdout 'OPA policy validated successfully'
+! stderr .
+
+# Test the --expect-action-item flag.
+# Copy the successful manifest to another filename that does not indicate
+# whether we expect success/failure.
+# Then indicate we do not expect an action item when running insights-cli.
+cp manifest.success.yaml manifest.yaml
+! exec insights-cli validate opa -r policy.rego -k manifest.yaml --expect-action-item=true
+stdout 'OPA policy failed validation: 0 action items were returned, but 1 is expected'
+! stderr .
+
+
+# Validate multiple policies using batch-mode.
+# Copy policies and manifests into a directory, with a policy and its manifests
+# sharing the base file name.
+mkdir multiple-policies
+cp policy.rego multiple-policies/1.rego
+cp manifest.success.yaml multiple-policies/1.success.yaml
+cp manifest.failure.yaml multiple-policies/1.failure.yaml
+mkdir multiple-policies/subdir
+cp policy.rego multiple-policies/subdir/2.rego
+cp manifest.success.yaml multiple-policies/subdir/2.success.yaml
+cp manifest.failure.yaml multiple-policies/subdir/2.failure.yaml
+
+exec insights-cli validate opa -b multiple-policies
+stdout 'OPA policies validated successfully'
+# standard error outputs status as policies are processed.
+stderr .
+
+# ### Create policy and manifest files used by the above tests. ###
+-- policy.rego --
+package fairwinds
+blockedNamespace(elem) {
+    # List Kubernetes namespaces where this policy should not be applied.
+    blockedNamespaces := ["kube-system"]
+
+    ns := blockedNamespaces[_]
+    elem.metadata.namespace == ns
+}
+annotationrequired[actionItem] {
+    # List the keys of Kubernetes annotations that will be required.
+    requiredAnnotations := {"meta.helm.sh/release-name"}
+    # List the Kubernetes Kinds to which this policy should apply.
+    kinds := {"Deployment"}
+
+    not blockedNamespace(input)
+    kind := lower(kinds[val])
+    lower(input.kind) == kind
+    provided := {annotation | input.metadata.annotations[annotation]}
+    missing := requiredAnnotations - provided
+    count(missing) > 0
+    actionItem := {
+        "title": "Annotation is missing",
+        "description": sprintf("Annotation %v is missing", [missing]),
+        "severity": 0.1,
+        "remediation": "Add the annotation",
+        "category": "Reliability"
+    }
+}
+
+-- manifest.success.yaml --
+# This manifest is used to test policy.rego.
+# The .success.yaml in the filename is significant to the insights-cli
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: policy-test
+  namespace: default
+  annotations:
+    # This annotation will cause the policy to succeed.
+    meta.helm.sh/release-name: release
+  labels:
+    app: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      annotations:
+        certmanager.k8s.io/issuer: hello
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - image: nginx
+        imagePullPolicy: Always
+        name: nginx
+
+-- manifest.failure.yaml --
+# This manifest is used to test policy.rego.
+# The .failure.yaml in the filename is significant to the insights-cli
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: policy-test
+  namespace: default
+  annotations:
+    # Lack of this annotation will cause the policy to fail.
+    #meta.helm.sh/release-name: release
+  labels:
+    app: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: myapp
+  template:
+    metadata:
+      annotations:
+        certmanager.k8s.io/issuer: hello
+      labels:
+        app: myapp
+    spec:
+      containers:
+      - image: nginx
+        imagePullPolicy: Always
+        name: nginx
+
+

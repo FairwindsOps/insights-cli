@@ -1,0 +1,50 @@
+# Validate an automation rule and input action item, against an expected action
+# item (as would be modified by the automation rule).
+# See also inline files, denoted by a double dash, below.
+
+# Create a fairwinds-insights.yaml file.
+# THe printf command is used to create this file so that environment variables
+# can be used.
+exec printf 'options:\n  organization: %s\n  hostname: %s\n' $CI_INSIGHTS_ORGANIZATION $CI_INSIGHTS_API_URL
+cp stdout fairwinds-insights.yaml
+
+
+exec insights-cli validate rule --insights-context Agent --report-type trivy --automation-rule-file rule.js --action-item-file action-item.yaml --expected-action-item expected-output.yaml
+! stdout .
+stderr 'Success'
+
+# Expect different (incorrect) output, which should fail.
+exec insights-cli validate rule --insights-context Agent --report-type trivy --automation-rule-file rule.js --action-item-file action-item.yaml --expected-action-item expected-output-incorrect.yaml
+# Match both action item tieles shown in the diff output.
+stdout '"Image has absolutely no vulnerabilities'
+stdout 'Image has vulnerabilities'
+stderr 'Test failed'
+
+
+# ### Create files required by the above test ###
+-- rule.js --
+if (ActionItem.ReportType === "trivy" && ActionItem.Cluster === "production") {
+  ActionItem.Severity = 0.9;
+}
+
+-- action-item.yaml --
+title: Image has vulnerabilities
+cluster: production
+severity: 0.8
+-- expected-output.yaml --
+title: Image has vulnerabilities
+cluster: production
+severity: 0.8
+organization: cli-test
+fixed: false
+isCustom: false
+
+-- expected-output-incorrect.yaml --
+title: Image has absolutely no vulnerabilities
+cluster: production
+severity: 0.8
+organization: cli-test
+fixed: false
+isCustom: false
+
+

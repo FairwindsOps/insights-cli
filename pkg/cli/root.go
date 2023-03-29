@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cli
 
 import (
 	"errors"
@@ -61,6 +61,16 @@ func (c configuration) CheckForErrors() error {
 		return errors.New("options.organization not set")
 	}
 	return nil
+}
+
+// RUn executes the cobra root command, and returns an exit value depending on
+// whether an error occured.
+func Run() (exitValue int) {
+	if err := rootCmd.Execute(); err != nil {
+		logrus.Error(err)
+		return 1
+	}
+	return 0
 }
 
 func exitWithError(message string, err error) {
@@ -150,11 +160,4 @@ var rootCmd = &cobra.Command{
 		}
 		os.Exit(1)
 	},
-}
-
-func main() {
-	if err := rootCmd.Execute(); err != nil {
-		logrus.Error(err)
-		os.Exit(1)
-	}
 }
