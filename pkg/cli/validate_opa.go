@@ -1,7 +1,7 @@
 /*
 Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 */
-package main
+package cli
 
 import (
 	"fmt"

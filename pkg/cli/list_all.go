@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package cli
 
 import (
 	"fmt"
@@ -21,22 +21,27 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/xlab/treeprint"
 
+	"github.com/fairwindsops/insights-cli/pkg/opa"
 	"github.com/fairwindsops/insights-cli/pkg/rules"
 )
 
 func init() {
-	listCmd.AddCommand(listRulesCmd)
+	listCmd.AddCommand(listAllCmd)
 }
 
-var listRulesCmd = &cobra.Command{
-	Use:   "rules",
-	Short: "List automation rules.",
-	Long:  "List automation rules defined in Insights.",
+var listAllCmd = &cobra.Command{
+	Use:   "all",
+	Short: "List OPA policies and automation rules.",
+	Long:  "List OPA policies and automation rules defined in Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
 		tree := treeprint.New()
-		err := rules.BuildRulesTree(org, insightsToken, host, tree)
+		err := opa.BuildChecksTree(org, insightsToken, host, tree)
+		if err != nil {
+			logrus.Fatalf("Unable to get OPA checks from insights: %v", err)
+		}
+		err = rules.BuildRulesTree(org, insightsToken, host, tree)
 		if err != nil {
 			logrus.Fatalf("Unable to get rules from insights: %v", err)
 		}

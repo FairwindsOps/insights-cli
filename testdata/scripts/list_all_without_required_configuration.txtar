@@ -1,0 +1,30 @@
+# Attempt to list resources from Insights without proper CLI configuration.
+# By default FAIRWINDS_TOKEN is populated in the testscript enviornment from
+# the calling process.
+# Unset it here to verify insights-cli requires this variable to be set.
+env FAIRWINDS_TOKEN=
+# Expect this command to exit > 0
+! exec insights-cli list all
+# DO not expect any output to stdout (uses a regular expression).
+! stdout .
+stderr 'FAIRWINDS_TOKEN must be set'
+
+# Verify insights-cli requires a fairwinds-insights.yaml file.
+env FAIRWINDS_TOKEN=dummy_value
+! exec insights-cli list all
+! stdout .
+stderr 'Please add fairwinds-insights.yaml to the base of your repository'
+# Create fairwinds-insights.yaml with no organization.
+exec echo options:
+cp stdout fairwinds-insights.yaml
+! exec insights-cli list all
+! stdout .
+stderr 'options.organization not set'
+# Create a more complete fairwinds-insights.yaml file.
+exec printf 'options:\n  organization: %s\n  hostname: %s\n' $CI_INSIGHTS_ORGANIZATION $CI_INSIGHTS_API_URL
+cp stdout fairwinds-insights.yaml
+# This should still fail because the above dummy token value is invalid.
+# The API reports this failure as org not found instead of token is invalid.
+! exec insights-cli list all
+! stdout .
+stderr 'Organization not found'

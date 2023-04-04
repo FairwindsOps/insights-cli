@@ -17,9 +17,8 @@ jobs:
   test:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     docker:
-      # Note the Go version is also referenced via the goreleaser image,
-      # in both the snapshot and release jobs.
-      - image: cimg/go:1.19
+      # Note the goreleaser version is also referenced in the release and snapshot jobs.
+      - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
       - run:
@@ -33,16 +32,20 @@ jobs:
             fi
             go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
             golangci-lint run -v --timeout 2m0s
+      - run: ./.circleci/scripts/e2e-env.sh
+      - *install_vault
+      - rok8s/get_vault_env:
+          vault_path: repo/insights-cli/env
       - run:
           name: test
           command: |
-            go test ./...
+            go test -tags e2e ./...
             go vet ./...
   snapshot:
     working_directory: /go/src/github.com/fairwindsops/insights-cli
     resource_class: large
     docker:
-      # Note the goreleaser version is also referenced in the release job.
+      # Note the goreleaser version is also referenced in the release and test jobs.
       - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
@@ -58,19 +61,22 @@ jobs:
     resource_class: large
     shell: /bin/bash
     docker:
-      # Note the goreleaser version is also referenced in the snapshot job.
+      # Note the goreleaser version is also referenced in the snapshot and test jobs.
       - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
-      - run: |
-              go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
-              golangci-lint run -v --timeout 2m0s
-              go test ./pkg/...
-      - setup_remote_docker:
-          version: 20.10.11
+      - run: ./.circleci/scripts/e2e-env.sh
       - *install_vault
       - rok8s/get_vault_env:
           vault_path: repo/global/env
+      - rok8s/get_vault_env:
+          vault_path: repo/insights-cli/env
+      - run: |
+              go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.42.1
+              golangci-lint run -v --timeout 2m0s
+              go test -tags e2e ./pkg/...
+      - setup_remote_docker:
+          version: 20.10.11
       - rok8s/docker_login:
           registry: "quay.io"
           username: $FAIRWINDS_QUAY_USER

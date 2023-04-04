@@ -1,0 +1,100 @@
+# Use `insights-cli push ...` to zero-out OPA policies and automation rules,
+# then push new policies and rules, verifying they show up in `list` output.
+#
+# Create content directories which `insights-cli push` will use.
+# See also inline files, denoted by a double dash, below.
+mkdir empty_dir
+mkdir empty_dir/opa
+mkdir empty_dir/rules
+# There has to be a settings.yaml file to push policy configuration.
+cp settings.yaml empty_dir/settings.yaml
+mkdir populated_dir
+mkdir populated_dir/opa
+# OPA policies can live in sub-directories.
+# The difference between Insights V1 and V2 OPA policies is whether the policy
+# is accompanied by an "instance yaml file."
+mkdir populated_dir/opa/v1test
+mkdir populated_dir/opa/v2test
+cp policy.rego populated_dir/opa/anotherv2test.rego
+cp policy.rego populated_dir/opa/v1test/policy.rego
+cp policy.rego populated_dir/opa/v2test/policy.rego
+mkdir populated_dir/rules
+cp settings.yaml populated_dir/settings.yaml
+
+# Create a fairwinds-insights.yaml file.
+# THe printf command is used to create this file so that environment variables
+# can be used.
+exec printf 'options:\n  organization: %s\n  hostname: %s\n' $CI_INSIGHTS_ORGANIZATION $CI_INSIGHTS_API_URL
+cp stdout fairwinds-insights.yaml
+
+# Zero-out the Insights org by pushing empty OPA policies, automation rules,
+# and policy settings.
+exec insights-cli push opa --delete -d empty_dir
+! stdout .
+stderr 'Push succeeded.'
+exec insights-cli push rules --delete -d empty_dir
+! stdout .
+stderr 'Push succeeded.'
+exec insights-cli push settings -d empty_dir
+! stdout .
+stderr 'Push succeeded.'
+
+# Push OPA policies and automation rules, then list them.
+exec insights-cli push all -d populated_dir
+! stdout .
+stderr 'Push succeeded.'
+exec insights-cli list all --no-decoration
+cp stdout output.txt
+! stderr .
+cmp output.txt desired_output.txt
+
+
+# ### Create files used by the above tests. ###
+
+# A minimal settings.yaml file, to satisfy pushing policy settings to Insights.
+# This is copied above, into sub-directories that will be synced to Insights.
+-- settings.yaml --
+checks:
+
+# A minimal oPA policy.
+# This is copied above, into sub-directories that will be synced to Insights.
+-- policy.rego --
+package fairwinds
+
+info[actionItem] {
+    actionItem := {
+        "description": sprintf("insights context %v and cluster %v", [insightsinfo("context"), insightsinfo("clusterX")]),
+        "title": "test2",
+        "severity": 0.9,
+        "remediation": "Keep working hard.",
+        "category": "Security"
+    }
+}
+
+# An instance yaml that accompanies a V1 OPA policy.
+-- populated_dir/opa/v1test/deployments.yaml --
+targets:
+- apiGroups: ["apps"]
+  kinds: ["Deployment"]
+
+# An automation rule.
+-- populated_dir/rules/pluto-severity.yaml --
+name: "pluto severity increase"
+description: "Assigns all Action Items from pluto to a higher severity@"
+action: |
+  if (ActionItem.ReportType === 'pluto') {
+    ActionItem.Severity = 0.99;
+  }
+
+# The desired output from insights-cli list all, showing pushed OPA policies and automation rules.
+# Note the blank line at the end is required to match the insights-cli output.
+-- desired_output.txt --
+.
+   opa
+       anotherv2test (v2)
+       v1test (v1)
+           deployments
+       v2test (v2)
+   rules
+       pluto severity increase
+
