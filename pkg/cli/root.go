@@ -88,6 +88,8 @@ func insightsAPINotRequired(cmd *cobra.Command) bool {
 		cmd.Use == "insights-cli" ||
 		cmd.Use == "version" ||
 		cmd.Use == "validate" ||
+		// TODO: this function is very hack, improve it by setting explicit dependencies
+		cmd.Use == "generate" || cmd.Use == "opa" || cmd.Use == "openai [-m model] [-k key] -p prompt" ||
 		(cmd.Parent().Use == "validate" && strings.HasPrefix(cmd.Use, "opa "))
 }
 
