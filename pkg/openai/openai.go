@@ -2,7 +2,6 @@ package openai
 
 import (
 	"context"
-	"fmt"
 )
 
 type Client struct {
@@ -44,18 +43,12 @@ func NewClient(apiKey, model string, debug bool) *Client {
 	}
 }
 
-func (cs *Client) SendPrompt(ctx context.Context, prompt string) (*Operation, error) {
-	if cs.debug {
-		fmt.Print("\n\n---\n\n", prompt, "\n\n---\n\n")
-	}
+func (cs *Client) SendPrompt(ctx context.Context, prompt string) (string, error) {
 	message := Message{Role: "user", Content: promptBoilerplate + prompt + "'"}
 	request := Request{Model: cs.model, Messages: []Message{message}}
-	response, err := sendRequest(ctx, cs.apiKey, request)
+	content, err := sendRequest(ctx, cs.apiKey, request)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	if cs.debug {
-		fmt.Print("\n\n---\n\n", response, "\n\n---\n\n")
-	}
-	return parseResponse(response), nil
+	return content, nil
 }

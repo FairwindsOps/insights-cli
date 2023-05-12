@@ -27,7 +27,7 @@ var generateOPAOpenAI = &cobra.Command{
 	Short: "generate an Insights OPA policy based on OpenAI.",
 	Long:  `generate an Insights OPA policy based on OpenAI.`,
 	Example: `
-	To generate a policy that blocks anyone from using the default namespace: insights-cli generate opa openai -k $OPENAI_API_KEY -m gtp-4-0314 -p "blocks anyone from using the default namespace"
+	To generate a policy that blocks anyone from using the default namespace: insights-cli generate opa openai -k $OPENAI_API_KEY -m gpt-4 -p "blocks anyone from using the default namespace"
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if !checkGenerateOPAFlags() {
@@ -44,11 +44,11 @@ var generateOPAOpenAI = &cobra.Command{
 		client := openai.NewClient(apiKey, openAIModel, true)
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		rs, err := client.SendPrompt(ctx, openAIPrompt)
+		content, err := client.SendPrompt(ctx, openAIPrompt)
 		if err != nil {
 			logrus.Fatal(err)
 		}
-		fmt.Printf("%+v", rs)
+		fmt.Printf("\n%s\n", content)
 	},
 }
 

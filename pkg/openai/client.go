@@ -50,8 +50,6 @@ func sendRequest(ctx context.Context, apiKey string, request Request) (string, e
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
-	fmt.Print(req.Header)
-
 	reqDone := make(chan bool)
 
 	go func() {
