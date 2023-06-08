@@ -35,9 +35,13 @@ var pushOPACmd = &cobra.Command{
 	Short: "Push OPA policies.",
 	Long:  "Push OPA policies to Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
+		err := requiresInsightsAPIConfig()
+		if err != nil {
+			logrus.Fatal(err)
+		}
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		err := opa.PushOPAChecks(pushDir+"/"+pushOPASubDir, org, insightsToken, host, deleteMissingOPA, pushDryRun)
+		err = opa.PushOPAChecks(pushDir+"/"+pushOPASubDir, org, insightsToken, host, deleteMissingOPA, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push OPA Checks: %v", err)
 		}

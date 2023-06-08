@@ -42,7 +42,11 @@ var pushAllCmd = &cobra.Command{
 	Short: "Push OPA policies, automation rules, and policies configuration.",
 	Long:  "Push OPA policies, automation rules, and policies configuration to Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
-		_, err := os.Stat(pushDir)
+		err := requiresInsightsAPIConfig()
+		if err != nil {
+			logrus.Fatal(err)
+		}
+		_, err = os.Stat(pushDir)
 		if err != nil {
 			logrus.Fatalf("Unable to push  to Insights: %v", err)
 		}
