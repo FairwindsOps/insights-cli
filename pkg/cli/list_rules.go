@@ -33,10 +33,14 @@ var listRulesCmd = &cobra.Command{
 	Short: "List automation rules.",
 	Long:  "List automation rules defined in Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
+		err := requiresInsightsAPIConfig()
+		if err != nil {
+			logrus.Fatal(err)
+		}
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
 		tree := treeprint.New()
-		err := rules.BuildRulesTree(org, insightsToken, host, tree)
+		err = rules.BuildRulesTree(org, insightsToken, host, tree)
 		if err != nil {
 			logrus.Fatalf("Unable to get rules from insights: %v", err)
 		}
