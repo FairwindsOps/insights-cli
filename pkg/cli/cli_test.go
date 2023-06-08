@@ -29,7 +29,6 @@ func TestMain(m *testing.M) {
 // Define a test that runs TestScript to process script files in
 // the testdata/scripts directory.
 func TestScript(t *testing.T) {
-	t.Parallel()
 	testscript.Run(t, testscript.Params{
 		Dir: "../../testdata/scripts",
 		Setup: func(e *testscript.Env) error {
