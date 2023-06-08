@@ -19,7 +19,7 @@ import (
 
 // A TestScript setup function that passes specific environment variables into
 // the tests.
-var testScriptSetup func(*testscript.Env) error = func(e *testscript.Env) error {
+testScriptSetup := func(e *testscript.Env) error {
 	e.Vars = append(e.Vars,
 		fmt.Sprintf("FAIRWINDS_TOKEN=%s", os.Getenv("FAIRWINDS_TOKEN")),
 		fmt.Sprintf("CI_INSIGHTS_API_URL=%s", os.Getenv("CI_INSIGHTS_API_URL")),
