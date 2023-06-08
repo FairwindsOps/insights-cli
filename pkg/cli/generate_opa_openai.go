@@ -11,9 +11,14 @@ import (
 	"golang.org/x/net/context"
 )
 
+const (
+	prePolicyNotice = "NOTICE: The OpenAI integration is available for your convenience. Please be aware that you are using your OpenAI API key and all interaction will be governed by your agreement with OpenAI."
+	inPolicyNotice  = "# NOTICE: This policy was generated in part with OpenAI’s large-scale language-generation model. The generated policy should be reviewed and tested for accuracy and revised in order to obtain the desired outcome. The User is responsible for the accuracy of the policy."
+)
+
 var openAIAPIKey, openAIModel, openAIPrompt string
 
-// insights-cli generate opa open-api
+// insights-cli generate opa open-ai
 func init() {
 	generateOPAOpenAI.Flags().StringVarP(&openAIAPIKey, "openai-api-key", "k", "", "The API key for OpenAI")
 	generateOPAOpenAI.Flags().StringVarP(&openAIModel, "openai-model", "m", "gpt-4", "The OpenAI model to use")
@@ -30,6 +35,7 @@ var generateOPAOpenAI = &cobra.Command{
 	To generate a policy that blocks anyone from using the default namespace: insights-cli generate opa openai -k $OPENAI_API_KEY -m gpt-4 -p "blocks anyone from using the default namespace"
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Println(prePolicyNotice)
 		if !checkGenerateOPAFlags() {
 			err := cmd.Help()
 			if err != nil {
@@ -48,7 +54,7 @@ var generateOPAOpenAI = &cobra.Command{
 		if err != nil {
 			logrus.Fatal(err)
 		}
-		fmt.Printf("\n%s\n", content)
+		fmt.Printf("\n\n%s\n%s\n", inPolicyNotice, content)
 	},
 }
 
