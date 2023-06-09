@@ -10,9 +10,10 @@ package cli_test
 
 import (
 	"fmt"
-	"github.com/fairwindsops/insights-cli/pkg/cli"
 	"os"
 	"testing"
+
+	"github.com/fairwindsops/insights-cli/pkg/cli"
 
 	"github.com/rogpeppe/go-internal/testscript"
 )
