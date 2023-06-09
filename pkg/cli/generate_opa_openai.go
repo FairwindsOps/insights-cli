@@ -29,8 +29,8 @@ func init() {
 // generateOPAOpenAI represents the validate opa command
 var generateOPAOpenAI = &cobra.Command{
 	Use:   "openai [-m model] [-k key] -p prompt",
-	Short: "generate an Insights OPA policy based on OpenAI.",
-	Long:  `generate an Insights OPA policy based on OpenAI.`,
+	Short: "generate an Insights OPA policy with the help of OpenAI's ChatGPT.",
+	Long:  `use OpenAI's ChatGPT API to generate an OPA policy by providing an English-language prompt describing what the policy should do. You will need to provide your own OpenAI API key.`,
 	Example: `
 	To generate a policy that blocks anyone from using the default namespace: insights-cli generate opa openai -k $OPENAI_API_KEY -m gpt-4 -p "blocks anyone from using the default namespace"
 	`,
