@@ -29,10 +29,6 @@ var verifyRuleCmd = &cobra.Command{
 	Long:   "Validates an automation rule by applying it against the specified action item",
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := requiresInsightsAPIConfig()
-		if err != nil {
-			logrus.Fatal(err)
-		}
 		var actionItem rules.ActionItem
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname

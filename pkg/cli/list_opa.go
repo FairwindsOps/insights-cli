@@ -34,14 +34,10 @@ var listOPACmd = &cobra.Command{
 	Long:   "List OPA policies defined in Insights.",
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := requiresInsightsAPIConfig()
-		if err != nil {
-			logrus.Fatal(err)
-		}
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
 		tree := treeprint.New()
-		err = opa.BuildChecksTree(org, insightsToken, host, tree)
+		err := opa.BuildChecksTree(org, insightsToken, host, tree)
 		if err != nil {
 			logrus.Fatalf("Unable to get OPA checks from insights: %v", err)
 		}
