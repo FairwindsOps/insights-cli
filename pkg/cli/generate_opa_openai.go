@@ -20,7 +20,7 @@ var openAIAPIKey, openAIModel, openAIPrompt string
 
 // insights-cli generate opa open-ai
 func init() {
-	generateOPAOpenAI.Flags().StringVarP(&openAIAPIKey, "openai-api-key", "k", "", "The API key for OpenAI")
+	generateOPAOpenAI.Flags().StringVarP(&openAIAPIKey, "openai-api-key", "k", "", "The API key for OpenAI. Can also be set with environment variable OPENAI_API_KEY")
 	generateOPAOpenAI.Flags().StringVarP(&openAIModel, "openai-model", "m", "gpt-4", "The OpenAI model to use")
 	generateOPAOpenAI.Flags().StringVarP(&openAIPrompt, "prompt", "p", "", "A text specification of the desired OPA policy")
 	generateOPACmd.AddCommand(generateOPAOpenAI)
