@@ -38,9 +38,10 @@ func init() {
 }
 
 var pushAllCmd = &cobra.Command{
-	Use:   "all",
-	Short: "Push OPA policies, automation rules, and policies configuration.",
-	Long:  "Push OPA policies, automation rules, and policies configuration to Insights.",
+	Use:    "all",
+	Short:  "Push OPA policies, automation rules, and policies configuration.",
+	Long:   "Push OPA policies, automation rules, and policies configuration to Insights.",
+	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := requiresInsightsAPIConfig()
 		if err != nil {

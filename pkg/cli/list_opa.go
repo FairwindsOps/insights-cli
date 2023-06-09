@@ -29,9 +29,10 @@ func init() {
 }
 
 var listOPACmd = &cobra.Command{
-	Use:   "opa",
-	Short: "List OPA policies.",
-	Long:  "List OPA policies defined in Insights.",
+	Use:    "opa",
+	Short:  "List OPA policies.",
+	Long:   "List OPA policies defined in Insights.",
+	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := requiresInsightsAPIConfig()
 		if err != nil {

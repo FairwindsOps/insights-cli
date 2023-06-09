@@ -24,9 +24,10 @@ func init() {
 }
 
 var verifyRuleCmd = &cobra.Command{
-	Use:   "rule -t  <insights context> {-r <rule file> -a <action item file>} [-i <expected output file>]",
-	Short: "Validates an automation rule",
-	Long:  "Validates an automation rule by applying it against the specified action item",
+	Use:    "rule -t  <insights context> {-r <rule file> -a <action item file>} [-i <expected output file>]",
+	Short:  "Validates an automation rule",
+	Long:   "Validates an automation rule by applying it against the specified action item",
+	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		err := requiresInsightsAPIConfig()
 		if err != nil {
