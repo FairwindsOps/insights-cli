@@ -34,7 +34,7 @@ labelblock[actionItem] {
 }
 <>
 
-The new policy you write should: '`
+The new policy you write should: `
 
 func NewClient(apiKey, model string, debug bool) *Client {
 	return &Client{
