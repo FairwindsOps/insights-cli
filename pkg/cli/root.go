@@ -90,15 +90,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&noDecoration, "no-decoration", "", false, "Do not include decorative characters in output, such as tree visualization.")
 }
 
-func validateAndLoadInsightsAPIConfigWrapper(cmd *cobra.Command, args []string) {
-	err := validateAndLoadInsightsAPIConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
-}
-
-// validateAndLoadInsightsAPIConfig checks to make sure the user has set the FAIRWINDS_TOKEN environment variable and has a valid config file.
-func validateAndLoadInsightsAPIConfig() error {
+// requiresInsightsAPIConfig checks to make sure the user has set the FAIRWINDS_TOKEN environment variable and has a valid config file.
+func requiresInsightsAPIConfig() error {
 	insightsToken = os.Getenv("FAIRWINDS_TOKEN")
 	if insightsToken == "" {
 		return errors.New("FAIRWINDS_TOKEN must be set.")
@@ -116,7 +109,7 @@ func validateAndLoadInsightsAPIConfig() error {
 	} else if !os.IsNotExist(err) {
 		return fmt.Errorf("Could not open fairwinds-insights.yaml: %v", err)
 	} else if organization == "" {
-		return fmt.Errorf("Please add fairwinds-insights.yaml to the base of your repository: %v", err)
+		return fmt.Errorf("Please add fairwinds-insights.yaml to the base of your repository: %v", nil)
 	}
 	configurationObject.SetDefaults()
 	if organization != "" {

@@ -31,14 +31,17 @@ func init() {
 }
 
 var pushRulesCmd = &cobra.Command{
-	Use:    "rules",
-	Short:  "Push automation rules.",
-	Long:   "Push automation rules to Insights.",
-	PreRun: validateAndLoadInsightsAPIConfigWrapper,
+	Use:   "rules",
+	Short: "Push automation rules.",
+	Long:  "Push automation rules to Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
+		err := requiresInsightsAPIConfig()
+		if err != nil {
+			logrus.Fatal(err)
+		}
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		err := rules.PushRules(pushDir+"/"+pushRulesSubDir, org, insightsToken, host, deleteMissingRules, pushDryRun)
+		err = rules.PushRules(pushDir+"/"+pushRulesSubDir, org, insightsToken, host, deleteMissingRules, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push rules: %v", err)
 		}
