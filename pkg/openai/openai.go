@@ -2,6 +2,7 @@ package openai
 
 import (
 	"context"
+	"strings"
 )
 
 type Client struct {
@@ -50,5 +51,5 @@ func (cs *Client) SendPrompt(ctx context.Context, prompt string) (string, error)
 	if err != nil {
 		return "", err
 	}
-	return content, nil
+	return strings.ReplaceAll(content, "<>", ""), nil // removes the delimiters
 }
