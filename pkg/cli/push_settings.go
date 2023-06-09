@@ -26,17 +26,14 @@ func init() {
 }
 
 var pushSettingsCmd = &cobra.Command{
-	Use:   "settings",
-	Short: "Push policies configuration.",
-	Long:  "Push policies configuration to Insights to streamline settings across multiple Insights plugins.",
+	Use:    "settings",
+	Short:  "Push policies configuration.",
+	Long:   "Push policies configuration to Insights to streamline settings across multiple Insights plugins.",
+	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := requiresInsightsAPIConfig()
-		if err != nil {
-			logrus.Fatal(err)
-		}
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		err = policies.PushPolicies(pushDir, org, insightsToken, host, pushDryRun)
+		err := policies.PushPolicies(pushDir, org, insightsToken, host, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push policies configuration: %v", err)
 		}
