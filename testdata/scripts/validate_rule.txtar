@@ -10,8 +10,7 @@ cp stdout fairwinds-insights.yaml
 
 
 exec insights-cli validate rule --insights-context Agent --report-type trivy --automation-rule-file rule.js --action-item-file action-item.yaml --expected-action-item expected-output.yaml
-! stderr .
-stdout 'Success'
+stderr 'level=info msg="Success - actual response matches expected response"'
 
 # Expect different (incorrect) output, which should fail.
 exec insights-cli validate rule --insights-context Agent --report-type trivy --automation-rule-file rule.js --action-item-file action-item.yaml --expected-action-item expected-output-incorrect.yaml
