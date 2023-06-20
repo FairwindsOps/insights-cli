@@ -17,7 +17,7 @@ package models
 // KubernetesTarget represents a set of API Versions and Kinds to find Kubernetes objects.
 type KubernetesTarget struct {
 	APIGroups []string `json:"apiGroups" yaml:"apiGroups"`
-	Kinds     []string
+	Kinds     []string `json:"kinds" yaml:"kinds"`
 }
 
 // OutputModel is a model to represent settings for Action Items created by OPA.
@@ -39,10 +39,10 @@ type CustomCheckModel struct {
 
 // CustomCheckInstanceModel is a model for the API endpoint to receive an Instance for a Custom Check in OPA
 type CustomCheckInstanceModel struct {
-	CheckName    string `json:"-" yaml:"-"`
-	InstanceName string `json:"-" yaml:"-"`
-	Targets      []KubernetesTarget
-	Clusters     []string
-	Parameters   map[string]interface{}
-	Output       OutputModel
+	CheckName    string                 `json:"-" yaml:"-"`
+	InstanceName string                 `json:"-" yaml:"-"`
+	Targets      []KubernetesTarget     `yaml:"targets"`
+	Clusters     []string               `yaml:"clusters"`
+	Parameters   map[string]interface{} `yaml:"parameters"`
+	Output       OutputModel            `yaml:"output"`
 }
