@@ -56,7 +56,7 @@ cmp output.txt desired_output.txt
 -- settings.yaml --
 checks:
 
-# A minimal oPA policy.
+# A minimal OPA policy.
 # This is copied above, into sub-directories that will be synced to Insights.
 -- policy.rego --
 package fairwinds

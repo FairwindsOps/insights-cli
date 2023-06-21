@@ -65,32 +65,32 @@ const (
 )
 
 type ActionItem struct {
-	TicketCreatedAt   *time.Time                      `yaml:"TicketCreatedAt,omitempty"`
-	TicketLink        *string                         `yaml:"TicketLink,omitempty"`
-	TicketProvider    *VerifyActionItemTicketProvider `yaml:"TicketProvider,omitempty"`
-	AssigneeEmail     *string                         `yaml:"assigneeEmail,omitempty"`
-	Category          *string                         `yaml:"category,omitempty"`
-	Cluster           *string                         `yaml:"cluster,omitempty"`
-	DeletedAt         *time.Time                      `yaml:"deletedAt,omitempty"`
-	Description       *string                         `yaml:"description,omitempty"`
-	EventType         *string                         `yaml:"eventType,omitempty"`
-	FirstSeen         *time.Time                      `yaml:"firstSeen,omitempty"`
-	Fixed             *bool                           `yaml:"fixed,omitempty"`
-	IsCustom          *bool                           `yaml:"isCustom,omitempty"`
-	LastReportedAt    *time.Time                      `yaml:"lastReportedAt,omitempty"`
-	Notes             *string                         `yaml:"notes,omitempty"`
-	Organization      *string                         `yaml:"organization,omitempty"`
-	Remediation       *string                         `yaml:"remediation,omitempty"`
-	ReportType        *string                         `yaml:"reportType,omitempty"`
-	Resolution        *string                         `yaml:"resolution,omitempty"`
-	ResourceContainer *string                         `yaml:"resourceContainer,omitempty"`
-	ResourceKind      *string                         `yaml:"resourceKind,omitempty"`
-	ResourceLabels    map[string]string               `yaml:"resourceLabels,omitempty"`
-	ResourceName      *string                         `yaml:"resourceName,omitempty"`
-	ResourceNamespace *string                         `yaml:"resourceNamespace,omitempty"`
-	Severity          *float32                        `yaml:"severity,omitempty"`
-	Tags              []string                        `yaml:"tags"`
-	Title             string                          `yaml:"title"`
+	TicketCreatedAt   *time.Time                      `json:"TicketCreatedAt,omitempty" yaml:"TicketCreatedAt,omitempty"`
+	TicketLink        *string                         `json:"TicketLink,omitempty" yaml:"TicketLink,omitempty"`
+	TicketProvider    *VerifyActionItemTicketProvider `json:"TicketProvider,omitempty" yaml:"TicketProvider,omitempty"`
+	AssigneeEmail     *string                         `json:"assigneeEmail,omitempty" yaml:"assigneeEmail,omitempty"`
+	Category          *string                         `json:"category,omitempty" yaml:"category,omitempty"`
+	Cluster           *string                         `json:"cluster,omitempty" yaml:"cluster,omitempty"`
+	DeletedAt         *time.Time                      `json:"deletedAt,omitempty" yaml:"deletedAt,omitempty"`
+	Description       *string                         `json:"description,omitempty" yaml:"description,omitempty"`
+	EventType         *string                         `json:"eventType,omitempty" yaml:"eventType,omitempty"`
+	FirstSeen         *time.Time                      `json:"firstSeen,omitempty" yaml:"firstSeen,omitempty"`
+	Fixed             *bool                           `json:"fixed,omitempty" yaml:"fixed,omitempty"`
+	IsCustom          *bool                           `json:"isCustom,omitempty" yaml:"isCustom,omitempty"`
+	LastReportedAt    *time.Time                      `json:"lastReportedAt,omitempty" yaml:"lastReportedAt,omitempty"`
+	Notes             *string                         `json:"notes,omitempty" yaml:"notes,omitempty"`
+	Organization      *string                         `json:"organization,omitempty" yaml:"organization,omitempty"`
+	Remediation       *string                         `json:"remediation,omitempty" yaml:"remediation,omitempty"`
+	ReportType        *string                         `json:"reportType,omitempty" yaml:"reportType,omitempty"`
+	Resolution        *string                         `json:"resolution,omitempty" yaml:"resolution,omitempty"`
+	ResourceContainer *string                         `json:"resourceContainer,omitempty" yaml:"resourceContainer,omitempty"`
+	ResourceKind      *string                         `json:"resourceKind,omitempty" yaml:"resourceKind,omitempty"`
+	ResourceLabels    map[string]string               `json:"resourceLabels,omitempty" yaml:"resourceLabels,omitempty"`
+	ResourceName      *string                         `json:"resourceName,omitempty" yaml:"resourceName,omitempty"`
+	ResourceNamespace *string                         `json:"resourceNamespace,omitempty" yaml:"resourceNamespace,omitempty"`
+	Severity          *float32                        `json:"severity,omitempty" yaml:"severity,omitempty"`
+	Tags              []string                        `json:"tags" yaml:"tags"`
+	Title             string                          `json:"title" yaml:"title"`
 }
 
 // RuleExecutionContext defines model for RuleExecutionContext.
@@ -104,10 +104,10 @@ const (
 )
 
 type VerifyRule struct {
-	ActionItem ActionItem           `yaml:"actionItem"`
-	Context    RuleExecutionContext `yaml:"context"`
-	ReportType string               `yaml:"reportType"`
-	Script     string               `yaml:"script"`
+	ActionItem ActionItem           `json:"actionItem" yaml:"actionItem"`
+	Context    RuleExecutionContext `json:"context" yaml:"context"`
+	ReportType string               `json:"reportType" yaml:"reportType"`
+	Script     string               `json:"script" yaml:"script"`
 }
 
 // getRules queries Fairwinds Insights to retrieve all of the Rules for an organization
@@ -121,8 +121,8 @@ func getRules(org, token, hostName string) ([]Rule, error) {
 	}
 	var rules []Rule
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return nil, errors.New("invalid response code")
+		logrus.Errorf("getRules: invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return nil, errors.New("getRules: invalid response code")
 	}
 	err = resp.ToJSON(&rules)
 	if err != nil {
@@ -141,8 +141,8 @@ func insertRule(org, token, hostName string, rule Rule) error {
 		return err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return errors.New("invalid response code")
+		logrus.Errorf("insertRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return errors.New("insertRule: invalid response code")
 	}
 	return nil
 }
@@ -156,8 +156,8 @@ func updateRule(org, token, hostName string, rule Rule) error {
 		return err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return errors.New("invalid response code")
+		logrus.Errorf("updateRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return errors.New("updateRule: invalid response code")
 	}
 	return nil
 }
@@ -171,8 +171,8 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 		return err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return errors.New("invalid response code")
+		logrus.Errorf("deleteRule: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return errors.New("deleteRule: invalid response code")
 	}
 	return nil
 }
@@ -186,8 +186,8 @@ func RunVerifyRule(org, token, hostName string, rule VerifyRule) (*ActionItem, e
 		return nil, err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return nil, errors.New("invalid response code")
+		logrus.Errorf("runVerifyRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return nil, errors.New("runVerifyRule: invalid response code")
 	}
 	var verify *ActionItem
 	err = resp.ToJSON(&verify)
