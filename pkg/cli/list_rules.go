@@ -29,9 +29,10 @@ func init() {
 }
 
 var listRulesCmd = &cobra.Command{
-	Use:   "rules",
-	Short: "List automation rules.",
-	Long:  "List automation rules defined in Insights.",
+	Use:    "rules",
+	Short:  "List automation rules.",
+	Long:   "List automation rules defined in Insights.",
+	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname

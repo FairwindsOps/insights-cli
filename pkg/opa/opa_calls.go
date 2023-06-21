@@ -46,8 +46,8 @@ func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) 
 	}
 	var checks []opaPlugin.OPACustomCheck
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return nil, errors.New("invalid response code")
+		logrus.Errorf("GetChecks: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return nil, errors.New("GetChecks: invalid response code")
 	}
 	err = resp.ToJSON(&checks)
 	if err != nil {
@@ -64,8 +64,8 @@ func GetInstances(org, checkName, token, hostName string) ([]opaPlugin.CheckSett
 		return nil, err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return nil, errors.New("invalid response code")
+		logrus.Errorf("GetInstances: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return nil, errors.New("GetInstances: invalid response code")
 	}
 	var instances []opaPlugin.CheckSetting
 	err = resp.ToJSON(&instances)
@@ -83,8 +83,8 @@ func DeleteCheck(check models.CustomCheckModel, org, token, hostName string) err
 		return err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return errors.New("invalid response code")
+		logrus.Errorf("DeleteCheck: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return errors.New("DeleteCheck: invalid response code")
 	}
 	return nil
 }
@@ -97,8 +97,8 @@ func PutCheck(check models.CustomCheckModel, org, token, hostName string) error 
 		return err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return errors.New("invalid response code")
+		logrus.Errorf("PutCheck: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return errors.New("PutCheck: invalid response code")
 	}
 	return nil
 }
@@ -111,8 +111,8 @@ func DeleteInstance(instance models.CustomCheckInstanceModel, org, token, hostNa
 		return err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return errors.New("invalid response code")
+		logrus.Errorf("DeleteInstance: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return errors.New("DeleteInstance: invalid response code")
 	}
 	return nil
 }
@@ -125,8 +125,8 @@ func PutInstance(instance models.CustomCheckInstanceModel, org, token, hostName 
 		return err
 	}
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return errors.New("invalid response code")
+		logrus.Errorf("PutInstance: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+		return errors.New("PutInstance: invalid response code")
 	}
 	return nil
 }

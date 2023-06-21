@@ -31,9 +31,10 @@ func init() {
 }
 
 var pushRulesCmd = &cobra.Command{
-	Use:   "rules",
-	Short: "Push automation rules.",
-	Long:  "Push automation rules to Insights.",
+	Use:    "rules",
+	Short:  "Push automation rules.",
+	Long:   "Push automation rules to Insights.",
+	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
