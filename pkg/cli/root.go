@@ -16,9 +16,9 @@ package cli
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
-	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -81,16 +81,6 @@ func exitWithError(message string, err error) {
 	}
 }
 
-// insightsAPINotRequired returns true if Insights API connectivity is not
-// required for the supplied Cobra.command.
-func insightsAPINotRequired(cmd *cobra.Command) bool {
-	return cmd.Use == "help [command]" ||
-		cmd.Use == "insights-cli" ||
-		cmd.Use == "version" ||
-		cmd.Use == "validate" ||
-		(cmd.Parent().Use == "validate" && strings.HasPrefix(cmd.Use, "opa "))
-}
-
 func init() {
 	logrus.SetFormatter(&logrus.TextFormatter{DisableTimestamp: true, DisableLevelTruncation: true})
 
@@ -98,6 +88,45 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./fairwinds-insights.yaml", "Configuration file")
 	rootCmd.PersistentFlags().StringVarP(&organization, "organization", "", "", "Fairwinds Insights Organization name")
 	rootCmd.PersistentFlags().BoolVarP(&noDecoration, "no-decoration", "", false, "Do not include decorative characters in output, such as tree visualization.")
+}
+
+func validateAndLoadInsightsAPIConfigWrapper(cmd *cobra.Command, args []string) {
+	err := validateAndLoadInsightsAPIConfig()
+	if err != nil {
+		logrus.Fatal(err)
+	}
+}
+
+// validateAndLoadInsightsAPIConfig checks to make sure the user has set the FAIRWINDS_TOKEN environment variable and has a valid config file.
+func validateAndLoadInsightsAPIConfig() error {
+	insightsToken = os.Getenv("FAIRWINDS_TOKEN")
+	if insightsToken == "" {
+		return errors.New("FAIRWINDS_TOKEN must be set.")
+	}
+	configHandler, err := os.Open(configFile)
+	if err == nil {
+		configContents, err := io.ReadAll(configHandler)
+		if err != nil {
+			return fmt.Errorf("Could not read fairwinds-insights.yaml: %v", err)
+		}
+		err = yaml.Unmarshal(configContents, &configurationObject)
+		if err != nil {
+			return fmt.Errorf("Could not parse fairwinds-insights.yaml: %v", err)
+		}
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("Could not open fairwinds-insights.yaml: %v", err)
+	} else if organization == "" {
+		return fmt.Errorf("Please add fairwinds-insights.yaml to the base of your repository: %v", err)
+	}
+	configurationObject.SetDefaults()
+	if organization != "" {
+		configurationObject.Options.Organization = organization
+	}
+	err = configurationObject.CheckForErrors()
+	if err != nil {
+		return fmt.Errorf("Error parsing fairwinds-insights.yaml: %v", err)
+	}
+	return nil
 }
 
 func preRun(cmd *cobra.Command, args []string) {
@@ -111,39 +140,6 @@ func preRun(cmd *cobra.Command, args []string) {
 		logrus.Errorf("log-level flag has invalid value %s", logLevel)
 	} else {
 		logrus.SetLevel(parsedLevel)
-	}
-	if insightsAPINotRequired(cmd) {
-		// Do not require Insights API options for the root command or others that
-		// do not need to connect to the Insights API.
-		return
-	}
-	insightsToken = os.Getenv("FAIRWINDS_TOKEN")
-	if insightsToken == "" {
-		exitWithError("FAIRWINDS_TOKEN must be set.", nil)
-	}
-
-	configHandler, err := os.Open(configFile)
-	if err == nil {
-		configContents, err := io.ReadAll(configHandler)
-		if err != nil {
-			exitWithError("Could not read fairwinds-insights.yaml", err)
-		}
-		err = yaml.Unmarshal(configContents, &configurationObject)
-		if err != nil {
-			exitWithError("Could not parse fairwinds-insights.yaml", err)
-		}
-	} else if !os.IsNotExist(err) {
-		exitWithError("Could not open fairwinds-insights.yaml", err)
-	} else if organization == "" {
-		exitWithError("Please add fairwinds-insights.yaml to the base of your repository.", nil)
-	}
-	configurationObject.SetDefaults()
-	if organization != "" {
-		configurationObject.Options.Organization = organization
-	}
-	err = configurationObject.CheckForErrors()
-	if err != nil {
-		exitWithError("Error parsing fairwinds-insights.yaml", err)
 	}
 }
 

@@ -10,27 +10,17 @@ package cli_test
 
 import (
 	"fmt"
-	"github.com/fairwindsops/insights-cli/pkg/cli"
 	"os"
 	"testing"
+
+	"github.com/fairwindsops/insights-cli/pkg/cli"
 
 	"github.com/rogpeppe/go-internal/testscript"
 )
 
-// A TestScript setup function that passes specific environment variables into
-// the tests.
-var testScriptSetup func(*testscript.Env) error = func(e *testscript.Env) error {
-	e.Vars = append(e.Vars,
-		fmt.Sprintf("FAIRWINDS_TOKEN=%s", os.Getenv("FAIRWINDS_TOKEN")),
-		fmt.Sprintf("CI_INSIGHTS_API_URL=%s", os.Getenv("CI_INSIGHTS_API_URL")),
-		fmt.Sprintf("CI_INSIGHTS_ORGANIZATION=%s", os.Getenv("CI_INSIGHTS_ORGANIZATION")))
-	return nil
-}
-
 func TestMain(m *testing.M) {
 	// Map running `insights-cli`, to call our main function.
-	// This avoids tests running an unexpected insights-cli that may be in $PATH
-	// on a local workstation.
+	// This avoids tests running an unexpected insights-cli that may be in $PATH on a local workstation.
 	os.Exit(testscript.RunMain(m, map[string]func() int{
 		"insights-cli": cli.Run,
 	}))
@@ -41,7 +31,13 @@ func TestMain(m *testing.M) {
 func TestScript(t *testing.T) {
 	t.Parallel()
 	testscript.Run(t, testscript.Params{
-		Dir:   "../../testdata/scripts",
-		Setup: testScriptSetup,
+		Dir: "../../testdata/scripts",
+		Setup: func(e *testscript.Env) error {
+			e.Vars = append(e.Vars,
+				fmt.Sprintf("FAIRWINDS_TOKEN=%s", os.Getenv("FAIRWINDS_TOKEN")),
+				fmt.Sprintf("CI_INSIGHTS_API_URL=%s", os.Getenv("CI_INSIGHTS_API_URL")),
+				fmt.Sprintf("CI_INSIGHTS_ORGANIZATION=%s", os.Getenv("CI_INSIGHTS_ORGANIZATION")))
+			return nil
+		},
 	})
 }

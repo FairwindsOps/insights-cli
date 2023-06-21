@@ -10,8 +10,7 @@ cp stdout fairwinds-insights.yaml
 
 
 exec insights-cli validate rule --insights-context Agent --report-type trivy --automation-rule-file rule.js --action-item-file action-item.yaml --expected-action-item expected-output.yaml
-! stdout .
-stderr 'Success'
+stderr 'level=info msg="Success - actual response matches expected response"'
 
 # Expect different (incorrect) output, which should fail.
 exec insights-cli validate rule --insights-context Agent --report-type trivy --automation-rule-file rule.js --action-item-file action-item.yaml --expected-action-item expected-output-incorrect.yaml
@@ -31,6 +30,7 @@ if (ActionItem.ReportType === "trivy" && ActionItem.Cluster === "production") {
 title: Image has vulnerabilities
 cluster: production
 severity: 0.8
+
 -- expected-output.yaml --
 title: Image has vulnerabilities
 cluster: production
