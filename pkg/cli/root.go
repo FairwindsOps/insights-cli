@@ -45,7 +45,7 @@ type optionConfig struct {
 	RepositoryName string `yaml:"repositoryName"`
 }
 
-// SetDefaults sets configurationd defaults
+// SetDefaults sets configuration defaults
 func (c *configuration) SetDefaults() {
 	if c.Options.BaseBranch == "" {
 		c.Options.BaseBranch = "main"
