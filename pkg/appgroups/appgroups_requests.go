@@ -12,8 +12,8 @@ const (
 	appGroupURLSingleFormat = "%s/v0/organizations/%s/app-groups/%s"
 )
 
-// fetchAppGroups queries Fairwinds Insights to retrieve all of the app-groups for an organization
-func fetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
+// FetchAppGroups queries Fairwinds Insights to retrieve all of the app-groups for an organization
+func FetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
 	url := fmt.Sprintf(appGroupURLFormat, hostName, org)
 	logrus.Debugf("fetchAppGroups: appGroups URL: %s", url)
 	resp, err := req.Get(url, getHeaders(token))

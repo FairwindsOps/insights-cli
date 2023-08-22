@@ -3,8 +3,10 @@ package appgroups
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
+	"regexp"
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
 	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
@@ -15,12 +17,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+var filenameRegex = regexp.MustCompile("[^A-Za-z0-9]+")
+
 // BuildAppGroupsTree builds a tree for app-groups
-func BuildAppGroupsTree(org, token, hostName string) (treeprint.Tree, error) {
-	appGroups, err := fetchAppGroups(org, token, hostName)
-	if err != nil {
-		return nil, fmt.Errorf("unable to fetch app-groups from insights: %v", err)
-	}
+func BuildAppGroupsTree(appGroups []AppGroup) (treeprint.Tree, error) {
 	tree := treeprint.New()
 	appGroupsBranch := tree.AddBranch("app-groups")
 	for _, appGroup := range appGroups {
@@ -37,7 +37,7 @@ func PushAppGroups(pushDir, org, insightsToken, host string, deleteMissing bool)
 		return err
 	}
 
-	existingAppGroups, err := fetchAppGroups(org, insightsToken, host)
+	existingAppGroups, err := FetchAppGroups(org, insightsToken, host)
 	if err != nil {
 		return fmt.Errorf("error during API call: %w", err)
 	}
@@ -138,4 +138,69 @@ func getHeaders(token string) req.Header {
 		"Authorization":           fmt.Sprintf("Bearer %s", token),
 		"Accept":                  "application/json",
 	}
+}
+
+func SaveAppGroupsLocally(saveDir string, appGroups []AppGroup, overrideLocalFiles bool) (int, error) {
+	_, err := os.Stat(saveDir)
+	if err != nil {
+		return 0, err
+	}
+	isEmpty, err := IsEmpty(saveDir)
+	if err != nil {
+		return 0, fmt.Errorf("error checking if directory %s is empty: %w", saveDir, err)
+	}
+	if !isEmpty && !overrideLocalFiles {
+		logrus.Warnf("directory %s must be empty, use --override to override local files", saveDir)
+		return 0, nil
+	}
+
+	purgeDirectory(saveDir)
+
+	var saved int
+	for _, appGroup := range appGroups {
+		filename := formatFilename(appGroup.Name)
+		filePath := saveDir + "/" + filename
+
+		b, err := yaml.Marshal(appGroup)
+		if err != nil {
+			return saved, fmt.Errorf("error marshalling app-group %s: %w", appGroup.Name, err)
+		}
+		err = os.WriteFile(filePath, b, 0644)
+		if err != nil {
+			return saved, fmt.Errorf("error writing file %s: %w", filePath, err)
+		}
+		saved++
+	}
+	return saved, nil
+}
+
+// remove all contents of a directory and creates it again
+func purgeDirectory(saveDir string) error {
+	err := os.RemoveAll(saveDir)
+	if err != nil {
+		return fmt.Errorf("error clearing directory %s: %w", saveDir, err)
+	}
+	err = os.MkdirAll(saveDir, 0755)
+	if err != nil {
+		return fmt.Errorf("error creating directory %s: %w", saveDir, err)
+	}
+	return nil
+}
+
+func formatFilename(name string) string {
+	return fmt.Sprintf("%s.yaml", filenameRegex.ReplaceAllString(name, "-"))
+}
+
+func IsEmpty(path string) (bool, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	_, err = f.Readdirnames(1) // Or f.Readdir(1)
+	if err == io.EOF {
+		return true, nil
+	}
+	return false, err // Either not empty or error, suits both cases
 }
