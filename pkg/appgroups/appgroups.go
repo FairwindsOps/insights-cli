@@ -1,6 +1,7 @@
 package appgroups
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"reflect"
@@ -23,10 +24,7 @@ func BuildAppGroupsTree(org, token, hostName string) (treeprint.Tree, error) {
 	tree := treeprint.New()
 	appGroupsBranch := tree.AddBranch("app-groups")
 	for _, appGroup := range appGroups {
-		appGroupsNode := appGroupsBranch.AddBranch(appGroup.Name)
-		if appGroup.Spec.Enabled != nil {
-			appGroupsNode.AddNode(fmt.Sprintf("Enabled: %t", *appGroup.Spec.Enabled))
-		}
+		appGroupsBranch.AddBranch(appGroup.Name)
 	}
 	return tree, nil
 }
@@ -74,13 +72,13 @@ func PushAppGroups(pushDir, org, insightsToken, host string, deleteMissing bool)
 func compareAppGroups(folder string, existingAppGroups []AppGroup) (upserts, deletes []AppGroup, err error) {
 	files, err := directory.ScanFolder(folder)
 	if err != nil {
-		logrus.Error("Error scanning directory")
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error scanning directory: %w", err)
+
 	}
 	fileAppGroups, err := getAppGroupsFromFiles(files)
 	if err != nil {
-		logrus.Error("Error reading checks from files")
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("error reading app-groups from files: %w", err)
+
 	}
 	upserts, deletes = getAppGroupsDifferences(fileAppGroups, existingAppGroups)
 	return upserts, deletes, nil
@@ -90,22 +88,22 @@ func getAppGroupsFromFiles(files map[string][]string) ([]AppGroup, error) {
 	var appGroups []AppGroup
 	for _, appGroupsFiles := range files {
 		for _, filePath := range appGroupsFiles {
-			fileContents, err := os.ReadFile(filePath)
+			content, err := os.ReadFile(filePath)
 			if err != nil {
 				return nil, fmt.Errorf("error reading file %s: %w", filePath, err)
 			}
+			r := bytes.NewReader(content)
+			dec := yaml.NewDecoder(r)
 			var appGroup AppGroup
-			err = yaml.Unmarshal(fileContents, &appGroup)
-			if err != nil {
-				return nil, fmt.Errorf("Error unmarshaling check YAML %s: %w", filePath, err)
+			for dec.Decode(&appGroup) == nil {
+				if appGroup.Name == "" {
+					return nil, fmt.Errorf("name is required in file %s", filePath)
+				}
+				if appGroup.Type == "" {
+					return nil, fmt.Errorf("type is empty in file %s", filePath)
+				}
+				appGroups = append(appGroups, appGroup)
 			}
-			if appGroup.Name == "" {
-				return nil, fmt.Errorf("name is required in file %s", filePath)
-			}
-			if appGroup.Type == "" {
-				return nil, fmt.Errorf("type is empty in file %s", filePath)
-			}
-			appGroups = append(appGroups, appGroup)
 		}
 	}
 	return appGroups, nil
