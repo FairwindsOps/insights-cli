@@ -15,35 +15,32 @@
 package cli
 
 import (
+	"github.com/fairwindsops/insights-cli/pkg/appgroups"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
-	"github.com/fairwindsops/insights-cli/pkg/rules"
 )
 
-var pushRulesSubDir string
-var deleteMissingRules bool
-
-const defaultPushRulesSubDir = "rules"
+var deleteMissingAppGroups bool
+var pushAppGroupsSubDir string
 
 func init() {
-	pushRulesCmd.PersistentFlags().BoolVarP(&deleteMissingRules, "delete", "D", false, "Delete any automation rules from Insights that are not present in the local directory.")
+	pushAppGroupsCmd.PersistentFlags().BoolVarP(&deleteMissingAppGroups, "delete", "D", false, "Delete any app groups from Fairwinds Insights that are not present in the local directory.")
 	// This flag sets a variable defined in the parent `push` command.
-	pushRulesCmd.PersistentFlags().StringVarP(&pushRulesSubDir, "push-rules-subdirectory", "", defaultPushRulesSubDir, "Sub-directory within push-directory, to contain automation rules.")
-	pushCmd.AddCommand(pushRulesCmd)
+	pushAppGroupsCmd.PersistentFlags().StringVarP(&pushAppGroupsSubDir, "push-app-groups-subdirectory", "", "app-groups", "Sub-directory within push-directory, to contain app-groups.")
+	pushCmd.AddCommand(pushAppGroupsCmd)
 }
 
-var pushRulesCmd = &cobra.Command{
-	Use:    "rules",
-	Short:  "Push automation rules.",
-	Long:   "Push automation rules to Insights.",
+var pushAppGroupsCmd = &cobra.Command{
+	Use:    "app-groups",
+	Short:  "Push app-groups.",
+	Long:   "Push app-groups to Fairwinds Insights.",
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		err := rules.PushRules(pushDir+"/"+pushRulesSubDir, org, insightsToken, host, deleteMissingRules, pushDryRun)
+		err := appgroups.PushAppGroups(pushDir+"/"+pushAppGroupsSubDir, org, insightsToken, host, deleteMissingAppGroups)
 		if err != nil {
-			logrus.Fatalf("Unable to push rules: %v", err)
+			logrus.Fatalf("Unable to push app-groups: %v", err)
 		}
 		logrus.Infoln("Push succeeded.")
 	},

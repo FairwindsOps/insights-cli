@@ -23,8 +23,8 @@ import (
 	"strings"
 
 	"github.com/fairwindsops/insights-plugins/plugins/opa/pkg/opa"
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
-	"github.com/thoas/go-funk"
 	"github.com/xlab/treeprint"
 	"gopkg.in/yaml.v3"
 
@@ -62,15 +62,15 @@ func CompareChecks(folder, org, token, hostName string, deleteMissing bool) (Com
 		return results, err
 	}
 	if !deleteMissing {
-		apiChecks = funk.Filter(apiChecks, func(c opa.OPACustomCheck) bool {
-			return len(funk.Filter(fileChecks, func(fc models.CustomCheckModel) bool {
+		apiChecks = lo.Filter(apiChecks, func(c opa.OPACustomCheck, _ int) bool {
+			return len(lo.Filter(fileChecks, func(fc models.CustomCheckModel, _ int) bool {
 				return fc.CheckName == c.Name
-			}).([]models.CustomCheckModel)) > 0
-		}).([]opa.OPACustomCheck)
+			})) > 0
+		})
 	}
-	fileChecks = funk.Filter(fileChecks, func(fc models.CustomCheckModel) bool {
+	fileChecks = lo.Filter(fileChecks, func(fc models.CustomCheckModel, _ int) bool {
 		return fc.Rego != ""
-	}).([]models.CustomCheckModel)
+	})
 	var apiInstances []opa.CheckSetting
 	// TODO replace with org wide get.
 	for _, check := range apiChecks {
@@ -85,25 +85,25 @@ func CompareChecks(folder, org, token, hostName string, deleteMissing bool) (Com
 	return results, nil
 }
 
-func instanceMatchesName(name string) func(opa.CheckSetting) bool {
-	return func(instance opa.CheckSetting) bool {
+func instanceMatchesName(name string) func(opa.CheckSetting, int) bool {
+	return func(instance opa.CheckSetting, _ int) bool {
 		return instance.CheckName == name
 	}
 }
 
 func getMissingChecks(apiChecks []opa.OPACustomCheck, fileChecks []models.CustomCheckModel) []models.CustomCheckModel {
-	diff := funk.Subtract(
-		funk.Map(apiChecks, func(c opa.OPACustomCheck) string {
+	left, _ := lo.Difference(
+		lo.Map(apiChecks, func(c opa.OPACustomCheck, _ int) string {
 			return c.Name
 		}),
-		funk.Map(fileChecks, func(c models.CustomCheckModel) string {
+		lo.Map(fileChecks, func(c models.CustomCheckModel, _ int) string {
 			return c.CheckName
 		}))
-	diffChecks := funk.Map(diff, func(s string) models.CustomCheckModel {
+	diffChecks := lo.Map(left, func(s string, _ int) models.CustomCheckModel {
 		return models.CustomCheckModel{
 			CheckName: s,
 		}
-	}).([]models.CustomCheckModel)
+	})
 	return diffChecks
 }
 
@@ -111,7 +111,7 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 	var results CompareResults
 	results.CheckDelete = append(results.CheckDelete, getMissingChecks(apiChecks, fileChecks)...)
 	for _, deletedCheck := range results.CheckDelete {
-		for _, instance := range funk.Filter(apiInstances, instanceMatchesName(deletedCheck.CheckName)).([]opa.CheckSetting) {
+		for _, instance := range lo.Filter(apiInstances, instanceMatchesName(deletedCheck.CheckName)) {
 			results.InstanceDelete = append(results.InstanceDelete, models.CustomCheckInstanceModel{
 				CheckName:    instance.CheckName,
 				InstanceName: instance.AdditionalData.Name,
@@ -133,7 +133,7 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 		if !found {
 			results.CheckInsert = append(results.CheckInsert, fileCheck)
 		}
-		instances := funk.Filter(apiInstances, instanceMatchesName(fileCheck.CheckName)).([]opa.CheckSetting)
+		instances := lo.Filter(apiInstances, instanceMatchesName(fileCheck.CheckName))
 		for _, fileInstance := range fileCheck.Instances {
 			found := false
 			for _, instance := range instances {
@@ -155,19 +155,19 @@ func compareChecks(fileChecks []models.CustomCheckModel, apiChecks []opa.OPACust
 }
 
 func getDifferenceInstances(instances []opa.CheckSetting, fileCheck models.CustomCheckModel) []models.CustomCheckInstanceModel {
-	diff := funk.Subtract(
-		funk.Map(instances, func(i opa.CheckSetting) string {
+	left, _ := lo.Difference(
+		lo.Map(instances, func(i opa.CheckSetting, _ int) string {
 			return i.AdditionalData.Name
 		}),
-		funk.Map(fileCheck.Instances, func(i models.CustomCheckInstanceModel) string {
+		lo.Map(fileCheck.Instances, func(i models.CustomCheckInstanceModel, _ int) string {
 			return i.InstanceName
 		}))
-	diffInstances := funk.Map(diff, func(s string) models.CustomCheckInstanceModel {
+	diffInstances := lo.Map(left, func(s string, _ int) models.CustomCheckInstanceModel {
 		return models.CustomCheckInstanceModel{
 			InstanceName: s,
 			CheckName:    fileCheck.CheckName,
 		}
-	}).([]models.CustomCheckInstanceModel)
+	})
 	return diffInstances
 }
 

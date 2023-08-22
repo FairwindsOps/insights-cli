@@ -21,7 +21,10 @@ import (
 	"github.com/fairwindsops/insights-cli/pkg/opa"
 )
 
+var pushOPASubDir string
 var deleteMissingOPA bool
+
+const defaultPushOPASubDir = "opa"
 
 func init() {
 	pushOPACmd.PersistentFlags().BoolVarP(&deleteMissingOPA, "delete", "D", false, "Delete any OPA policies from Insights that are not present in the local directory.")
