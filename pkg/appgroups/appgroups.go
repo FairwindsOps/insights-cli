@@ -154,7 +154,10 @@ func SaveAppGroupsLocally(saveDir string, appGroups []AppGroup, overrideLocalFil
 		return 0, nil
 	}
 
-	purgeDirectory(saveDir)
+	err = purgeDirectory(saveDir)
+	if err != nil {
+		return 0, fmt.Errorf("could not purge directory %s: %w", saveDir, err)
+	}
 
 	var saved int
 	for _, appGroup := range appGroups {

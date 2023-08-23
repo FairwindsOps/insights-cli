@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var downloadAppGroups, overrideLocalFiles bool
+var overrideLocalFiles bool
 var downloadAppGroupsSubDir string
 
 func init() {
