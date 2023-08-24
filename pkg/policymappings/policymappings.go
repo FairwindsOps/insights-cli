@@ -21,7 +21,7 @@ func BuildPolicyMappingsTree(policyMappings []PolicyMapping) (treeprint.Tree, er
 	policyMappingsBranch := tree.AddBranch("policy-mappings")
 	for _, policyMapping := range policyMappings {
 		enabled := "enabled"
-		if policyMapping.Spec.Enabled != nil && *policyMapping.Spec.Enabled == false {
+		if policyMapping.Spec.Enabled != nil && !*policyMapping.Spec.Enabled {
 			enabled = "disabled"
 		}
 		policyMappingsBranch.AddBranch(fmt.Sprintf("%s (%s)", policyMapping.Name, enabled))
