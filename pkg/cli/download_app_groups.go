@@ -8,11 +8,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var overrideLocalFiles bool
 var downloadAppGroupsSubDir string
 
 func init() {
-	downloadAppGroupsCmd.PersistentFlags().BoolVar(&overrideLocalFiles, "override", false, "use this flag to override local app-groups files.")
 	downloadAppGroupsCmd.PersistentFlags().StringVar(&downloadAppGroupsSubDir, "download-subdirectory", "app-groups", "Sub-directory within download-directory, to download app-groups.")
 	downloadCmd.AddCommand(downloadAppGroupsCmd)
 }
@@ -30,7 +28,7 @@ var downloadAppGroupsCmd = &cobra.Command{
 			logrus.Fatalf("unable to fetch app-groups from insights: %v", err)
 		}
 		saveDir := downloadDir + "/" + downloadAppGroupsSubDir
-		c, err := appgroups.SaveAppGroupsLocally(saveDir, appGroups, overrideLocalFiles)
+		c, err := saveEntitiesLocally(saveDir, appGroups, overrideLocalFiles)
 		if err != nil {
 			logrus.Fatalf("error saving app-groups locally: %v", err)
 		}

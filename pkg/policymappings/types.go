@@ -14,3 +14,7 @@ type PolicyMappingSpec struct {
 	Contexts  []string `json:"contexts,omitempty" yaml:"contexts,omitempty"`
 	Policies  []string `json:"policies,omitempty" yaml:"policies,omitempty"`
 }
+
+func (pm PolicyMapping) GetName() string {
+	return pm.Name
+}

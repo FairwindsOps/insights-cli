@@ -3,10 +3,8 @@ package policymappings
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"os"
 	"reflect"
-	"regexp"
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
 	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
@@ -16,8 +14,6 @@ import (
 	"github.com/xlab/treeprint"
 	"gopkg.in/yaml.v2"
 )
-
-var filenameRegex = regexp.MustCompile("[^A-Za-z0-9]+")
 
 // BuildPolicyMappingsTree builds a tree for policy-mapping
 func BuildPolicyMappingsTree(policyMappings []PolicyMapping) (treeprint.Tree, error) {
@@ -142,72 +138,4 @@ func getHeaders(token string) req.Header {
 		"Authorization":           fmt.Sprintf("Bearer %s", token),
 		"Accept":                  "application/json",
 	}
-}
-
-func SavePolicyMappingsLocally(saveDir string, policyMappings []PolicyMapping, overrideLocalFiles bool) (int, error) {
-	_, err := os.Stat(saveDir)
-	if err != nil {
-		return 0, err
-	}
-	isEmpty, err := IsEmpty(saveDir)
-	if err != nil {
-		return 0, fmt.Errorf("error checking if directory %s is empty: %w", saveDir, err)
-	}
-	if !isEmpty && !overrideLocalFiles {
-		logrus.Warnf("directory %s must be empty, use --override to override local files", saveDir)
-		return 0, nil
-	}
-
-	err = purgeDirectory(saveDir)
-	if err != nil {
-		return 0, fmt.Errorf("could not purge directory %s: %w", saveDir, err)
-	}
-
-	var saved int
-	for _, policyMapping := range policyMappings {
-		filename := formatFilename(policyMapping.Name)
-		filePath := saveDir + "/" + filename
-
-		b, err := yaml.Marshal(policyMapping)
-		if err != nil {
-			return saved, fmt.Errorf("error marshalling policy-mapping %s: %w", policyMapping.Name, err)
-		}
-		err = os.WriteFile(filePath, b, 0644)
-		if err != nil {
-			return saved, fmt.Errorf("error writing file %s: %w", filePath, err)
-		}
-		saved++
-	}
-	return saved, nil
-}
-
-// remove all contents of a directory and creates it again
-func purgeDirectory(saveDir string) error {
-	err := os.RemoveAll(saveDir)
-	if err != nil {
-		return fmt.Errorf("error clearing directory %s: %w", saveDir, err)
-	}
-	err = os.MkdirAll(saveDir, 0755)
-	if err != nil {
-		return fmt.Errorf("error creating directory %s: %w", saveDir, err)
-	}
-	return nil
-}
-
-func formatFilename(name string) string {
-	return fmt.Sprintf("%s.yaml", filenameRegex.ReplaceAllString(name, "-"))
-}
-
-func IsEmpty(path string) (bool, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return false, err
-	}
-	defer f.Close()
-
-	_, err = f.Readdirnames(1) // Or f.Readdir(1)
-	if err == io.EOF {
-		return true, nil
-	}
-	return false, err // Either not empty or error, suits both cases
 }
