@@ -34,7 +34,7 @@ var noDecoration bool
 
 var configurationObject configuration
 
-const enableAppGroups = false
+const hideAppGroupCommands = true
 
 type configuration struct {
 	Options optionConfig `yaml:"options"`
