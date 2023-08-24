@@ -1,0 +1,8 @@
+name: test-123
+spec:
+    match:
+        - labels:
+            app: insights-agent
+          namespace: insights-agent
+        - namespace: kube-system
+type: AppGroup
