@@ -21,7 +21,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/xlab/treeprint"
 
+	"github.com/fairwindsops/insights-cli/pkg/appgroups"
 	"github.com/fairwindsops/insights-cli/pkg/opa"
+	"github.com/fairwindsops/insights-cli/pkg/policymappings"
 	"github.com/fairwindsops/insights-cli/pkg/rules"
 )
 
@@ -38,14 +40,33 @@ var listAllCmd = &cobra.Command{
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
 		tree := treeprint.New()
-		err := opa.BuildChecksTree(org, insightsToken, host, tree)
+		err := opa.AddOPAChecksBranch(org, insightsToken, host, tree)
 		if err != nil {
 			logrus.Fatalf("Unable to get OPA checks from insights: %v", err)
 		}
-		err = rules.BuildRulesTree(org, insightsToken, host, tree)
+		err = rules.AddRulesBranch(org, insightsToken, host, tree)
 		if err != nil {
 			logrus.Fatalf("Unable to get rules from insights: %v", err)
 		}
+
+		appGroups, err := appgroups.FetchAppGroups(org, insightsToken, host)
+		if err != nil {
+			logrus.Fatalf("unable to fetch app-groups from insights: %v", err)
+		}
+		err = appgroups.AddAppGroupsBranch(tree, appGroups)
+		if err != nil {
+			logrus.Fatalf("error building app-groups tree: %v", err)
+		}
+
+		policyMappings, err := policymappings.FetchPolicyMappings(org, insightsToken, host)
+		if err != nil {
+			logrus.Fatalf("unable to fetch policy-mappings from insights: %v", err)
+		}
+		err = policymappings.AddPolicyMappingsBranch(tree, policyMappings)
+		if err != nil {
+			logrus.Fatalf("error building policy-mappings tree: %v", err)
+		}
+
 		fmt.Println(tree.String())
 	},
 }

@@ -15,10 +15,9 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// BuildPolicyMappingsTree builds a tree for policy-mapping
-func BuildPolicyMappingsTree(policyMappings []PolicyMapping) (treeprint.Tree, error) {
-	tree := treeprint.New()
-	policyMappingsBranch := tree.AddBranch("policy-mappings")
+// AddPolicyMappingsBranch builds a tree for policy-mapping
+func AddPolicyMappingsBranch(parent treeprint.Tree, policyMappings []PolicyMapping) error {
+	policyMappingsBranch := parent.AddBranch("policy-mappings")
 	for _, policyMapping := range policyMappings {
 		enabled := "enabled"
 		if policyMapping.Spec.Enabled != nil && !*policyMapping.Spec.Enabled {
@@ -26,7 +25,7 @@ func BuildPolicyMappingsTree(policyMappings []PolicyMapping) (treeprint.Tree, er
 		}
 		policyMappingsBranch.AddBranch(fmt.Sprintf("%s (%s)", policyMapping.Name, enabled))
 	}
-	return tree, nil
+	return nil
 }
 
 // PushPolicyMappings pushes policy-mapping to insights

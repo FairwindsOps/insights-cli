@@ -19,6 +19,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/xlab/treeprint"
 
 	"github.com/fairwindsops/insights-cli/pkg/policymappings"
 )
@@ -40,7 +41,9 @@ var listPolicyMappingsCmd = &cobra.Command{
 		if err != nil {
 			logrus.Fatalf("unable to fetch policy-mappings from insights: %v", err)
 		}
-		tree, err := policymappings.BuildPolicyMappingsTree(policyMappings)
+
+		tree := treeprint.New()
+		err = policymappings.AddPolicyMappingsBranch(tree, policyMappings)
 		if err != nil {
 			logrus.Fatalf("error building policy-mappings tree: %v", err)
 		}

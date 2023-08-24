@@ -258,14 +258,14 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 	return checks, nil
 }
 
-// BuildChecksTree builds the tree for OPA checks
-func BuildChecksTree(org, token, hostName string, tree treeprint.Tree) error {
+// AddOPAChecksBranch builds the tree for OPA checks
+func AddOPAChecksBranch(org, token, hostName string, parent treeprint.Tree) error {
 	checks, err := GetChecks(org, token, hostName)
 	if err != nil {
 		logrus.Errorf("Unable to get checks from insights: %v", err)
 		return err
 	}
-	opaBranch := tree.AddBranch("opa")
+	opaBranch := parent.AddBranch("opa")
 	for _, check := range checks {
 		branch := opaBranch.AddBranch(fmt.Sprintf("%s (v%.0f)", check.Name, check.Version))
 		instances, err := GetInstances(org, check.Name, token, hostName)
