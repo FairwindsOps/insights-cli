@@ -34,6 +34,7 @@ var pushAppGroupsCmd = &cobra.Command{
 	Use:    "app-groups",
 	Short:  "Push app-groups.",
 	Long:   "Push app-groups to Fairwinds Insights.",
+	Hidden: enableAppGroups,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
