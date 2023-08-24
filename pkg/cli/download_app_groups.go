@@ -19,7 +19,7 @@ var downloadAppGroupsCmd = &cobra.Command{
 	Use:    "app-groups",
 	Short:  "Download App Groups to local files.",
 	Long:   "Download App Groups defined in Insights to local files.",
-	Hidden: enableAppGroups,
+	Hidden: hideAppGroupCommands,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
