@@ -31,6 +31,7 @@ var listPolicyMappingsCmd = &cobra.Command{
 	Use:    "policy-mappings",
 	Short:  "List Policy Mappings.",
 	Long:   "List Policy Mappings defined in Insights.",
+	Hidden: hideAppGroupCommands,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization

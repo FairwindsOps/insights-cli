@@ -19,6 +19,7 @@ var downloadPolicyMappingsCmd = &cobra.Command{
 	Use:    "policy-mappings",
 	Short:  "Download Policy Mappings to local files.",
 	Long:   "Download Policy Mappings defined in Insights to local files.",
+	Hidden: hideAppGroupCommands,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization

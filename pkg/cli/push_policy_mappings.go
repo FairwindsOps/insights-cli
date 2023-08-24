@@ -34,6 +34,7 @@ var pushPolicyMappingsCmd = &cobra.Command{
 	Use:    "policy-mappings",
 	Short:  "Push policy-mappings.",
 	Long:   "Push policy-mappings to Fairwinds Insights.",
+	Hidden: hideAppGroupCommands,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
