@@ -1,6 +1,0 @@
-name: test-113
-spec:
-    match:
-        - namespace: insights-agent
-        - namespace: kube-system
-type: AppGroup
