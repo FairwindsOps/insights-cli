@@ -30,7 +30,7 @@ func BuildPolicyMappingsTree(policyMappings []PolicyMapping) (treeprint.Tree, er
 }
 
 // PushPolicyMappings pushes policy-mapping to insights
-func PushPolicyMappings(pushDir, org, insightsToken, host string, deleteMissing bool) error {
+func PushPolicyMappings(pushDir, org, insightsToken, host string, deleteMissing, dryRun bool) error {
 	logrus.Debugln("Pushing policy-mapping")
 	_, err := os.Stat(pushDir)
 	if err != nil {
@@ -49,18 +49,22 @@ func PushPolicyMappings(pushDir, org, insightsToken, host string, deleteMissing 
 
 	for _, policyMapping := range upserts {
 		logrus.Infof("upsert policy-mapping: %s", policyMapping.Name)
-		err = upsertPolicyMapping(org, insightsToken, host, policyMapping)
-		if err != nil {
-			return fmt.Errorf("Error while upsert policy-mapping %s to Fairwinds Insights: %w", policyMapping.Name, err)
+		if !dryRun {
+			err = upsertPolicyMapping(org, insightsToken, host, policyMapping)
+			if err != nil {
+				return fmt.Errorf("Error while upsert policy-mapping %s to Fairwinds Insights: %w", policyMapping.Name, err)
+			}
 		}
 	}
 
 	if deleteMissing {
 		for _, policyMappingForDelete := range deletes {
 			logrus.Infof("Deleting policy-mapping: %s", policyMappingForDelete.Name)
-			err = deletePolicyMapping(org, insightsToken, host, policyMappingForDelete)
-			if err != nil {
-				return fmt.Errorf("Error while deleting policy-mapping %s from insights: %w", policyMappingForDelete.Name, err)
+			if !dryRun {
+				err = deletePolicyMapping(org, insightsToken, host, policyMappingForDelete)
+				if err != nil {
+					return fmt.Errorf("Error while deleting policy-mapping %s from insights: %w", policyMappingForDelete.Name, err)
+				}
 			}
 		}
 	}
