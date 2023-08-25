@@ -100,7 +100,7 @@ var pushAllCmd = &cobra.Command{
 			logrus.Warnf("Unable to push app-groups: %v", err)
 			numWarnings++
 		} else {
-			err = appgroups.PushAppGroups(absPushAppGroupsDir, org, insightsToken, host, doNotDeleteMissingResources)
+			err = appgroups.PushAppGroups(absPushAppGroupsDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
 			if err != nil {
 				logrus.Errorf("Unable to push app-groups: %v", err)
 				numFailures++
@@ -113,7 +113,7 @@ var pushAllCmd = &cobra.Command{
 			logrus.Warnf("Unable to push policy-mappings: %v", err)
 			numWarnings++
 		} else {
-			err = policymappings.PushPolicyMappings(absPushPolicyMappingsDir, org, insightsToken, host, doNotDeleteMissingResources)
+			err = policymappings.PushPolicyMappings(absPushPolicyMappingsDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
 			if err != nil {
 				logrus.Errorf("Unable to push policy-mappings: %v", err)
 				numFailures++
