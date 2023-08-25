@@ -26,7 +26,7 @@ func BuildAppGroupsTree(appGroups []AppGroup) (treeprint.Tree, error) {
 }
 
 // PushAppGroups pushes app-groups to insights
-func PushAppGroups(pushDir, org, insightsToken, host string, deleteMissing bool) error {
+func PushAppGroups(pushDir, org, insightsToken, host string, deleteMissing, dryRun bool) error {
 	logrus.Debugln("Pushing app-groups")
 	_, err := os.Stat(pushDir)
 	if err != nil {
@@ -45,18 +45,22 @@ func PushAppGroups(pushDir, org, insightsToken, host string, deleteMissing bool)
 
 	for _, appGroup := range upserts {
 		logrus.Infof("upsert app-group: %s", appGroup.Name)
-		err = upsertAppGroup(org, insightsToken, host, appGroup)
-		if err != nil {
-			return fmt.Errorf("Error while upsert app-group %s to Fairwinds Insights: %w", appGroup.Name, err)
+		if !dryRun {
+			err = upsertAppGroup(org, insightsToken, host, appGroup)
+			if err != nil {
+				return fmt.Errorf("Error while upsert app-group %s to Fairwinds Insights: %w", appGroup.Name, err)
+			}
 		}
 	}
 
 	if deleteMissing {
 		for _, appGroupForDelete := range deletes {
 			logrus.Infof("Deleting app-group: %s", appGroupForDelete.Name)
-			err = deleteAppGroup(org, insightsToken, host, appGroupForDelete)
-			if err != nil {
-				return fmt.Errorf("Error while deleting app-group %s from insights: %w", appGroupForDelete.Name, err)
+			if !dryRun {
+				err = deleteAppGroup(org, insightsToken, host, appGroupForDelete)
+				if err != nil {
+					return fmt.Errorf("Error while deleting app-group %s from insights: %w", appGroupForDelete.Name, err)
+				}
 			}
 		}
 	}
