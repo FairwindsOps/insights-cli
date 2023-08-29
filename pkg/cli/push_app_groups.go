@@ -15,27 +15,33 @@
 package cli
 
 import (
+	"github.com/fairwindsops/insights-cli/pkg/appgroups"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-
-	"github.com/fairwindsops/insights-cli/pkg/policies"
 )
 
+var deleteMissingAppGroups bool
+var pushAppGroupsSubDir string
+
 func init() {
-	pushCmd.AddCommand(pushSettingsCmd)
+	pushAppGroupsCmd.PersistentFlags().BoolVarP(&deleteMissingAppGroups, "delete", "D", false, "Delete any app groups from Fairwinds Insights that are not present in the local directory.")
+	// This flag sets a variable defined in the parent `push` command.
+	pushAppGroupsCmd.PersistentFlags().StringVarP(&pushAppGroupsSubDir, "push-app-groups-subdirectory", "", "app-groups", "Sub-directory within push-directory, to contain app-groups.")
+	pushCmd.AddCommand(pushAppGroupsCmd)
 }
 
-var pushSettingsCmd = &cobra.Command{
-	Use:    "settings",
-	Short:  "Push policies configuration.",
-	Long:   "Push policies configuration to Insights to streamline settings across multiple Insights plugins.",
+var pushAppGroupsCmd = &cobra.Command{
+	Use:    "app-groups",
+	Short:  "Push app-groups.",
+	Long:   "Push app-groups to Fairwinds Insights.",
+	Hidden: hideAppGroupCommands,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		err := policies.PushPolicies(pushDir, org, insightsToken, host, pushDryRun)
+		err := appgroups.PushAppGroups(pushDir+"/"+pushAppGroupsSubDir, org, insightsToken, host, deleteMissingAppGroups, pushDryRun)
 		if err != nil {
-			logrus.Fatalf("Unable to push policies configuration: %v", err)
+			logrus.Fatalf("Unable to push app-groups: %v", err)
 		}
 		logrus.Infoln("Push succeeded.")
 	},

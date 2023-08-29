@@ -15,26 +15,35 @@
 package cli
 
 import (
-	"os"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/fairwindsops/insights-cli/pkg/appgroups"
 )
 
 func init() {
-	rootCmd.AddCommand(listCmd)
+	listCmd.AddCommand(listAppGroupsCmd)
 }
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List custom configuration resources from Insights",
-	Long:  "List custom configuration such as OPA policies or automation rules from Insights.",
+var listAppGroupsCmd = &cobra.Command{
+	Use:    "app-groups",
+	Short:  "List App Groups.",
+	Long:   "List App Groups defined in Insights.",
+	Hidden: hideAppGroupCommands,
+	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
-		logrus.Error("Please specify a sub-command.")
-		err := cmd.Help()
+		org := configurationObject.Options.Organization
+		host := configurationObject.Options.Hostname
+		appGroups, err := appgroups.FetchAppGroups(org, insightsToken, host)
 		if err != nil {
-			logrus.Error(err)
+			logrus.Fatalf("unable to fetch app-groups from insights: %v", err)
 		}
-		os.Exit(1)
+		tree, err := appgroups.BuildAppGroupsTree(appGroups)
+		if err != nil {
+			logrus.Fatalf("error building app-groups tree: %v", err)
+		}
+		fmt.Println(tree.String())
 	},
 }

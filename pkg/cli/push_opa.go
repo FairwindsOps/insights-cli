@@ -1,4 +1,4 @@
-// Copyright 2020 FairwindsOps Inc
+// Copyright 2023 FairwindsOps Inc
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,10 @@ import (
 	"github.com/fairwindsops/insights-cli/pkg/opa"
 )
 
+var pushOPASubDir string
 var deleteMissingOPA bool
+
+const defaultPushOPASubDir = "opa"
 
 func init() {
 	pushOPACmd.PersistentFlags().BoolVarP(&deleteMissingOPA, "delete", "D", false, "Delete any OPA policies from Insights that are not present in the local directory.")

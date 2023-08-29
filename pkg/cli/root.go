@@ -1,4 +1,4 @@
-// Copyright 2020 FairwindsOps Inc
+// Copyright 2023 FairwindsOps Inc
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,6 +34,8 @@ var noDecoration bool
 
 var configurationObject configuration
 
+const hideAppGroupCommands = true
+
 type configuration struct {
 	Options optionConfig `yaml:"options"`
 }
@@ -45,7 +47,7 @@ type optionConfig struct {
 	RepositoryName string `yaml:"repositoryName"`
 }
 
-// SetDefaults sets configurationd defaults
+// SetDefaults sets configuration defaults
 func (c *configuration) SetDefaults() {
 	if c.Options.BaseBranch == "" {
 		c.Options.BaseBranch = "main"

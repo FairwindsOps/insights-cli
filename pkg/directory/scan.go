@@ -1,4 +1,4 @@
-// Copyright 2020 FairwindsOps Inc
+// Copyright 2023 FairwindsOps Inc
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -66,10 +66,9 @@ func ScanOPAFolder(folder string) (map[string][]string, error) {
 	return fileMap, err
 }
 
-// ScanRulesFolder looks through a given folder and returns a map[string][]string
-// keyed on the directory name, and the value listing files providing automation
-// rules.
-func ScanRulesFolder(folder string) (map[string][]string, error) {
+// ScanFolder looks through a given folder and returns a map[string][]string
+// keyed on the directory name, and the value listing files.
+func ScanFolder(folder string) (map[string][]string, error) {
 	fileMap := map[string][]string{}
 	err := filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -82,7 +81,7 @@ func ScanRulesFolder(folder string) (map[string][]string, error) {
 		fileMap[directoryName] = append(fileMap[directoryName], path)
 		return nil
 	})
-	logrus.Debugf("rules fileScan returning: %#v\n", fileMap)
+	logrus.Debugf("scan-folder returning: %#v\n", fileMap)
 	return fileMap, err
 }
 

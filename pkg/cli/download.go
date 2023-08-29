@@ -21,14 +21,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var downloadDir string
+
 func init() {
-	rootCmd.AddCommand(listCmd)
+	downloadCmd.PersistentFlags().StringVarP(&downloadDir, "download-directory", "d", ".", "target directory to download content pulled from Insights.")
+	rootCmd.AddCommand(downloadCmd)
 }
 
-var listCmd = &cobra.Command{
-	Use:   "list",
-	Short: "List custom configuration resources from Insights",
-	Long:  "List custom configuration such as OPA policies or automation rules from Insights.",
+var downloadCmd = &cobra.Command{
+	Use:   "download",
+	Short: "Download custom configuration resources from Insights",
+	Long:  "Download custom configuration such as App Groups from Insights.",
 	Run: func(cmd *cobra.Command, args []string) {
 		logrus.Error("Please specify a sub-command.")
 		err := cmd.Help()

@@ -1,4 +1,4 @@
-// Copyright 2020 FairwindsOps Inc
+// Copyright 2023 FairwindsOps Inc
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,11 +23,6 @@ import (
 
 var pushDir string
 var pushDryRun bool
-var pushOPASubDir, pushRulesSubDir string // set by opa and rules sub-commands
-const (
-	defaultPushOPASubDir   = "opa"
-	defaultPushRulesSubDir = "rules"
-)
 
 func init() {
 	pushCmd.PersistentFlags().StringVarP(&pushDir, "push-directory", "d", ".", "Directory of content to push to Insights.")

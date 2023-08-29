@@ -14,8 +14,8 @@ import (
 	"github.com/open-policy-agent/opa/rego"
 	"github.com/open-policy-agent/opa/topdown"
 	"github.com/open-policy-agent/opa/types"
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
-	"github.com/thoas/go-funk"
 )
 
 const (
@@ -81,12 +81,12 @@ func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insights
 			_, err := Run(regoFileName, objectFileName, expectAIOptions, insightsInfo, objectNamespaceOverride)
 			if err != nil {
 				logrus.Errorf("Failed validation of OPA policy %s using input %s: %v\n", regoFileName, objectFileName, err)
-				if !funk.ContainsString(failedPolicies, regoFileName) {
+				if !lo.Contains(failedPolicies, regoFileName) {
 					failedPolicies = append(failedPolicies, regoFileName)
 				}
 			}
 		}
-		if !funk.ContainsString(failedPolicies, regoFileName) {
+		if !lo.Contains(failedPolicies, regoFileName) {
 			successfulPolicies = append(successfulPolicies, regoFileName)
 			logrus.Infof("Success validating OPA policy %s\n", regoFileName)
 		}

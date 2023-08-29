@@ -1,4 +1,4 @@
-// Copyright 2020 FairwindsOps Inc
+// Copyright 2023 FairwindsOps Inc
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/imroc/req"
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
-	"github.com/thoas/go-funk"
 	"github.com/xlab/treeprint"
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
@@ -257,12 +257,6 @@ func getRulesFromFiles(files map[string][]string) ([]Rule, error) {
 	return rules, nil
 }
 
-func mapRulesWithName(rules []Rule) map[string]Rule {
-	return funk.Map(rules, func(value Rule) (string, Rule) {
-		return value.Name, value
-	}).(map[string]Rule)
-}
-
 func ruleNeedsUpdate(fileRule, existingRule Rule) bool {
 	if fileRule.Description != existingRule.Description {
 		return true
@@ -282,15 +276,13 @@ func ruleNeedsUpdate(fileRule, existingRule Rule) bool {
 	if fileRule.Action != existingRule.Action {
 		return true
 	}
-
 	return false
 }
 
 func getRuleDifferences(fileRules, existingRules []Rule) CompareResults {
-	mappedFileRules := mapRulesWithName(fileRules)
-	mappedExistingRules := mapRulesWithName(existingRules)
+	mappedFileRules := lo.KeyBy(fileRules, func(i Rule) string { return i.Name })
+	mappedExistingRules := lo.KeyBy(existingRules, func(i Rule) string { return i.Name })
 	var results CompareResults
-
 	for ruleName, fileRule := range mappedFileRules {
 		if existingRule, ok := mappedExistingRules[ruleName]; ok {
 			if ruleNeedsUpdate(fileRule, existingRule) {
@@ -313,7 +305,7 @@ func getRuleDifferences(fileRules, existingRules []Rule) CompareResults {
 // compareRules compares a folder vs the rules returned by the API.
 func compareRules(folder, org, token, hostName string) (CompareResults, error) {
 	var results CompareResults
-	files, err := directory.ScanRulesFolder(folder)
+	files, err := directory.ScanFolder(folder)
 	if err != nil {
 		logrus.Error("Error scanning directory")
 		return results, err
