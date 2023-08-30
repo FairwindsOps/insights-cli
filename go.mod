@@ -20,7 +20,7 @@ require (
 	golang.org/x/net v0.14.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
-	k8s.io/apimachinery v0.28.0
+	k8s.io/apimachinery v0.28.1
 )
 
 require (
