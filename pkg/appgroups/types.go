@@ -25,3 +25,7 @@ type AppGroupSpecCriteria struct {
 	NamespaceLabels map[string]any `json:"namespaceLabels,omitempty" yaml:"namespaceLabels,omitempty"`
 	Repository      string         `json:"repository,omitempty" yaml:"repository,omitempty"`
 }
+
+func (a AppGroup) GetName() string {
+	return a.Name
+}
