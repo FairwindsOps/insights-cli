@@ -10,7 +10,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imroc/req v0.3.2
-	github.com/open-policy-agent/opa v0.55.0
+	github.com/open-policy-agent/opa v0.56.0
 	github.com/rogpeppe/go-internal v1.11.0
 	github.com/samber/lo v1.38.1
 	github.com/sirupsen/logrus v1.9.3
@@ -33,7 +33,6 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
-	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
