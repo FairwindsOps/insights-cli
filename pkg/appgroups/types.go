@@ -4,7 +4,7 @@ package appgroups
 
 type AppGroup struct {
 	Name string       `json:"name,omitempty" yaml:"name,omitempty"`
-	Spec AppGroupSpec `json:"spec,omitempty" yaml:"spec,omitempty"`
+	Spec AppGroupSpec `json:"spec" yaml:"spec"`
 	Type string       `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
