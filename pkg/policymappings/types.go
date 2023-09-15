@@ -4,7 +4,7 @@ package policymappings
 
 type PolicyMapping struct {
 	Name string            `json:"name,omitempty" yaml:"name,omitempty"`
-	Spec PolicyMappingSpec `json:"spec,omitempty" yaml:"spec,omitempty"`
+	Spec PolicyMappingSpec `json:"spec" yaml:"spec"`
 	Type string            `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
