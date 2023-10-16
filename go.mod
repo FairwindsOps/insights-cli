@@ -7,7 +7,7 @@ replace github.com/fairwindsops/insights-cli => ./
 require (
 	github.com/fairwindsops/insights-plugins/plugins/opa v0.0.0-20230816161340-4e57dcbf926b
 	github.com/fatih/color v1.15.0
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imroc/req v0.3.2
 	github.com/open-policy-agent/opa v0.56.0
