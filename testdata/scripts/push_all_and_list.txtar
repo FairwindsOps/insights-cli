@@ -121,4 +121,7 @@ spec:
        v2test (v2)
    rules
        pluto severity increase
-
+   app-groups
+       all
+   policy-mappings
+       trivy-all (enabled)
