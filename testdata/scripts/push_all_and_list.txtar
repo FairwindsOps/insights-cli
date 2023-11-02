@@ -96,6 +96,20 @@ action: |
     ActionItem.Severity = 0.99;
   }
 
+# An app-group
+-- populated_dir/app-groups/match-all.yaml --
+type: AppGroup
+name: all
+spec: {}
+
+# A policy mapping
+-- populated_dir/policy-mappings/match-all.yaml --
+type: PolicyMapping
+name: trivy-all
+spec:
+  appGroups: [all]
+  policies: [trivy]
+
 # The desired output from insights-cli list all, showing pushed OPA policies and automation rules.
 # Note the blank line at the end is required to match the insights-cli output.
 -- desired_output.txt --
