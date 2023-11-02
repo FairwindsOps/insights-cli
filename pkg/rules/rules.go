@@ -199,13 +199,13 @@ func RunVerifyRule(org, token, hostName string, rule VerifyRule) (*ActionItem, e
 }
 
 // AddRulesBranch builds a tree for rules
-func AddRulesBranch(org, token, hostName string, parent treeprint.Tree) error {
+func AddRulesBranch(org, token, hostName string, tree treeprint.Tree) error {
 	rules, err := getRules(org, token, hostName)
 	if err != nil {
 		logrus.Errorf("Unable to get rules from insights: %v", err)
 		return err
 	}
-	rulesBranch := parent.AddBranch("rules")
+	rulesBranch := tree.AddBranch("rules")
 	for _, rule := range rules {
 		rulesNode := rulesBranch.AddBranch(rule.Name)
 		if rule.Cluster != "" {
