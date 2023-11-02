@@ -32,7 +32,6 @@ var listAppGroupsCmd = &cobra.Command{
 	Use:    "app-groups",
 	Short:  "List App Groups.",
 	Long:   "List App Groups defined in Insights.",
-	Hidden: hideAppGroupCommands,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
