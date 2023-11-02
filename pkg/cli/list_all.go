@@ -48,7 +48,6 @@ var listAllCmd = &cobra.Command{
 		if err != nil {
 			logrus.Fatalf("Unable to get rules from insights: %v", err)
 		}
-
 		appGroups, err := appgroups.FetchAppGroups(org, insightsToken, host)
 		if err != nil {
 			logrus.Fatalf("unable to fetch app-groups from insights: %v", err)

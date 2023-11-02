@@ -22,11 +22,12 @@ import (
 
 var deleteMissingPolicyMappings bool
 var pushPolicyMappingsSubDir string
+var defaultPushPolicyMappingsSubDir = "policy-mappings"
 
 func init() {
 	pushPolicyMappingsCmd.PersistentFlags().BoolVarP(&deleteMissingPolicyMappings, "delete", "D", false, "Delete any policy-mappings from Fairwinds Insights that are not present in the local directory.")
 	// This flag sets a variable defined in the parent `push` command.
-	pushPolicyMappingsCmd.PersistentFlags().StringVarP(&pushPolicyMappingsSubDir, "push-policy-mappings-subdirectory", "", "policy-mappings", "Sub-directory within push-directory, to contain policy-mappings.")
+	pushPolicyMappingsCmd.PersistentFlags().StringVarP(&pushPolicyMappingsSubDir, "push-policy-mappings-subdirectory", "", defaultPushPolicyMappingsSubDir, "Sub-directory within push-directory, to contain policy-mappings.")
 	pushCmd.AddCommand(pushPolicyMappingsCmd)
 }
 

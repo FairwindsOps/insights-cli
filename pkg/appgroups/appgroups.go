@@ -15,14 +15,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// BuildAppGroupsTree builds a tree for app-groups
-func BuildAppGroupsTree(appGroups []AppGroup) (treeprint.Tree, error) {
-	tree := treeprint.New()
+// AddAppGroupsBranch builds a tree for app-groups
+func AddAppGroupsBranch(tree treeprint.Tree, appGroups []AppGroup) error {
 	appGroupsBranch := tree.AddBranch("app-groups")
 	for _, appGroup := range appGroups {
 		appGroupsBranch.AddBranch(appGroup.Name)
 	}
-	return tree, nil
+	return nil
 }
 
 // PushAppGroups pushes app-groups to insights

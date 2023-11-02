@@ -22,11 +22,12 @@ import (
 
 var deleteMissingAppGroups bool
 var pushAppGroupsSubDir string
+var defaultPushAppGroupsSubDir = "app-groups"
 
 func init() {
 	pushAppGroupsCmd.PersistentFlags().BoolVarP(&deleteMissingAppGroups, "delete", "D", false, "Delete any app groups from Fairwinds Insights that are not present in the local directory.")
 	// This flag sets a variable defined in the parent `push` command.
-	pushAppGroupsCmd.PersistentFlags().StringVarP(&pushAppGroupsSubDir, "push-app-groups-subdirectory", "", "app-groups", "Sub-directory within push-directory, to contain app-groups.")
+	pushAppGroupsCmd.PersistentFlags().StringVarP(&pushAppGroupsSubDir, "push-app-groups-subdirectory", "", defaultPushAppGroupsSubDir, "Sub-directory within push-directory, to contain app-groups.")
 	pushCmd.AddCommand(pushAppGroupsCmd)
 }
 
