@@ -6,6 +6,8 @@
 mkdir empty_dir
 mkdir empty_dir/opa
 mkdir empty_dir/rules
+mkdir empty_dir/app-groups
+mkdir empty_dir/policy-mappings
 # There has to be a settings.yaml file to push policy configuration.
 cp settings.yaml empty_dir/settings.yaml
 mkdir populated_dir
@@ -19,6 +21,8 @@ cp policy.rego populated_dir/opa/anotherv2test.rego
 cp policy.rego populated_dir/opa/v1test/policy.rego
 cp policy.rego populated_dir/opa/v2test/policy.rego
 mkdir populated_dir/rules
+mkdir populated_dir/app-groups
+mkdir populated_dir/policy-mappings
 cp settings.yaml populated_dir/settings.yaml
 
 # Create a fairwinds-insights.yaml file.
@@ -35,11 +39,17 @@ stderr 'Push succeeded.'
 exec insights-cli push rules --delete -d empty_dir
 ! stdout .
 stderr 'Push succeeded.'
+exec insights-cli push app-groups --delete -d empty_dir
+! stdout .
+stderr 'Push succeeded.'
+exec insights-cli push policy-mappings --delete -d empty_dir
+! stdout .
+stderr 'Push succeeded.'
 exec insights-cli push settings -d empty_dir
 ! stdout .
 stderr 'Push succeeded.'
 
-# Push OPA policies and automation rules, then list them.
+# Push OPA policies, automation rules, app-groups and policy-mappings then list them.
 exec insights-cli push all -d populated_dir
 ! stdout .
 stderr 'Push succeeded.'
