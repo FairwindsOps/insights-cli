@@ -39,10 +39,10 @@ stderr 'Push succeeded.'
 exec insights-cli push rules --delete -d empty_dir
 ! stdout .
 stderr 'Push succeeded.'
-exec insights-cli push app-groups --delete -d empty_dir
+exec insights-cli push policy-mappings --delete -d empty_dir
 ! stdout .
 stderr 'Push succeeded.'
-exec insights-cli push policy-mappings --delete -d empty_dir
+exec insights-cli push app-groups --delete -d empty_dir
 ! stdout .
 stderr 'Push succeeded.'
 exec insights-cli push settings -d empty_dir
