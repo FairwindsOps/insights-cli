@@ -21,26 +21,28 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/fairwindsops/insights-cli/pkg/appgroups"
 	"github.com/fairwindsops/insights-cli/pkg/opa"
 	"github.com/fairwindsops/insights-cli/pkg/policies"
+	"github.com/fairwindsops/insights-cli/pkg/policymappings"
 	"github.com/fairwindsops/insights-cli/pkg/rules"
 )
 
 var warningsAreFatal bool
 
 func init() {
-	// This flag sets a variable defined in the parent `push` command.
 	pushAllCmd.PersistentFlags().StringVarP(&pushOPASubDir, "push-opa-subdirectory", "", defaultPushOPASubDir, "Sub-directory within push-directory, to contain OPA policies.")
-	// This flag sets a variable defined in the parent `push` command.
 	pushAllCmd.PersistentFlags().StringVarP(&pushRulesSubDir, "push-rules-subdirectory", "", defaultPushRulesSubDir, "Sub-directory within push-directory, to contain automation rules.")
-	pushAllCmd.PersistentFlags().BoolVarP(&warningsAreFatal, "warnings-are-fatal", "", false, "Treat warnings as a failure and exit with a non-zero status. For example, if pushing OPA policies and automation rules succeeds, but pushing policies configuration failes because the settings.yaml file is not present.")
+	pushAllCmd.PersistentFlags().StringVarP(&pushAppGroupsSubDir, "push-app-groups-subdirectory", "", defaultPushAppGroupsSubDir, "Sub-directory within push-directory, to contain App Groups.")
+	pushAllCmd.PersistentFlags().StringVarP(&pushPolicyMappingsSubDir, "push-policy-mappings-subdirectory", "", defaultPushPolicyMappingsSubDir, "Sub-directory within push-directory, to contain Policy Mappings.")
+	pushAllCmd.PersistentFlags().BoolVarP(&warningsAreFatal, "warnings-are-fatal", "", false, "Treat warnings as a failure and exit with a non-zero status. For example, if pushing OPA policies and automation rules succeeds, but pushing policies configuration fails because the settings.yaml file is not present.")
 	pushCmd.AddCommand(pushAllCmd)
 }
 
 var pushAllCmd = &cobra.Command{
 	Use:    "all",
-	Short:  "Push OPA policies, automation rules, and policies configuration.",
-	Long:   "Push OPA policies, automation rules, and policies configuration to Insights.",
+	Short:  "Push OPA policies, automation rules, app-groups, policy mappings and policies configuration.",
+	Long:   "Push OPA policies, automation rules, app-groups, policy mappings and policies configuration to Insights.",
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		_, err := os.Stat(pushDir)
@@ -51,7 +53,7 @@ var pushAllCmd = &cobra.Command{
 		host := configurationObject.Options.Hostname
 		const (
 			doNotDeleteMissingResources bool = false
-			numExpectedSuccesses             = 3
+			numExpectedSuccesses             = 5
 		)
 		var numWarnings, numFailures int
 		logrus.Infoln("Pushing OPA policies, automation rules, and policies configuration to Insights.")
@@ -91,6 +93,33 @@ var pushAllCmd = &cobra.Command{
 				numFailures++
 			}
 		}
+
+		absPushAppGroupsDir := filepath.Join(pushDir, pushAppGroupsSubDir)
+		_, err = os.Stat(absPushAppGroupsDir)
+		if err != nil {
+			logrus.Warnf("Unable to push app-groups: %v", err)
+			numWarnings++
+		} else {
+			err = appgroups.PushAppGroups(absPushAppGroupsDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
+			if err != nil {
+				logrus.Errorf("Unable to push app-groups: %v", err)
+				numFailures++
+			}
+		}
+
+		absPushPolicyMappingsDir := filepath.Join(pushDir, pushPolicyMappingsSubDir)
+		_, err = os.Stat(absPushPolicyMappingsDir)
+		if err != nil {
+			logrus.Warnf("Unable to push policy-mappings: %v", err)
+			numWarnings++
+		} else {
+			err = policymappings.PushPolicyMappings(absPushPolicyMappingsDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
+			if err != nil {
+				logrus.Errorf("Unable to push policy-mappings: %v", err)
+				numFailures++
+			}
+		}
+
 		if numFailures == 0 && numWarnings == 0 {
 			logrus.Infoln("Push succeeded")
 			return

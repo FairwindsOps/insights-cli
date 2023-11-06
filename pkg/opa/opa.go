@@ -258,8 +258,8 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 	return checks, nil
 }
 
-// BuildChecksTree builds the tree for OPA checks
-func BuildChecksTree(org, token, hostName string, tree treeprint.Tree) error {
+// AddOPAChecksBranch builds the tree for OPA checks
+func AddOPAChecksBranch(org, token, hostName string, tree treeprint.Tree) error {
 	checks, err := GetChecks(org, token, hostName)
 	if err != nil {
 		logrus.Errorf("Unable to get checks from insights: %v", err)

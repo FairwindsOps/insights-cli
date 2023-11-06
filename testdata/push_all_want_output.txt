@@ -1,8 +1,0 @@
-.
-   opa
-       v1test (v1)
-           deployments
-       v2test (v2)
-   rules
-       pluto severity increase
-

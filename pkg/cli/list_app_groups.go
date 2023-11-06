@@ -19,6 +19,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/xlab/treeprint"
 
 	"github.com/fairwindsops/insights-cli/pkg/appgroups"
 )
@@ -31,7 +32,6 @@ var listAppGroupsCmd = &cobra.Command{
 	Use:    "app-groups",
 	Short:  "List App Groups.",
 	Long:   "List App Groups defined in Insights.",
-	Hidden: hideAppGroupCommands,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
@@ -40,7 +40,9 @@ var listAppGroupsCmd = &cobra.Command{
 		if err != nil {
 			logrus.Fatalf("unable to fetch app-groups from insights: %v", err)
 		}
-		tree, err := appgroups.BuildAppGroupsTree(appGroups)
+
+		tree := treeprint.New()
+		err = appgroups.AddAppGroupsBranch(tree, appGroups)
 		if err != nil {
 			logrus.Fatalf("error building app-groups tree: %v", err)
 		}
