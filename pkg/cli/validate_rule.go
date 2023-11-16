@@ -20,8 +20,14 @@ func init() {
 	verifyRuleCmd.PersistentFlags().StringVarP(&insightsContext, "insights-context", "t", "", "Insights context: [AdmissionController/Agent/CI/CD]")
 	verifyRuleCmd.PersistentFlags().StringVarP(&reportType, "report-type", "R", "", "Report type: [opa, nova, kubesec, kube-hunter, kube-bench, goldilocks, admission, pluto, polaris, rbac-reporter, release-watcher, prometheus-metrics, resource-metrics, trivy, workloads, right-sizer, awscosts, falco]")
 	verifyRuleCmd.PersistentFlags().StringVarP(&expectedActionItem, "expected-action-item", "i", "", "Optional file containing the action item that the automation rule is expected to produce")
-	verifyRuleCmd.MarkPersistentFlagRequired("report-type")
-	verifyRuleCmd.MarkPersistentFlagRequired("insights-context")
+	err := verifyRuleCmd.MarkPersistentFlagRequired("report-type")
+	if err != nil {
+		panic(err)
+	}
+	err = verifyRuleCmd.MarkPersistentFlagRequired("insights-context")
+	if err != nil {
+		panic(err)
+	}
 	validateCmd.AddCommand(verifyRuleCmd)
 }
 
