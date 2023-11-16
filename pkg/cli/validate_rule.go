@@ -20,11 +20,13 @@ func init() {
 	verifyRuleCmd.PersistentFlags().StringVarP(&insightsContext, "insights-context", "t", "", "Insights context: [AdmissionController/Agent/CI/CD]")
 	verifyRuleCmd.PersistentFlags().StringVarP(&reportType, "report-type", "R", "", "Report type: [opa, nova, kubesec, kube-hunter, kube-bench, goldilocks, admission, pluto, polaris, rbac-reporter, release-watcher, prometheus-metrics, resource-metrics, trivy, workloads, right-sizer, awscosts, falco]")
 	verifyRuleCmd.PersistentFlags().StringVarP(&expectedActionItem, "expected-action-item", "i", "", "Optional file containing the action item that the automation rule is expected to produce")
+	verifyRuleCmd.MarkPersistentFlagRequired("report-type")
+	verifyRuleCmd.MarkPersistentFlagRequired("insights-context")
 	validateCmd.AddCommand(verifyRuleCmd)
 }
 
 var verifyRuleCmd = &cobra.Command{
-	Use:    "rule -t  <insights context> {-r <rule file> -a <action item file>} [-i <expected output file>]",
+	Use:    "rule -t <insights context> -R <report type> -r <rule file> -a <action item file> [-i <expected output file>]",
 	Short:  "Validates an automation rule",
 	Long:   "Validates an automation rule by applying it against the specified action item",
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
