@@ -7,8 +7,6 @@ import (
 	"reflect"
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
-	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
-	"github.com/imroc/req"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/xlab/treeprint"
@@ -129,12 +127,4 @@ func getAppGroupsDifferences(fileAppGroups, existingAppGroups []AppGroup) (upser
 		}
 	}
 	return upserts, deletes
-}
-
-func getHeaders(token string) req.Header {
-	return req.Header{
-		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
-		"Authorization":           fmt.Sprintf("Bearer %s", token),
-		"Accept":                  "application/json",
-	}
 }

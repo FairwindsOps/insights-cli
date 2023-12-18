@@ -20,12 +20,12 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/fairwindsops/insights-cli/pkg/models"
+	"github.com/fairwindsops/insights-cli/pkg/utils"
+	"github.com/fairwindsops/insights-cli/pkg/version"
 	opaPlugin "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/opa"
 	"github.com/imroc/req"
 	"github.com/sirupsen/logrus"
-
-	"github.com/fairwindsops/insights-cli/pkg/models"
-	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
 )
 
 const opaURLFormat = "%s/v0/organizations/%s/opa/customChecks"
@@ -40,7 +40,7 @@ const opaInstanceURLFormat = opaCheckInstancesURLFormat + "/%s"
 func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) {
 	url := fmt.Sprintf(opaURLFormat, hostName, org)
 	logrus.Debugf("OPA URL: %s", url)
-	resp, err := req.Get(url, getHeaders(token))
+	resp, err := req.Get(url, utils.GetHeaders(version.GetVersion(), token))
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +59,7 @@ func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) 
 // GetInstances queries Fairwinds Insights to retrieve all of the instances for a given check
 func GetInstances(org, checkName, token, hostName string) ([]opaPlugin.CheckSetting, error) {
 	url := fmt.Sprintf(opaCheckInstancesURLFormat, hostName, org, checkName)
-	resp, err := req.Get(url, getHeaders(token))
+	resp, err := req.Get(url, utils.GetHeaders(version.GetVersion(), token))
 	if err != nil {
 		return nil, err
 	}
@@ -78,7 +78,7 @@ func GetInstances(org, checkName, token, hostName string) ([]opaPlugin.CheckSett
 // DeleteCheck deletes an OPA Check from Fairwinds Insights
 func DeleteCheck(check models.CustomCheckModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaCheckURLFormat, hostName, org, check.CheckName)
-	resp, err := req.Delete(url, getHeaders(token))
+	resp, err := req.Delete(url, utils.GetHeaders(version.GetVersion(), token))
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func DeleteCheck(check models.CustomCheckModel, org, token, hostName string) err
 // PutCheck upserts an OPA Check to Fairwinds Insights
 func PutCheck(check models.CustomCheckModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaPutCheckURLFormat, hostName, org, check.CheckName, check.Version)
-	resp, err := req.Put(url, getHeaders(token), req.BodyJSON(&check))
+	resp, err := req.Put(url, utils.GetHeaders(version.GetVersion(), token), req.BodyJSON(&check))
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func PutCheck(check models.CustomCheckModel, org, token, hostName string) error 
 // DeleteInstance deletes an Instance from Fairwinds Insights
 func DeleteInstance(instance models.CustomCheckInstanceModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaInstanceURLFormat, hostName, org, instance.CheckName, instance.InstanceName)
-	resp, err := req.Delete(url, getHeaders(token))
+	resp, err := req.Delete(url, utils.GetHeaders(version.GetVersion(), token))
 	if err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func DeleteInstance(instance models.CustomCheckInstanceModel, org, token, hostNa
 // PutInstance upserts an Instance to Fairwinds Insights
 func PutInstance(instance models.CustomCheckInstanceModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaInstanceURLFormat, hostName, org, instance.CheckName, instance.InstanceName)
-	resp, err := req.Put(url, getHeaders(token), req.BodyJSON(&instance))
+	resp, err := req.Put(url, utils.GetHeaders(version.GetVersion(), token), req.BodyJSON(&instance))
 	if err != nil {
 		return err
 	}
@@ -198,12 +198,4 @@ func PushOPAChecks(pushDir, org, insightsToken, host string, deleteMissing, dryr
 	}
 	logrus.Debugln("Done pushing OPA policies")
 	return nil
-}
-
-func getHeaders(token string) req.Header {
-	return req.Header{
-		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
-		"Authorization":           fmt.Sprintf("Bearer %s", token),
-		"Accept":                  "application/json",
-	}
 }

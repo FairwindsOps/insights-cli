@@ -9,6 +9,8 @@ import (
 	"io"
 	"net/http"
 	"time"
+
+	"github.com/fairwindsops/insights-cli/pkg/utils"
 )
 
 type Message struct {
@@ -76,7 +78,7 @@ func sendRequest(ctx context.Context, apiKey string, request Request) (string, e
 		return "", err
 	}
 
-	if !isSuccessful(resp.StatusCode) {
+	if !utils.IsSuccessful(resp.StatusCode) {
 		return "", fmt.Errorf("expected 200 - got %d - %s", resp.StatusCode, string(body))
 	}
 
@@ -91,8 +93,4 @@ func sendRequest(ctx context.Context, apiKey string, request Request) (string, e
 	}
 
 	return response.Choices[0].Message.Content, nil
-}
-
-func isSuccessful(statusCode int) bool {
-	return statusCode >= 200 && statusCode < 400
 }

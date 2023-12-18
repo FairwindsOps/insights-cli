@@ -3,6 +3,8 @@ package appgroups
 import (
 	"fmt"
 
+	"github.com/fairwindsops/insights-cli/pkg/utils"
+	"github.com/fairwindsops/insights-cli/pkg/version"
 	"github.com/imroc/req"
 	"github.com/sirupsen/logrus"
 )
@@ -16,12 +18,12 @@ const (
 func FetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
 	url := fmt.Sprintf(appGroupURLFormat, hostName, org)
 	logrus.Debugf("fetchAppGroups: appGroups URL: %s", url)
-	resp, err := req.Get(url, getHeaders(token))
+	resp, err := req.Get(url, utils.GetHeaders(version.GetVersion(), token))
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
 	var appGroups []AppGroup
-	if !isSuccessful(resp.Response().StatusCode) {
+	if !utils.IsSuccessful(resp.Response().StatusCode) {
 		return nil, fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
 	}
 	err = resp.ToJSON(&appGroups)
@@ -35,11 +37,11 @@ func FetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
 func upsertAppGroup(org, token, hostName string, appGroup AppGroup) error {
 	url := fmt.Sprintf(appGroupURLFormat, hostName, org)
 	logrus.Debugf("upsertAppGroup: appGroups URL: %s", url)
-	resp, err := req.Post(url, getHeaders(token), req.BodyJSON(&appGroup))
+	resp, err := req.Post(url, utils.GetHeaders(version.GetVersion(), token), req.BodyJSON(&appGroup))
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
-	if !isSuccessful(resp.Response().StatusCode) {
+	if !utils.IsSuccessful(resp.Response().StatusCode) {
 		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
 	}
 	var response AppGroup
@@ -55,11 +57,11 @@ func upsertAppGroup(org, token, hostName string, appGroup AppGroup) error {
 func deleteAppGroup(org, token, hostName string, appGroup AppGroup) error {
 	url := fmt.Sprintf(appGroupURLSingleFormat, hostName, org, appGroup.Name)
 	logrus.Debugf("deleteAppGroup: appGroups URL: %s", url)
-	resp, err := req.Delete(url, getHeaders(token))
+	resp, err := req.Delete(url, utils.GetHeaders(version.GetVersion(), token))
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
-	if !isSuccessful(resp.Response().StatusCode) {
+	if !utils.IsSuccessful(resp.Response().StatusCode) {
 		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
 	}
 	var response AppGroup
@@ -69,5 +71,3 @@ func deleteAppGroup(org, token, hostName string, appGroup AppGroup) error {
 	}
 	return nil
 }
-
-func isSuccessful(statusCode int) bool { return statusCode >= 200 && statusCode < 300 }
