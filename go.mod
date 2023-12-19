@@ -10,7 +10,7 @@ require (
 	github.com/imroc/req v0.3.2
 	github.com/open-policy-agent/opa v0.58.0
 	github.com/rogpeppe/go-internal v1.11.0
-	github.com/samber/lo v1.38.1
+	github.com/samber/lo v1.39.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
 	github.com/stretchr/testify v1.8.4
