@@ -3,6 +3,7 @@ package policymappings
 import (
 	"fmt"
 
+	"github.com/fairwindsops/insights-cli/pkg/utils"
 	"github.com/imroc/req"
 	"github.com/sirupsen/logrus"
 )
@@ -20,10 +21,10 @@ func FetchPolicyMappings(org, token, hostName string) ([]PolicyMapping, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch policy-mappings from insights: %w", err)
 	}
-	var policyMappings []PolicyMapping
-	if !isSuccessful(resp.Response().StatusCode) {
+	if !utils.IsSuccessful(resp.Response().StatusCode) {
 		return nil, fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
 	}
+	var policyMappings []PolicyMapping
 	err = resp.ToJSON(&policyMappings)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to convert response to json for policy-mappings: %w", err)
@@ -39,7 +40,7 @@ func upsertPolicyMapping(org, token, hostName string, policyMapping PolicyMappin
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mapping from insights: %w", err)
 	}
-	if !isSuccessful(resp.Response().StatusCode) {
+	if !utils.IsSuccessful(resp.Response().StatusCode) {
 		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
 	}
 	var response PolicyMapping
@@ -59,7 +60,7 @@ func deletePolicyMapping(org, token, hostName string, policyMapping PolicyMappin
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mapping from insights: %w", err)
 	}
-	if !isSuccessful(resp.Response().StatusCode) {
+	if !utils.IsSuccessful(resp.Response().StatusCode) {
 		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
 	}
 	var response PolicyMapping
@@ -69,5 +70,3 @@ func deletePolicyMapping(org, token, hostName string, policyMapping PolicyMappin
 	}
 	return nil
 }
-
-func isSuccessful(statusCode int) bool { return statusCode >= 200 && statusCode < 300 }
