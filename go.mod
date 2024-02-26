@@ -9,7 +9,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imroc/req v0.3.2
 	github.com/open-policy-agent/opa v0.58.0
-	github.com/rogpeppe/go-internal v1.11.0
+	github.com/rogpeppe/go-internal v1.12.0
 	github.com/samber/lo v1.38.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.7.0
