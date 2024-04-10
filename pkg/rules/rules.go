@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -34,7 +35,7 @@ import (
 const rulesURLFormat = "%s/v0/organizations/%s/rules"
 const rulesURLFormatCreate = "%s/v0/organizations/%s/rules/create"
 const rulesURLFormatUpdateDelete = "%s/v0/organizations/%s/rules/%d"
-const rulesURLVerify = "%s/v0/organizations/%s/rules/verify"
+const rulesURLVerify = "%s/v0/organizations/%s/rules/verify-with-events"
 
 // Rule is the struct to hold the information for a rule
 type Rule struct {
@@ -63,6 +64,61 @@ const (
 	VerifyActionItemTicketProviderGitHub VerifyActionItemTicketProvider = "GitHub"
 	VerifyActionItemTicketProviderJira   VerifyActionItemTicketProvider = "Jira"
 )
+
+type VerifyWithEvents struct {
+	ActionItem ActionItem           `json:"actionItem" yaml:"actionItem"`
+	Events     []RuleExecutionEvent `json:"events" yaml:"events"`
+}
+
+type RuleExecutionEvent struct {
+	Changelog []changelog `json:"changelog" yaml:"changelog"`
+	CreatedAt time.Time   `json:"createdAt" yaml:"createdAt"`
+	Details   string      `json:"details" yaml:"details"`
+	DryRun    bool        `json:"dryRun" yaml:"dryRun"`
+	Level     string      `json:"level" yaml:"level"`
+	Type      string      `json:"type" yaml:"type"`
+}
+
+type changelog struct {
+	From any      `json:"from" yaml:"from"`
+	Path []string `json:"path" yaml:"path"`
+	To   any      `json:"to" yaml:"to"`
+	Type string   `json:"type" yaml:"type"`
+}
+
+func (e RuleExecutionEvent) String() string {
+	const colorGreen = "\033[0;32m"
+	const colorYellow = "\033[0;33m"
+	const colorRed = "\033[0;31m"
+	const colorOrange = "\033[0;31m\033[0;33m"
+	const colorNone = "\033[0m"
+
+	var s string
+	switch e.Level {
+	case "error":
+		s = fmt.Sprintf("%s[error]%s ", colorRed, colorNone)
+	case "warn":
+		s += fmt.Sprintf("%s[warn]%s ", colorYellow, colorNone)
+	case "info":
+		s += fmt.Sprintf("%s[info]%s ", colorGreen, colorNone)
+	}
+
+	if e.DryRun {
+		s += fmt.Sprintf("%s[dry-run]%s ", colorOrange, colorNone)
+	}
+
+	switch e.Type {
+	case "edit_action_item":
+		var ss []string
+		for _, c := range e.Changelog {
+			ss = append(ss, fmt.Sprintf("%q was %q from %q to %q", c.Path[0], c.Type, c.From, c.To))
+		}
+		s += fmt.Sprintf("%q - %s - [%s]", e.Type, e.Details, strings.Join(ss, ","))
+	default:
+		s += fmt.Sprintf("%q - %s", e.Type, e.Details)
+	}
+	return s
+}
 
 type ActionItem struct {
 	TicketCreatedAt   *time.Time                      `json:"TicketCreatedAt,omitempty" yaml:"TicketCreatedAt,omitempty"`
@@ -178,8 +234,12 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 }
 
 // RunVerifyRule verifies rule against one action item
-func RunVerifyRule(org, token, hostName string, rule VerifyRule) (*ActionItem, error) {
+func RunVerifyRule(org, token, hostName string, rule VerifyRule, dryRun bool) (*VerifyWithEvents, error) {
 	url := fmt.Sprintf(rulesURLVerify, hostName, org)
+	if dryRun {
+		url += "?dryRun=true"
+	}
+
 	resp, err := req.Post(url, getRuleVerifyHeaders(token), req.BodyJSON(&rule))
 	if err != nil {
 		logrus.Errorf("error verifying rule %v in insights: %v", rule, err)
@@ -189,13 +249,13 @@ func RunVerifyRule(org, token, hostName string, rule VerifyRule) (*ActionItem, e
 		logrus.Errorf("runVerifyRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
 		return nil, errors.New("runVerifyRule: invalid response code")
 	}
-	var verify *ActionItem
+	var verify VerifyWithEvents
 	err = resp.ToJSON(&verify)
 	if err != nil {
 		logrus.Errorf("unable to convert response to json to VerifyActionItem: %v", err)
 		return nil, err
 	}
-	return verify, nil
+	return &verify, nil
 }
 
 // AddRulesBranch builds a tree for rules
