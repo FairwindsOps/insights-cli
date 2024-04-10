@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -154,18 +153,17 @@ func runVerifyRule(org, token, hostName string, rule verifyRule, dryRun bool) (*
 
 	resp, err := req.Post(url, getRuleVerifyHeaders(token), req.BodyJSON(&rule))
 	if err != nil {
-		logrus.Errorf("error verifying rule %v in insights: %v", rule, err)
-		return nil, err
+		return nil, fmt.Errorf("error verifying rule in Insights: %v", err)
+
 	}
 	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("runVerifyRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return nil, errors.New("runVerifyRule: invalid response code")
+		return nil, fmt.Errorf("invalid response code: %v - %s", resp.Response().StatusCode, string(resp.Bytes()))
 	}
 	var verify verifyWithEvents
 	err = resp.ToJSON(&verify)
 	if err != nil {
-		logrus.Errorf("unable to convert response to json to VerifyActionItem: %v", err)
-		return nil, err
+		return nil, fmt.Errorf("unable to convert response to json: %v", err)
+
 	}
 	return &verify, nil
 }
@@ -228,12 +226,12 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 
 	expectedActionItemFile, err := os.Open(expectedActionItemFilePath)
 	if err != nil {
-		return fmt.Errorf("Error when trying to open expected file %s: %v", expectedActionItemFilePath, err)
+		return fmt.Errorf("error when trying to open expected file %s: %v", expectedActionItemFilePath, err)
 	}
 
 	expectedActionItemBytes, err := io.ReadAll(expectedActionItemFile)
 	if err != nil {
-		return fmt.Errorf("Failed to read output file: %v", err)
+		return fmt.Errorf("failed to read output file: %v", err)
 	}
 
 	var expectedActionItem actionItem
