@@ -19,8 +19,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strings"
-	"time"
 
 	"gopkg.in/yaml.v3"
 
@@ -35,7 +33,6 @@ import (
 const rulesURLFormat = "%s/v0/organizations/%s/rules"
 const rulesURLFormatCreate = "%s/v0/organizations/%s/rules/create"
 const rulesURLFormatUpdateDelete = "%s/v0/organizations/%s/rules/%d"
-const rulesURLVerify = "%s/v0/organizations/%s/rules/verify-with-events"
 
 // Rule is the struct to hold the information for a rule
 type Rule struct {
@@ -54,116 +51,6 @@ type CompareResults struct {
 	RuleInsert []Rule
 	RuleUpdate []Rule
 	RuleDelete []Rule
-}
-
-type VerifyActionItemTicketProvider string
-
-// Defines values for VerifyActionItemTicketProvider.
-const (
-	VerifyActionItemTicketProviderAzure  VerifyActionItemTicketProvider = "Azure"
-	VerifyActionItemTicketProviderGitHub VerifyActionItemTicketProvider = "GitHub"
-	VerifyActionItemTicketProviderJira   VerifyActionItemTicketProvider = "Jira"
-)
-
-type VerifyWithEvents struct {
-	ActionItem ActionItem           `json:"actionItem" yaml:"actionItem"`
-	Events     []RuleExecutionEvent `json:"events" yaml:"events"`
-}
-
-type RuleExecutionEvent struct {
-	Changelog []changelog `json:"changelog" yaml:"changelog"`
-	CreatedAt time.Time   `json:"createdAt" yaml:"createdAt"`
-	Details   string      `json:"details" yaml:"details"`
-	DryRun    bool        `json:"dryRun" yaml:"dryRun"`
-	Level     string      `json:"level" yaml:"level"`
-	Type      string      `json:"type" yaml:"type"`
-}
-
-type changelog struct {
-	From any      `json:"from" yaml:"from"`
-	Path []string `json:"path" yaml:"path"`
-	To   any      `json:"to" yaml:"to"`
-	Type string   `json:"type" yaml:"type"`
-}
-
-func (e RuleExecutionEvent) String() string {
-	const colorGreen = "\033[0;32m"
-	const colorYellow = "\033[0;33m"
-	const colorRed = "\033[0;31m"
-	const colorOrange = "\033[0;31m\033[0;33m"
-	const colorNone = "\033[0m"
-
-	var s string
-	switch e.Level {
-	case "error":
-		s = fmt.Sprintf("%s[error]%s ", colorRed, colorNone)
-	case "warn":
-		s += fmt.Sprintf("%s[warn]%s ", colorYellow, colorNone)
-	case "info":
-		s += fmt.Sprintf("%s[info]%s ", colorGreen, colorNone)
-	}
-
-	if e.DryRun {
-		s += fmt.Sprintf("%s[dry-run]%s ", colorOrange, colorNone)
-	}
-
-	switch e.Type {
-	case "edit_action_item":
-		var ss []string
-		for _, c := range e.Changelog {
-			ss = append(ss, fmt.Sprintf("%q was %q from %q to %q", c.Path[0], c.Type, c.From, c.To))
-		}
-		s += fmt.Sprintf("%q - %s - [%s]", e.Type, e.Details, strings.Join(ss, ","))
-	default:
-		s += fmt.Sprintf("%q - %s", e.Type, e.Details)
-	}
-	return s
-}
-
-type ActionItem struct {
-	TicketCreatedAt   *time.Time                      `json:"TicketCreatedAt,omitempty" yaml:"TicketCreatedAt,omitempty"`
-	TicketLink        *string                         `json:"TicketLink,omitempty" yaml:"TicketLink,omitempty"`
-	TicketProvider    *VerifyActionItemTicketProvider `json:"TicketProvider,omitempty" yaml:"TicketProvider,omitempty"`
-	AssigneeEmail     *string                         `json:"assigneeEmail,omitempty" yaml:"assigneeEmail,omitempty"`
-	Category          *string                         `json:"category,omitempty" yaml:"category,omitempty"`
-	Cluster           *string                         `json:"cluster,omitempty" yaml:"cluster,omitempty"`
-	DeletedAt         *time.Time                      `json:"deletedAt,omitempty" yaml:"deletedAt,omitempty"`
-	Description       *string                         `json:"description,omitempty" yaml:"description,omitempty"`
-	EventType         *string                         `json:"eventType,omitempty" yaml:"eventType,omitempty"`
-	FirstSeen         *time.Time                      `json:"firstSeen,omitempty" yaml:"firstSeen,omitempty"`
-	Fixed             *bool                           `json:"fixed,omitempty" yaml:"fixed,omitempty"`
-	IsCustom          *bool                           `json:"isCustom,omitempty" yaml:"isCustom,omitempty"`
-	LastReportedAt    *time.Time                      `json:"lastReportedAt,omitempty" yaml:"lastReportedAt,omitempty"`
-	Notes             *string                         `json:"notes,omitempty" yaml:"notes,omitempty"`
-	Organization      *string                         `json:"organization,omitempty" yaml:"organization,omitempty"`
-	Remediation       *string                         `json:"remediation,omitempty" yaml:"remediation,omitempty"`
-	ReportType        *string                         `json:"reportType,omitempty" yaml:"reportType,omitempty"`
-	Resolution        *string                         `json:"resolution,omitempty" yaml:"resolution,omitempty"`
-	ResourceContainer *string                         `json:"resourceContainer,omitempty" yaml:"resourceContainer,omitempty"`
-	ResourceKind      *string                         `json:"resourceKind,omitempty" yaml:"resourceKind,omitempty"`
-	ResourceLabels    map[string]string               `json:"resourceLabels,omitempty" yaml:"resourceLabels,omitempty"`
-	ResourceName      *string                         `json:"resourceName,omitempty" yaml:"resourceName,omitempty"`
-	ResourceNamespace *string                         `json:"resourceNamespace,omitempty" yaml:"resourceNamespace,omitempty"`
-	Severity          *float32                        `json:"severity,omitempty" yaml:"severity,omitempty"`
-	Tags              []string                        `json:"tags" yaml:"tags"`
-	Title             string                          `json:"title" yaml:"title"`
-}
-
-// RuleExecutionContext defines model for RuleExecutionContext.
-type RuleExecutionContext string
-
-// Defines values for RuleExecutionContext.
-const (
-	RuleExecutionContextAdmissionController RuleExecutionContext = "AdmissionController"
-	RuleExecutionContextAgent               RuleExecutionContext = "Agent"
-	RuleExecutionContextCICD                RuleExecutionContext = "CI/CD"
-)
-
-type VerifyRule struct {
-	ActionItem ActionItem           `json:"actionItem" yaml:"actionItem"`
-	Context    RuleExecutionContext `json:"context" yaml:"context"`
-	ReportType string               `json:"reportType" yaml:"reportType"`
-	Script     string               `json:"script" yaml:"script"`
 }
 
 // getRules queries Fairwinds Insights to retrieve all of the Rules for an organization
@@ -231,31 +118,6 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 		return errors.New("deleteRule: invalid response code")
 	}
 	return nil
-}
-
-// RunVerifyRule verifies rule against one action item
-func RunVerifyRule(org, token, hostName string, rule VerifyRule, dryRun bool) (*VerifyWithEvents, error) {
-	url := fmt.Sprintf(rulesURLVerify, hostName, org)
-	if dryRun {
-		url += "?dryRun=true"
-	}
-
-	resp, err := req.Post(url, getRuleVerifyHeaders(token), req.BodyJSON(&rule))
-	if err != nil {
-		logrus.Errorf("error verifying rule %v in insights: %v", rule, err)
-		return nil, err
-	}
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("runVerifyRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
-		return nil, errors.New("runVerifyRule: invalid response code")
-	}
-	var verify VerifyWithEvents
-	err = resp.ToJSON(&verify)
-	if err != nil {
-		logrus.Errorf("unable to convert response to json to VerifyActionItem: %v", err)
-		return nil, err
-	}
-	return &verify, nil
 }
 
 // AddRulesBranch builds a tree for rules
@@ -439,13 +301,5 @@ func getHeaders(token string) req.Header {
 	return req.Header{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"Accept":        "application/json",
-	}
-}
-
-func getRuleVerifyHeaders(token string) req.Header {
-	return req.Header{
-		"Authorization": fmt.Sprintf("Bearer %s", token),
-		"Accept":        "application/json",
-		"Content-Type":  "application/yaml",
 	}
 }
