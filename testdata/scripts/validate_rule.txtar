@@ -28,6 +28,7 @@ if (ActionItem.ReportType === "trivy" && ActionItem.Cluster === "production") {
 
 -- action-item.yaml --
 title: Image has vulnerabilities
+eventType: image_vulnerability
 cluster: production
 severity: 0.8
 
@@ -35,16 +36,10 @@ severity: 0.8
 title: Image has vulnerabilities
 cluster: production
 severity: 0.8
-organization: cli-test
-fixed: false
-isCustom: false
+eventType: image_vulnerability
 
 -- expected-output-incorrect.yaml --
 title: Image has absolutely no vulnerabilities
 cluster: production
 severity: 0.8
-organization: cli-test
-fixed: false
-isCustom: false
-
-
+eventType: image_vulnerability
