@@ -115,6 +115,8 @@ type actionItem struct {
 	FirstSeen         *time.Time                      `json:"firstSeen,omitempty" yaml:"firstSeen,omitempty"`
 	LastReportedAt    *time.Time                      `json:"lastReportedAt,omitempty" yaml:"lastReportedAt,omitempty"`
 	Notes             *string                         `json:"notes,omitempty" yaml:"notes,omitempty"`
+	Fixed             *bool                           `json:"fixed,omitempty" yaml:"fixed,omitempty"`
+	IsCustom          *bool                           `json:"isCustom,omitempty" yaml:"isCustom,omitempty"`
 	Remediation       *string                         `json:"remediation,omitempty" yaml:"remediation,omitempty"`
 	ReportType        *string                         `json:"reportType,omitempty" yaml:"reportType,omitempty"`
 	Resolution        *string                         `json:"resolution,omitempty" yaml:"resolution,omitempty"`
@@ -218,11 +220,10 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 		for _, e := range r.Events {
 			fmt.Println(e)
 		}
-		fmt.Println()
 	}
 
 	if expectedActionItemFilePath == "" {
-		fmt.Printf("-- Returned Action Item --\n\n")
+		fmt.Printf("\n-- Returned Action Item --\n\n")
 		b, err := yaml.Marshal(responseActionItem)
 		if err != nil {
 			return fmt.Errorf("could not marshal verify result: %v", err)
@@ -247,7 +248,7 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 		return fmt.Errorf("could not marshal expected response: %v", err)
 	}
 
-	fmt.Printf("-- Diff Result --\n\n")
+	fmt.Printf("\n-- Diff Result --\n\n")
 
 	opts := buildCmpOptions(expectedActionItem)
 
@@ -276,13 +277,17 @@ func validateInputActionItem(context string, ai actionItem) error {
 		}
 	}
 
-	if context == string(RuleExecutionContextCICD) {
+	if isRepositoryRequired(context) {
 		if ai.Repository == nil || len(*ai.Repository) == 0 {
 			return fmt.Errorf("repository is required for context %s", context)
 		}
 	}
 
 	return nil
+}
+
+func isRepositoryRequired(context string) bool {
+	return context == string(RuleExecutionContextCICD)
 }
 
 func isClusterRequired(context string) bool {
