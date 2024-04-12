@@ -36,7 +36,7 @@ var verifyRuleCmd = &cobra.Command{
 		host := configurationObject.Options.Hostname
 		err := rules.ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, reportType, insightsContext, dryRun)
 		if err != nil {
-			exitWithError("error validating rule", err)
+			exitWithError("", err)
 		}
 	},
 }
