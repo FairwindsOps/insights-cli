@@ -239,7 +239,7 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 	if err != nil {
 		return fmt.Errorf("could not marshal expected response: %v", err)
 	}
-	diff := cmp.Diff(&expectedActionItem, responseActionItem)
+	diff := cmp.Diff(expectedActionItem, responseActionItem)
 	if len(diff) == 0 {
 		logrus.Infoln("Success - actual response matches expected response")
 	} else {
