@@ -11,7 +11,7 @@ var dryRun bool
 func init() {
 	verifyRuleCmd.PersistentFlags().StringVarP(&automationRuleFilePath, "automation-rule-file", "r", "./rule.js", "Automation rule JS file path")
 	verifyRuleCmd.PersistentFlags().StringVarP(&actionItemFilePath, "action-item-file", "a", "./action-item.yaml", "Action Item file path")
-	verifyRuleCmd.PersistentFlags().StringVarP(&insightsContext, "insights-context", "t", "", "Insights context: [AdmissionController/Agent/CI/CD]")
+	verifyRuleCmd.PersistentFlags().StringVarP(&insightsContext, "insights-context", "t", "", "Insights context: [AdmissionController, Agent or CI/CD]")
 	verifyRuleCmd.PersistentFlags().StringVarP(&reportType, "report-type", "R", "", "Report type: [opa, nova, kubesec, kube-hunter, kube-bench, goldilocks, admission, pluto, polaris, rbac-reporter, release-watcher, prometheus-metrics, resource-metrics, trivy, workloads, right-sizer, awscosts, falco]")
 	verifyRuleCmd.PersistentFlags().StringVarP(&expectedActionItemFilePath, "expected-action-item", "i", "", "Optional file containing the action item that the automation rule is expected to produce")
 	verifyRuleCmd.PersistentFlags().BoolVarP(&dryRun, "dry-run", "", false, "Optional flag to run the rule without executing any external integration (Slack, Jira, PagerDuty, Azure, http requests).")
