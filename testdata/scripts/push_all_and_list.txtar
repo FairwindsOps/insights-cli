@@ -120,7 +120,7 @@ spec:
            deployments
        v2test (v2)
    rules
-       pluto severity increase
+       pluto-severity-increase
    app-groups
        all
    policy-mappings
