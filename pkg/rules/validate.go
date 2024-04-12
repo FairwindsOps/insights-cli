@@ -11,7 +11,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/imroc/req"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml" // this lib correctly handles null slices
 )
 
 const rulesURLVerify = "%s/v0/organizations/%s/rules/verify-with-events"
@@ -212,10 +212,11 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 		for _, e := range r.Events {
 			fmt.Println(e)
 		}
+		fmt.Println()
 	}
 
 	if expectedActionItemFilePath == "" {
-		fmt.Printf("\n-- Returned Action Item --\n\n")
+		fmt.Printf("-- Returned Action Item --\n\n")
 		b, err := yaml.Marshal(responseActionItem)
 		if err != nil {
 			return fmt.Errorf("could not marshal verify result: %v", err)
@@ -239,9 +240,12 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 	if err != nil {
 		return fmt.Errorf("could not marshal expected response: %v", err)
 	}
+
+	fmt.Printf("-- Diff Result --\n\n")
+
 	diff := cmp.Diff(expectedActionItem, responseActionItem)
 	if len(diff) == 0 {
-		logrus.Infoln("Success - actual response matches expected response")
+		logrus.Infof("Success - actual response matches expected response\n\n")
 	} else {
 		logrus.Errorln("Test failed:")
 		fmt.Println(diff)
