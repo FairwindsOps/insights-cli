@@ -89,7 +89,7 @@ targets:
 
 # An automation rule.
 -- populated_dir/rules/pluto-severity.yaml --
-name: "pluto severity increase"
+name: "pluto-severity-increase"
 description: "Assigns all Action Items from pluto to a higher severity@"
 action: |
   if (ActionItem.ReportType === 'pluto') {
@@ -120,7 +120,7 @@ spec:
            deployments
        v2test (v2)
    rules
-       pluto severity increase
+       pluto-severity-increase
    app-groups
        all
    policy-mappings
