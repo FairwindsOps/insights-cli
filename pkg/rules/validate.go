@@ -188,6 +188,11 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 		return fmt.Errorf("could not parse action item file %s: %v", actionItemFilePath, err)
 	}
 
+	// if `reportType` is not set, we default using the one from the command line
+	if ai.ReportType == nil {
+		ai.ReportType = &reportType
+	}
+
 	err = validateInputActionItem(insightsContext, ai)
 	if err != nil {
 		return fmt.Errorf("invalid input action item: %v", err)
@@ -270,6 +275,10 @@ func validateInputActionItem(context string, ai actionItem) error {
 
 	if ai.EventType == nil || len(*ai.EventType) == 0 {
 		return errors.New("eventType is required")
+	}
+
+	if ai.ReportType == nil || len(*ai.ReportType) == 0 {
+		return errors.New("reportType is required")
 	}
 
 	if isClusterRequired(context) {
