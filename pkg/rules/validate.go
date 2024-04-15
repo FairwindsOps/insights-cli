@@ -254,7 +254,8 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 
 	diff := cmp.Diff(expectedActionItem, responseActionItem, opts...)
 	if len(diff) == 0 {
-		logrus.Infof("Success - actual response matches expected response\n\n")
+		logrus.Infoln("Success - actual response matches expected response")
+		fmt.Println()
 	} else {
 		logrus.Errorln("Test failed:")
 		fmt.Println(diff)
