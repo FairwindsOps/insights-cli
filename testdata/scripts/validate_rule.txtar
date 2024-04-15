@@ -35,11 +35,11 @@ severity: 0.8
 -- expected-output.yaml --
 title: Image has vulnerabilities
 cluster: production
-severity: 0.8
+severity: 0.9
 eventType: image_vulnerability
 
 -- expected-output-incorrect.yaml --
 title: Image has absolutely no vulnerabilities
 cluster: production
-severity: 0.8
+severity: 0.9
 eventType: image_vulnerability
