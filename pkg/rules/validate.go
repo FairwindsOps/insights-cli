@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -115,8 +114,6 @@ type actionItem struct {
 	FirstSeen         *time.Time                      `json:"firstSeen,omitempty" yaml:"firstSeen,omitempty"`
 	LastReportedAt    *time.Time                      `json:"lastReportedAt,omitempty" yaml:"lastReportedAt,omitempty"`
 	Notes             *string                         `json:"notes,omitempty" yaml:"notes,omitempty"`
-	Fixed             *bool                           `json:"fixed,omitempty" yaml:"fixed,omitempty"`
-	IsCustom          *bool                           `json:"isCustom,omitempty" yaml:"isCustom,omitempty"`
 	Remediation       *string                         `json:"remediation,omitempty" yaml:"remediation,omitempty"`
 	ReportType        *string                         `json:"reportType,omitempty" yaml:"reportType,omitempty"`
 	Resolution        *string                         `json:"resolution,omitempty" yaml:"resolution,omitempty"`
@@ -171,7 +168,7 @@ func runVerifyRule(org, token, hostName string, rule verifyRule, dryRun bool) (*
 	return &verify, nil
 }
 
-func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, reportType, insightsContext string, dryRun bool) error {
+func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, insightsContext string, dryRun bool) error {
 	aiInput, err := os.Open(actionItemFilePath)
 	if err != nil {
 		return fmt.Errorf("error when trying to open action item file %s: %v", actionItemFilePath, err)
@@ -186,11 +183,6 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 	err = yaml.Unmarshal(aiBytes, &ai)
 	if err != nil {
 		return fmt.Errorf("could not parse action item file %s: %v", actionItemFilePath, err)
-	}
-
-	// if `reportType` is not set, we default using the one from the command line
-	if ai.ReportType == nil {
-		ai.ReportType = &reportType
 	}
 
 	err = validateInputActionItem(insightsContext, ai)
@@ -211,7 +203,7 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 	verifyRule := verifyRule{
 		ActionItem: ai,
 		Context:    ruleExecutionContext(insightsContext),
-		ReportType: reportType,
+		ReportType: *ai.ReportType,
 		Script:     string(ruleBytes),
 	}
 	r, err := runVerifyRule(org, insightsToken, host, verifyRule, dryRun)
@@ -247,15 +239,18 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 		return fmt.Errorf("failed to read output file: %v", err)
 	}
 
+	fmt.Printf("\n-- Diff Result --\n\n")
+
+	opts, err := buildCmpOptions(expectedActionItemBytes)
+	if err != nil {
+		return fmt.Errorf("could not build cmp options: %v", err)
+	}
+
 	var expectedActionItem actionItem
 	err = yaml.Unmarshal(expectedActionItemBytes, &expectedActionItem)
 	if err != nil {
 		return fmt.Errorf("could not marshal expected response: %v", err)
 	}
-
-	fmt.Printf("\n-- Diff Result --\n\n")
-
-	opts := buildCmpOptions(expectedActionItem)
 
 	diff := cmp.Diff(expectedActionItem, responseActionItem, opts...)
 	if len(diff) == 0 {
@@ -281,6 +276,10 @@ func validateInputActionItem(context string, ai actionItem) error {
 		return errors.New("reportType is required")
 	}
 
+	if ai.Severity == nil {
+		return errors.New("severity is required")
+	}
+
 	if isClusterRequired(context) {
 		if ai.Cluster == nil || len(*ai.Cluster) == 0 {
 			return fmt.Errorf("cluster is required for context %s", context)
@@ -304,17 +303,52 @@ func isClusterRequired(context string) bool {
 	return context == string(RuleExecutionContextAgent) || context == string(RuleExecutionContextAdmissionController)
 }
 
-// buildCmpOptions builds the cmp options to ignore fields that are nil in the expected object
-func buildCmpOptions[T any](expected T) []cmp.Option {
-	var opts []cmp.Option
-	typ := reflect.TypeOf(expected)
-	for i := 0; i < typ.NumField(); i++ {
-		fieldName := typ.Field(i).Name
-		if reflect.ValueOf(expected).FieldByName(fieldName).IsNil() {
-			opts = append(opts, cmpopts.IgnoreFields(expected, fieldName))
+// maps json fields to exported fields in the action item
+var expectedFields = map[string]string{
+	"TicketCreatedAt":   "TicketCreatedAt",
+	"TicketLink":        "TicketLink",
+	"TicketProvider":    "TicketProvider",
+	"assigneeEmail":     "AssigneeEmail",
+	"category":          "Category",
+	"cluster":           "Cluster",
+	"repository":        "Repository",
+	"deletedAt":         "DeletedAt",
+	"description":       "Description",
+	"eventType":         "EventType",
+	"firstSeen":         "FirstSeen",
+	"lastReportedAt":    "LastReportedAt",
+	"notes":             "Notes",
+	"remediation":       "Remediation",
+	"reportType":        "ReportType",
+	"resolution":        "Resolution",
+	"resourceContainer": "ResourceContainer",
+	"resourceKind":      "ResourceKind",
+	"resourceLabels":    "ResourceLabels",
+	"resourceName":      "ResourceName",
+	"resourceNamespace": "ResourceNamespace",
+	"severity":          "Severity",
+	"tags":              "Tags",
+	"title":             "Title",
+}
+
+// buildCmpOptions builds the cmp options to ignore fields that are not present in the expected action-item
+func buildCmpOptions(expectedBytes []byte) ([]cmp.Option, error) {
+
+	var expectedActionItemMap map[string]any
+	err := yaml.Unmarshal(expectedBytes, &expectedActionItemMap)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal expected response: %v", err)
+	}
+
+	var ignoredFields []string
+	for k, v := range expectedFields {
+		if _, ok := expectedActionItemMap[k]; ok {
+			continue
+		} else {
+			ignoredFields = append(ignoredFields, v)
 		}
 	}
-	return opts
+	return []cmp.Option{cmpopts.IgnoreFields(actionItem{}, ignoredFields...)}, nil
 }
 
 func getRuleVerifyHeaders(token string) req.Header {
