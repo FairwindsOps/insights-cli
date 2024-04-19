@@ -9,12 +9,12 @@ exec printf 'options:\n  organization: %s\n  hostname: %s\n' $CI_INSIGHTS_ORGANI
 cp stdout fairwinds-insights.yaml
 
 
-exec insights-cli validate rule --insights-context Agent --report-type trivy --automation-rule-file rule.js --action-item-file action-item.yaml --expected-action-item expected-output.yaml
+exec insights-cli validate rule --insights-context Agent --automation-rule-file rule.js --action-item-file action-item.yaml --expected-action-item expected-output.yaml
 stderr 'level=info msg="Success - actual response matches expected response"'
 
 # Expect different (incorrect) output, which should fail.
-exec insights-cli validate rule --insights-context Agent --report-type trivy --automation-rule-file rule.js --action-item-file action-item.yaml --expected-action-item expected-output-incorrect.yaml
-# Match both action item tieles shown in the diff output.
+exec insights-cli validate rule --insights-context Agent --automation-rule-file rule.js --action-item-file action-item.yaml --expected-action-item expected-output-incorrect.yaml
+# Match both action item titles shown in the diff output.
 stdout '"Image has absolutely no vulnerabilities'
 stdout 'Image has vulnerabilities'
 stderr 'Test failed'
@@ -28,23 +28,21 @@ if (ActionItem.ReportType === "trivy" && ActionItem.Cluster === "production") {
 
 -- action-item.yaml --
 title: Image has vulnerabilities
+eventType: image_vulnerability
 cluster: production
 severity: 0.8
+reportType: trivy
 
 -- expected-output.yaml --
 title: Image has vulnerabilities
 cluster: production
-severity: 0.8
-organization: cli-test
-fixed: false
-isCustom: false
+severity: 0.9
+eventType: image_vulnerability
+reportType: trivy
 
 -- expected-output-incorrect.yaml --
 title: Image has absolutely no vulnerabilities
 cluster: production
-severity: 0.8
-organization: cli-test
-fixed: false
-isCustom: false
-
-
+severity: 0.9
+eventType: image_vulnerability
+reportType: trivy

@@ -1,6 +1,7 @@
 package rules
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -9,9 +10,10 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/imroc/req"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml" // this lib correctly handles null slices
 )
 
 const rulesURLVerify = "%s/v0/organizations/%s/rules/verify-with-events"
@@ -105,15 +107,13 @@ type actionItem struct {
 	AssigneeEmail     *string                         `json:"assigneeEmail,omitempty" yaml:"assigneeEmail,omitempty"`
 	Category          *string                         `json:"category,omitempty" yaml:"category,omitempty"`
 	Cluster           *string                         `json:"cluster,omitempty" yaml:"cluster,omitempty"`
+	Repository        *string                         `json:"repository,omitempty" yaml:"repository,omitempty"`
 	DeletedAt         *time.Time                      `json:"deletedAt,omitempty" yaml:"deletedAt,omitempty"`
 	Description       *string                         `json:"description,omitempty" yaml:"description,omitempty"`
 	EventType         *string                         `json:"eventType,omitempty" yaml:"eventType,omitempty"`
 	FirstSeen         *time.Time                      `json:"firstSeen,omitempty" yaml:"firstSeen,omitempty"`
-	Fixed             *bool                           `json:"fixed,omitempty" yaml:"fixed,omitempty"`
-	IsCustom          *bool                           `json:"isCustom,omitempty" yaml:"isCustom,omitempty"`
 	LastReportedAt    *time.Time                      `json:"lastReportedAt,omitempty" yaml:"lastReportedAt,omitempty"`
 	Notes             *string                         `json:"notes,omitempty" yaml:"notes,omitempty"`
-	Organization      *string                         `json:"organization,omitempty" yaml:"organization,omitempty"`
 	Remediation       *string                         `json:"remediation,omitempty" yaml:"remediation,omitempty"`
 	ReportType        *string                         `json:"reportType,omitempty" yaml:"reportType,omitempty"`
 	Resolution        *string                         `json:"resolution,omitempty" yaml:"resolution,omitempty"`
@@ -123,8 +123,8 @@ type actionItem struct {
 	ResourceName      *string                         `json:"resourceName,omitempty" yaml:"resourceName,omitempty"`
 	ResourceNamespace *string                         `json:"resourceNamespace,omitempty" yaml:"resourceNamespace,omitempty"`
 	Severity          *float32                        `json:"severity,omitempty" yaml:"severity,omitempty"`
-	Tags              []string                        `json:"tags" yaml:"tags"`
-	Title             string                          `json:"title" yaml:"title"`
+	Tags              []string                        `json:"tags,omitempty" yaml:"tags,omitempty"`
+	Title             *string                         `json:"title,omitempty" yaml:"title,omitempty"`
 }
 
 // ruleExecutionContext defines model for ruleExecutionContext.
@@ -168,7 +168,7 @@ func runVerifyRule(org, token, hostName string, rule verifyRule, dryRun bool) (*
 	return &verify, nil
 }
 
-func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, reportType, insightsContext string, dryRun bool) error {
+func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, insightsContext string, dryRun bool) error {
 	aiInput, err := os.Open(actionItemFilePath)
 	if err != nil {
 		return fmt.Errorf("error when trying to open action item file %s: %v", actionItemFilePath, err)
@@ -185,6 +185,11 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 		return fmt.Errorf("could not parse action item file %s: %v", actionItemFilePath, err)
 	}
 
+	err = validateInputActionItem(insightsContext, ai)
+	if err != nil {
+		return fmt.Errorf("invalid input action item: %v", err)
+	}
+
 	ruleInput, err := os.Open(automationRuleFilePath)
 	if err != nil {
 		return fmt.Errorf("error when trying to open file %s: %v", automationRuleFilePath, err)
@@ -198,7 +203,7 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 	verifyRule := verifyRule{
 		ActionItem: ai,
 		Context:    ruleExecutionContext(insightsContext),
-		ReportType: reportType,
+		ReportType: *ai.ReportType,
 		Script:     string(ruleBytes),
 	}
 	r, err := runVerifyRule(org, insightsToken, host, verifyRule, dryRun)
@@ -234,19 +239,116 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 		return fmt.Errorf("failed to read output file: %v", err)
 	}
 
+	fmt.Printf("\n-- Diff Result --\n\n")
+
+	opts, err := buildCmpOptions(expectedActionItemBytes)
+	if err != nil {
+		return fmt.Errorf("could not build cmp options: %v", err)
+	}
+
 	var expectedActionItem actionItem
 	err = yaml.Unmarshal(expectedActionItemBytes, &expectedActionItem)
 	if err != nil {
 		return fmt.Errorf("could not marshal expected response: %v", err)
 	}
-	diff := cmp.Diff(expectedActionItem, responseActionItem)
+
+	diff := cmp.Diff(expectedActionItem, responseActionItem, opts...)
 	if len(diff) == 0 {
 		logrus.Infoln("Success - actual response matches expected response")
+		fmt.Println()
 	} else {
 		logrus.Errorln("Test failed:")
 		fmt.Println(diff)
 	}
 	return nil
+}
+
+func validateInputActionItem(context string, ai actionItem) error {
+	if ai.Title == nil || len(*ai.Title) == 0 {
+		return errors.New("title is required")
+	}
+
+	if ai.EventType == nil || len(*ai.EventType) == 0 {
+		return errors.New("eventType is required")
+	}
+
+	if ai.ReportType == nil || len(*ai.ReportType) == 0 {
+		return errors.New("reportType is required")
+	}
+
+	if ai.Severity == nil {
+		return errors.New("severity is required")
+	}
+
+	if isClusterRequired(context) {
+		if ai.Cluster == nil || len(*ai.Cluster) == 0 {
+			return fmt.Errorf("cluster is required for context %s", context)
+		}
+	}
+
+	if isRepositoryRequired(context) {
+		if ai.Repository == nil || len(*ai.Repository) == 0 {
+			return fmt.Errorf("repository is required for context %s", context)
+		}
+	}
+
+	return nil
+}
+
+func isRepositoryRequired(context string) bool {
+	return context == string(RuleExecutionContextCICD)
+}
+
+func isClusterRequired(context string) bool {
+	return context == string(RuleExecutionContextAgent) || context == string(RuleExecutionContextAdmissionController)
+}
+
+// maps json fields to exported fields in the action item
+var expectedFields = map[string]string{
+	"TicketCreatedAt":   "TicketCreatedAt",
+	"TicketLink":        "TicketLink",
+	"TicketProvider":    "TicketProvider",
+	"assigneeEmail":     "AssigneeEmail",
+	"category":          "Category",
+	"cluster":           "Cluster",
+	"repository":        "Repository",
+	"deletedAt":         "DeletedAt",
+	"description":       "Description",
+	"eventType":         "EventType",
+	"firstSeen":         "FirstSeen",
+	"lastReportedAt":    "LastReportedAt",
+	"notes":             "Notes",
+	"remediation":       "Remediation",
+	"reportType":        "ReportType",
+	"resolution":        "Resolution",
+	"resourceContainer": "ResourceContainer",
+	"resourceKind":      "ResourceKind",
+	"resourceLabels":    "ResourceLabels",
+	"resourceName":      "ResourceName",
+	"resourceNamespace": "ResourceNamespace",
+	"severity":          "Severity",
+	"tags":              "Tags",
+	"title":             "Title",
+}
+
+// buildCmpOptions builds the cmp options to ignore fields that are not present in the expected action-item
+func buildCmpOptions(expectedBytes []byte) ([]cmp.Option, error) {
+
+	var expectedActionItemMap map[string]any
+	err := yaml.Unmarshal(expectedBytes, &expectedActionItemMap)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal expected response: %v", err)
+	}
+
+	var ignoredFields []string
+	for k, v := range expectedFields {
+		if _, ok := expectedActionItemMap[k]; ok {
+			continue
+		} else {
+			ignoredFields = append(ignoredFields, v)
+		}
+	}
+	return []cmp.Option{cmpopts.IgnoreFields(actionItem{}, ignoredFields...)}, nil
 }
 
 func getRuleVerifyHeaders(token string) req.Header {
