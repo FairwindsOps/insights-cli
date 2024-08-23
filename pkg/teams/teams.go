@@ -45,12 +45,6 @@ type TeamsInput struct {
 	Teams                  []TeamInput `json:"teams" yaml:"teams"`
 }
 
-type Team struct {
-	Name        string   `yaml:"name"`
-	Description string   `yaml:"description"`
-	Users       []string `yaml:"users"`
-}
-
 func PostTeams(teamInput TeamsInput, org, token, hostName string) error {
 	url := fmt.Sprintf(policiesPutURLFormat, hostName, org)
 	teamInputYaml, err := yaml.Marshal(teamInput)
