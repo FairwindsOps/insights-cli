@@ -55,7 +55,11 @@ func PostTeams(teamInput TeamsInput, org, token, hostName string) error {
 	url := fmt.Sprintf(policiesPutURLFormat, hostName, org)
 	fmt.Println("URL====", url)
 	fmt.Println("teamInput====", teamInput)
-	resp, err := req.Post(url, getHeaders(token), teamInput)
+	teamInputYaml, err := yaml.Marshal(teamInput)
+	if err != nil {
+		return err
+	}
+	resp, err := req.Post(url, getHeaders(token), teamInputYaml)
 	if err != nil {
 		return err
 	}
