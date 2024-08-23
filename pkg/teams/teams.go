@@ -53,8 +53,6 @@ type Team struct {
 
 func PostTeams(teamInput TeamsInput, org, token, hostName string) error {
 	url := fmt.Sprintf(policiesPutURLFormat, hostName, org)
-	fmt.Println("URL====", url)
-	fmt.Println("teamInput====", teamInput)
 	teamInputYaml, err := yaml.Marshal(teamInput)
 	if err != nil {
 		return err
@@ -87,10 +85,8 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 	teams := []TeamInput{}
 	err = yaml.NewDecoder(teamsFile).Decode(&teams)
 	if err != nil {
-		fmt.Println("decode error======", err)
 		return err
 	}
-	fmt.Println("teams======", teams)
 	if dryrun {
 		logrus.Infof("Dry run: Would have pushed the following teams configuration:")
 		for _, team := range teams {
