@@ -39,10 +39,11 @@ type configuration struct {
 }
 
 type optionConfig struct {
-	BaseBranch     string `yaml:"baseBranch"`
-	Hostname       string `yaml:"hostname"`
-	Organization   string `yaml:"organization"`
-	RepositoryName string `yaml:"repositoryName"`
+	BaseBranch             string `yaml:"baseBranch"`
+	Hostname               string `yaml:"hostname"`
+	Organization           string `yaml:"organization"`
+	RepositoryName         string `yaml:"repositoryName"`
+	DeleteNonProvidedTeams bool   `yaml:"deleteNonProvidedTeams"`
 }
 
 // SetDefaults sets configuration defaults
