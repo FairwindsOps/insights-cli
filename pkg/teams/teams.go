@@ -23,7 +23,7 @@ import (
 
 	"github.com/imroc/req"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	"sigs.k8s.io/yaml"
 
 	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
 )
@@ -75,7 +75,11 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 	}
 	defer teamsFile.Close()
 	teams := []TeamInput{}
-	err = yaml.NewDecoder(teamsFile).Decode(&teams)
+	b, err := os.ReadFile(teamsFileName)
+	if err != nil {
+		return err
+	}
+	err = yaml.Unmarshal(b, &teams)
 	if err != nil {
 		return err
 	}
