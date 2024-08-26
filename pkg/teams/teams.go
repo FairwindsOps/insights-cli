@@ -28,7 +28,7 @@ import (
 	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
 )
 
-const policiesPutURLFormat = "%s/v0/organizations/%s/teams-bulk"
+const teamsPutURLFormat = "%s/v0/organizations/%s/teams-bulk"
 
 type TeamInput struct {
 	Clusters               []string `json:"clusters" yaml:"clusters"`
@@ -40,13 +40,11 @@ type TeamInput struct {
 	Repositories           []string `json:"repositories" yaml:"repositories"`
 }
 
-type TeamsInput struct {
-	DeleteNonProvidedTeams bool        `json:"deleteNonProvidedTeams" yaml:"deleteNonProvidedTeams"`
-	Teams                  []TeamInput `json:"teams" yaml:"teams"`
-}
-
-func PostTeams(teamInput TeamsInput, org, token, hostName string) error {
-	url := fmt.Sprintf(policiesPutURLFormat, hostName, org)
+func PostTeams(teamInput []TeamInput, deleteNonProvidedTeams bool, org, token, hostName string) error {
+	url := fmt.Sprintf(teamsPutURLFormat, hostName, org)
+	if deleteNonProvidedTeams {
+		url += "?deleteNonProvidedTeams=true"
+	}
 	teamInputYaml, err := yaml.Marshal(teamInput)
 	if err != nil {
 		return err
@@ -94,11 +92,7 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 		}
 		return nil
 	}
-	teamsInput := TeamsInput{
-		DeleteNonProvidedTeams: deleteNonProvidedTeams,
-		Teams:                  teams,
-	}
-	err = PostTeams(teamsInput, org, insightsToken, host)
+	err = PostTeams(teams, deleteNonProvidedTeams, org, insightsToken, host)
 	if err != nil {
 		return err
 	}
