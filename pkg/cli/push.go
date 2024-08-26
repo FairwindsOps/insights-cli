@@ -27,8 +27,8 @@ var pushDeleteNonProvidedTeams bool
 
 func init() {
 	pushCmd.PersistentFlags().StringVarP(&pushDir, "push-directory", "d", ".", "Directory of content to push to Insights.")
-	pushCmd.PersistentFlags().BoolVarP(&pushDryRun, "dry-run", "z", false, "Explain what would be pushed to Insights, without making changes.")
-	pushCmd.PersistentFlags().BoolVarP(&pushDeleteNonProvidedTeams, "delete-non-provided-teams", "x", false, "Delete teams that are not provided in the push directory.")
+	pushCmd.PersistentFlags().BoolVarP(&pushDryRun, "dry-run", "z", false, "Explains what would be pushed to Insights, without making changes.")
+	pushCmd.PersistentFlags().BoolVarP(&pushDeleteNonProvidedTeams, "delete", "x", false, "Deletes teams that are not provided in the push directory.")
 	rootCmd.AddCommand(pushCmd)
 }
 

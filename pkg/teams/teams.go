@@ -84,11 +84,11 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 		for _, team := range teams {
 			logrus.Infof("Team: %s", team.Name)
 			logrus.Infof("  Clusters: %v", team.Clusters)
+			logrus.Infof("  Namespaces: %v", team.Namespaces)
+			logrus.Infof("  Repositories: %v", team.Repositories)
 			logrus.Infof("  DisallowedClusters: %v", team.DisallowedClusters)
 			logrus.Infof("  DisallowedNamespaces: %v", team.DisallowedNamespaces)
 			logrus.Infof("  DisallowedRepositories: %v", team.DisallowedRepositories)
-			logrus.Infof("  Namespaces: %v", team.Namespaces)
-			logrus.Infof("  Repositories: %v", team.Repositories)
 		}
 		return nil
 	}
