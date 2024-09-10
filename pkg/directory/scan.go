@@ -104,7 +104,7 @@ func findRegoFilesOtherThanPolicy(dir string) ([]string, error) {
 }
 
 // fileNamesAreUnique returns true when no file names repeat in the given
-// list. For exampole, given input ["dir1/file.txt", "dir2/file.txt"] would
+// list. For example, given input ["dir1/file.txt", "dir2/file.txt"] would
 // return false, and duplicateNames of map["file.txt"]{"dir1", "dir2"}.
 func fileNamesAreUnique(files []string) (alreadyUnique bool, duplicateNames map[string][]string) {
 	duplicateNames = make(map[string][]string)

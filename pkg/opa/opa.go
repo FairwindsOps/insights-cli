@@ -28,7 +28,6 @@ import (
 	"github.com/xlab/treeprint"
 	"gopkg.in/yaml.v3"
 
-	"github.com/fairwindsops/insights-cli/pkg/directory"
 	"github.com/fairwindsops/insights-cli/pkg/models"
 )
 
@@ -43,19 +42,8 @@ type CompareResults struct {
 }
 
 // CompareChecks compares a folder vs the checks returned by the API.
-func CompareChecks(folder, org, token, hostName string, deleteMissing bool) (CompareResults, error) {
+func CompareChecks(folder, org, token, hostName string, fileChecks []models.CustomCheckModel, deleteMissing bool) (CompareResults, error) {
 	var results CompareResults
-	files, err := directory.ScanOPAFolder(folder)
-	if err != nil {
-		logrus.Error("Error scanning directory")
-		return results, err
-	}
-
-	fileChecks, err := getChecksFromFiles(files)
-	if err != nil {
-		logrus.Error("Error Reading checks from files")
-		return results, err
-	}
 	apiChecks, err := GetChecks(org, token, hostName)
 	if err != nil {
 		logrus.Error("Error getting checks from Insights")
