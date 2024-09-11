@@ -225,7 +225,18 @@ func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string
 		return fmt.Errorf("error opening file: %w", err)
 	}
 
-	checks, err := getExternalChecksFromFile(filePath, headers)
+	f, err := os.Open(filePath)
+	if err != nil {
+		return fmt.Errorf("error opening file: %w", err)
+	}
+	defer f.Close()
+
+	b, err := io.ReadAll(f)
+	if err != nil {
+		return fmt.Errorf("error reading file: %w", err)
+	}
+
+	checks, err := getExternalChecksFromFile(b, headers)
 	if err != nil {
 		return fmt.Errorf("error getting remote checks: %w", err)
 	}
@@ -304,20 +315,9 @@ type externalSourceItem struct {
 }
 
 // getExternalChecksFromFile reads the external sources file and fetches the OPA checks from them
-func getExternalChecksFromFile(fileDefinition string, headers []string) ([]models.CustomCheckModel, error) {
-	f, err := os.Open(fileDefinition)
-	if err != nil {
-		return nil, fmt.Errorf("error opening file: %w", err)
-	}
-	defer f.Close()
-
-	b, err := io.ReadAll(f)
-	if err != nil {
-		return nil, fmt.Errorf("error reading file: %w", err)
-	}
-
+func getExternalChecksFromFile(fileContent []byte, headers []string) ([]models.CustomCheckModel, error) {
 	var externalSources externalSource
-	err = yaml.Unmarshal(b, &externalSources)
+	err := yaml.Unmarshal(fileContent, &externalSources)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling yaml: %w", err)
 	}

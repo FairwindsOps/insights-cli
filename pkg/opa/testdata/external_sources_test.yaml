@@ -1,8 +1,0 @@
-externalSources:
-  - name: "this-is-an-external-lib.rego"
-    description: "This is an external lib"
-    url: "https://gist.githubusercontent.com/vitorvezani/cc89a6225a301a35f0427b2bfc3db39b/raw/25a5d442a89026556729e9385e542ba936c083f5/this-is-an-external-lib.rego"
-  - name: "this-uses-the-lib.rego"
-    description: "This uses the external lib"
-    url: "https://gist.githubusercontent.com/vitorvezani/aa42f21e50e08a85e08ca0bd0ae91cec/raw/3ec2462919f949d6088995dc82f5b7e3fff099eb/gistfile1.txt"
-    enabled: false

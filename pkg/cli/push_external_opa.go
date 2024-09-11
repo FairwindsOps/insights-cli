@@ -33,7 +33,7 @@ func init() {
 	pushExternalOPACmd.PersistentFlags().BoolVarP(&deleteMissingOPA, "delete", "D", false, "Delete any OPA policies from Insights that are not present in the external OPA file definition.")
 	// This flag sets a variable defined in the parent `push` command.
 	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPASubDir, "subdirectory", "s", defaultPushExternalOPASubDir, "Sub-directory within push-directory, to contain the external OPA file definition.")
-	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPAFile, "file", "f", "external_sources.yaml", "file name of the external OPA file definition.")
+	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPAFile, "file", "f", "external-sources.yaml", "file name of the external OPA file definition.")
 	pushExternalOPACmd.PersistentFlags().StringSliceVarP(&pushExternalOPAHeaders, "header", "", []string{}, "these headers are passed to the external service provider. i.e.: for authentication")
 	pushCmd.AddCommand(pushExternalOPACmd)
 }
