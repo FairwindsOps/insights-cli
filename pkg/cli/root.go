@@ -64,7 +64,7 @@ func (c configuration) CheckForErrors() error {
 }
 
 // RUn executes the cobra root command, and returns an exit value depending on
-// whether an error occured.
+// whether an error occurred.
 func Run() (exitValue int) {
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Error(err)

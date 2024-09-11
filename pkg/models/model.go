@@ -30,11 +30,13 @@ type OutputModel struct {
 
 // CustomCheckModel is a model for the API endpoint to receive a Custom Check for OPA
 type CustomCheckModel struct {
-	CheckName string `json:"-" yaml:"-"`
-	Version   float32
-	Output    OutputModel
-	Rego      string
-	Instances []CustomCheckInstanceModel `json:"-" yaml:"-"`
+	CheckName   string `json:"-" yaml:"-"`
+	Version     float32
+	Output      OutputModel
+	Rego        string
+	Instances   []CustomCheckInstanceModel `json:"-" yaml:"-"`
+	Description string
+	Disabled    *bool
 }
 
 // CustomCheckInstanceModel is a model for the API endpoint to receive an Instance for a Custom Check in OPA

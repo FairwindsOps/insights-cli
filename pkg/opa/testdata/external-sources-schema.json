@@ -1,0 +1,35 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "externalSources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "This is a required string field."
+          },
+          "description": {
+            "type": "string",
+            "description": "This is an optional string field."
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "This is a required URL field."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "This is an optional boolean field to enable or disable the source."
+          }
+        },
+        "required": ["name", "url"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["externalSources"],
+  "additionalProperties": false
+}
