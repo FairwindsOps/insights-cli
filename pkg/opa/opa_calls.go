@@ -95,13 +95,13 @@ func DeleteCheck(check models.CustomCheckModel, org, token, hostName string) err
 
 type PutCheckRequest struct {
 	Rego, Description string
-	Enabled           *bool
+	Disabled          *bool
 }
 
 // PutCheck upserts an OPA Check to Fairwinds Insights
 func PutCheck(check models.CustomCheckModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaPutCheckURLFormat, hostName, org, check.CheckName, check.Version)
-	resp, err := req.Put(url, utils.GetHeaders(version.GetVersion(), token), req.BodyJSON(PutCheckRequest{Rego: check.Rego, Description: check.Description, Enabled: check.Enabled}))
+	resp, err := req.Put(url, utils.GetHeaders(version.GetVersion(), token), req.BodyJSON(PutCheckRequest{Rego: check.Rego, Description: check.Description, Disabled: check.Disabled}))
 	if err != nil {
 		return err
 	}
@@ -225,21 +225,21 @@ func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string
 		return fmt.Errorf("error opening file: %w", err)
 	}
 
-	checks, err := getRemoteChecksFromFile(filePath, headers)
+	checks, err := getExternalChecksFromFile(filePath, headers)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting remote checks: %w", err)
 	}
 
 	results, err := CompareChecks(filePath, org, insightsToken, host, checks, deleteMissing)
 	if err != nil {
-		return err
+		return fmt.Errorf("error comparing checks: %w", err)
 	}
 	for _, instance := range results.InstanceDelete {
 		logrus.Infof("Deleting instance: %s for OPA policy %s", instance.InstanceName, instance.CheckName)
 		if !dryRun {
 			err := DeleteInstance(instance, org, insightsToken, host)
 			if err != nil {
-				return err
+				return fmt.Errorf("error deleting instance: %w", err)
 			}
 		}
 	}
@@ -248,7 +248,7 @@ func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string
 		if !dryRun {
 			err := DeleteCheck(check, org, insightsToken, host)
 			if err != nil {
-				return err
+				return fmt.Errorf("error deleting check: %w", err)
 			}
 		}
 	}
@@ -257,7 +257,7 @@ func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string
 		if !dryRun {
 			err := PutCheck(check, org, insightsToken, host)
 			if err != nil {
-				return err
+				return fmt.Errorf("error adding check: %w", err)
 			}
 		}
 	}
@@ -266,7 +266,7 @@ func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string
 		if !dryRun {
 			err := PutCheck(check, org, insightsToken, host)
 			if err != nil {
-				return err
+				return fmt.Errorf("error updating check: %w", err)
 			}
 		}
 	}
@@ -275,7 +275,7 @@ func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string
 		if !dryRun {
 			err := PutInstance(instance, org, insightsToken, host)
 			if err != nil {
-				return err
+				return fmt.Errorf("error adding instance: %w", err)
 			}
 		}
 	}
@@ -284,11 +284,11 @@ func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string
 		if !dryRun {
 			err := PutInstance(instance, org, insightsToken, host)
 			if err != nil {
-				return err
+				return fmt.Errorf("error updating instance: %w", err)
 			}
 		}
 	}
-	logrus.Debugln("Done pushing OPA policies")
+	logrus.Debugln("Done pushing external OPA policies")
 	return nil
 }
 
@@ -300,9 +300,11 @@ type externalSourceItem struct {
 	Name        string `yaml:"name"`
 	Description string `yaml:"description"`
 	URL         string `yaml:"url"`
+	Enabled     *bool  `yaml:"enabled"`
 }
 
-func getRemoteChecksFromFile(fileDefinition string, headers []string) ([]models.CustomCheckModel, error) {
+// getExternalChecksFromFile reads the external sources file and fetches the OPA checks from them
+func getExternalChecksFromFile(fileDefinition string, headers []string) ([]models.CustomCheckModel, error) {
 	f, err := os.Open(fileDefinition)
 	if err != nil {
 		return nil, fmt.Errorf("error opening file: %w", err)
@@ -342,9 +344,8 @@ func getRemoteChecksFromFile(fileDefinition string, headers []string) ([]models.
 			CheckName:   source.Name,
 			Description: source.Description,
 			Rego:        rego,
-			Version:     2.0,                  // only support for version 2?
-			Output:      models.OutputModel{}, // what is this for ??
-			Instances:   nil,                  // no need on V2
+			Version:     2.0,
+			Disabled:    utils.InvertBoolPointer(source.Enabled),
 		})
 	}
 	return checks, nil

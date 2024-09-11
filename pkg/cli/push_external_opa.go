@@ -24,14 +24,17 @@ import (
 )
 
 var pushExternalOPAFile string
+var pushExternalOPASubDir string
 var pushExternalOPAHeaders []string
 
+const defaultPushExternalOPASubDir = "external-opa"
+
 func init() {
-	pushExternalOPACmd.PersistentFlags().BoolVarP(&deleteMissingOPA, "delete", "D", false, "Delete any OPA policies from Insights that are not present in the local directory.")
+	pushExternalOPACmd.PersistentFlags().BoolVarP(&deleteMissingOPA, "delete", "D", false, "Delete any OPA policies from Insights that are not present in the external OPA file definition.")
 	// This flag sets a variable defined in the parent `push` command.
-	pushExternalOPACmd.PersistentFlags().StringVarP(&pushOPASubDir, "subdirectory", "s", defaultPushOPASubDir, "Sub-directory within push-directory, to contain the external OPA policy file.")
-	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPAFile, "file", "f", "external_sources.yaml", "file name to be used for external OPA policies")
-	pushExternalOPACmd.PersistentFlags().StringSliceVarP(&pushExternalOPAHeaders, "header", "", []string{}, "these headers are passed to the external OPA policies server. i.e.: for authentication")
+	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPASubDir, "subdirectory", "s", defaultPushExternalOPASubDir, "Sub-directory within push-directory, to contain the external OPA file definition.")
+	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPAFile, "file", "f", "external_sources.yaml", "file name of the external OPA file definition.")
+	pushExternalOPACmd.PersistentFlags().StringSliceVarP(&pushExternalOPAHeaders, "header", "", []string{}, "these headers are passed to the external service provider. i.e.: for authentication")
 	pushCmd.AddCommand(pushExternalOPACmd)
 }
 
@@ -43,10 +46,10 @@ var pushExternalOPACmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		filePath := fmt.Sprintf("%s/%s/%s", pushDir, pushOPASubDir, pushExternalOPAFile)
+		filePath := fmt.Sprintf("%s/%s/%s", pushDir, pushExternalOPASubDir, pushExternalOPAFile)
 		err := opa.PushExternalOPAChecks(filePath, org, insightsToken, pushExternalOPAHeaders, host, deleteMissingOPA, pushDryRun)
 		if err != nil {
-			logrus.Fatalf("Unable to push OPA Checks: %v", err)
+			logrus.Fatalf("Unable to push external OPA checks: %v", err)
 		}
 		logrus.Infoln("Push succeeded.")
 	},

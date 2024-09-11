@@ -36,7 +36,7 @@ type CustomCheckModel struct {
 	Rego        string
 	Instances   []CustomCheckInstanceModel `json:"-" yaml:"-"`
 	Description string
-	Enabled     *bool
+	Disabled    *bool
 }
 
 // CustomCheckInstanceModel is a model for the API endpoint to receive an Instance for a Custom Check in OPA
