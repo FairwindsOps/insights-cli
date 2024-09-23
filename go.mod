@@ -1,6 +1,7 @@
 module github.com/fairwindsops/insights-cli
 
 go 1.21
+toolchain go1.22.5
 
 require (
 	github.com/fairwindsops/insights-plugins/plugins/opa v0.0.0-20230816161340-4e57dcbf926b
@@ -9,7 +10,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imroc/req v0.3.2
 	github.com/open-policy-agent/opa v0.58.0
-	github.com/rogpeppe/go-internal v1.12.0
+	github.com/rogpeppe/go-internal v1.13.1
 	github.com/samber/lo v1.47.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
@@ -80,7 +81,7 @@ require (
 	golang.org/x/term v0.23.0 // indirect
 	golang.org/x/text v0.17.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
-	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
+	golang.org/x/tools v0.22.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
