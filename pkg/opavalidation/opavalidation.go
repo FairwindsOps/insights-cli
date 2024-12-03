@@ -24,7 +24,7 @@ const (
 
 // Run is a ValidateRego() wrapper that validates and prints resulting actionItems. This is
 // meant to be called from a cobra.Command{}.
-func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) (actionItems, error) {
+func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride, libsDir string) (actionItems, error) {
 	b, err := os.ReadFile(regoFileName)
 	if err != nil {
 		return nil, fmt.Errorf("error reading OPA policy %s: %v", regoFileName, err)
@@ -34,9 +34,25 @@ func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOp
 	if err != nil {
 		return nil, fmt.Errorf("error reading Kubernetes manifest %s: %v", objectFileName, err)
 	}
+	libs := map[string]string{}
+	if libsDir != "" {
+		files, err := FindFilesWithExtension(libsDir, ".rego")
+		if err != nil {
+			return nil, fmt.Errorf("unable to list .rego files in %s: %v", libsDir, err)
+		}
+		for _, lib := range files {
+			libContent, err := os.ReadFile(lib)
+			if err != nil {
+				return nil, fmt.Errorf("error reading OPA library %s: %v", lib, err)
+			}
+			libName := strings.TrimSuffix(filepath.Base(lib), filepath.Ext(lib))
+			libs[libName] = string(libContent)
+		}
+	}
+
 	baseRegoFileName := filepath.Base(regoFileName)
 	eventType := strings.TrimSuffix(baseRegoFileName, filepath.Ext(baseRegoFileName))
-	actionItems, err := ValidateRego(context.TODO(), regoContent, b, insightsInfo, eventType, objectNamespaceOverride)
+	actionItems, err := ValidateRego(context.TODO(), regoContent, b, insightsInfo, eventType, objectNamespaceOverride, libs)
 	if err != nil {
 		return actionItems, err
 	}
@@ -64,7 +80,7 @@ func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOp
 // Each OPA policy is validated with a Kubernetes manifest file named of the
 // form {base rego filename} and the extensions .yaml, .success.yaml, and
 // .failure.yaml (the last two of which are configurable).
-func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride string) (successfulPolicies, failedPolicies []string, err error) {
+func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride, libsDir string) (successfulPolicies, failedPolicies []string, err error) {
 	regoFiles, err := FindFilesWithExtension(batchDir, ".rego")
 	if err != nil {
 		return successfulPolicies, failedPolicies, fmt.Errorf("unable to list .rego files: %v", err)
@@ -78,7 +94,7 @@ func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insights
 		}
 		for _, objectFileName := range objectFileNames {
 			logrus.Infof("Validating OPA policy %s with input %s (expectActionItem=%v)", regoFileName, objectFileName, expectAIOptions.ForFileName(objectFileName))
-			_, err := Run(regoFileName, objectFileName, expectAIOptions, insightsInfo, objectNamespaceOverride)
+			_, err := Run(regoFileName, objectFileName, expectAIOptions, insightsInfo, objectNamespaceOverride, libsDir)
 			if err != nil {
 				logrus.Errorf("Failed validation of OPA policy %s using input %s: %v\n", regoFileName, objectFileName, err)
 				if !lo.Contains(failedPolicies, regoFileName) {
@@ -99,7 +115,7 @@ func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insights
 
 // ValidateRego validates rego by executing rego with an input object.
 // Validation includes signatures for Insights-provided rego functions.
-func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte, insightsInfo fwrego.InsightsInfo, eventType string, objectNamespaceOverride string) (actionItems, error) {
+func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte, insightsInfo fwrego.InsightsInfo, eventType string, objectNamespaceOverride string, libs map[string]string) (actionItems, error) {
 	if !strings.Contains(regoAsString, "package fairwinds") {
 		return nil, errors.New("policy must be within a fairwinds package. The policy must contain the statement: package fairwinds")
 	}
@@ -111,7 +127,7 @@ func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte
 	if err != nil {
 		return nil, fmt.Errorf("while overriding object namespace with %q: %v", objectNamespaceOverride, err)
 	}
-	regoResult, err := runRegoForObject(ctx, regoAsString, objectAsMap, insightsInfo)
+	regoResult, err := runRegoForObject(ctx, regoAsString, objectAsMap, insightsInfo, libs)
 	if err != nil {
 		return nil, err
 	}
@@ -128,8 +144,8 @@ func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte
 }
 
 // runRegoForObject executes rego with a Kubernetes object as input.
-func runRegoForObject(ctx context.Context, regoAsString string, object map[string]interface{}, insightsInfo fwrego.InsightsInfo) (rego.ResultSet, error) {
-	query, err := rego.New(rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stdout)),
+func runRegoForObject(ctx context.Context, regoAsString string, object map[string]interface{}, insightsInfo fwrego.InsightsInfo, libs map[string]string) (rego.ResultSet, error) {
+	opts := []func(r *rego.Rego){rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stdout)),
 		rego.Query("results = data"),
 		rego.Module("fairwinds", regoAsString),
 		rego.Function2(
@@ -151,14 +167,22 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 				Name: "insightsinfo",
 				Decl: types.NewFunction(types.Args(types.S), types.A),
 			},
-			fwrego.GetInsightsInfoFunction(&insightsInfo))).PrepareForEval(ctx)
+			fwrego.GetInsightsInfoFunction(&insightsInfo),
+		),
+	}
+	for libName, libContent := range libs {
+		opts = append(opts, rego.Module(libName, libContent))
+	}
+	query, err := rego.New(opts...).PrepareForEval(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error preparing rego for evaluation: %v", err)
 	}
 	preparedInput := rego.EvalInput(object)
 	rs, err := query.Eval(ctx, preparedInput)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error evaluating rego: %v", err)
 	}
 	return rs, nil
 }
+
+//query, err := rego.New(rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stdout)),
