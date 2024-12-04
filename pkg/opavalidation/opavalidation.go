@@ -56,13 +56,6 @@ func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOp
 	if err != nil {
 		return actionItems, err
 	}
-	actionItemsAsString, err := actionItems.StringWithValidation()
-	// If actionItems have errors, output the actionItems first to display more
-	// specific inline errors.
-	fmt.Println(actionItemsAsString)
-	if err != nil {
-		return actionItems, err
-	}
 	expectAI := expectAIOptions.ForFileName(objectFileName)
 	if expectAI && len(actionItems) != 1 {
 		return actionItems, fmt.Errorf("%d action items were returned, but 1 is expected", len(actionItems))
@@ -172,16 +165,13 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 	}
 	for libName, libContent := range libs {
 		opts = append(opts, rego.Module(libName, libContent))
-		fmt.Println("Loaded library:", libName, libContent)
 	}
 	query, err := rego.New(opts...).PrepareForEval(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error preparing rego for evaluation: %v", err)
 	}
-	fmt.Println("Object:", object)
 	preparedInput := rego.EvalInput(object)
 	rs, err := query.Eval(ctx, preparedInput)
-	fmt.Println("rs:", rs)
 	if err != nil {
 		return nil, fmt.Errorf("error evaluating rego: %v", err)
 	}
