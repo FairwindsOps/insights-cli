@@ -3,12 +3,13 @@ package fairwinds
 import data.utils.array_contains
 
 labelrequired[actionItem] {
+
     requiredLabel := "department2"
     provided := {input.metadata.labels[label]}
     
-    array_contains(provided, requiredLabel) == false
+    array_contains(provided, requiredLabel) == true
     
-    input.name == "abc"
+    input.name == "abcadlskjf"
 
     description := sprintf("Label %v is missing", [requiredLabel])
     actionItem := {

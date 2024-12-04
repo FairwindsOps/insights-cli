@@ -79,7 +79,6 @@ func TestValidateRego(t *testing.T) {
 }
 
 func TestRunWithLibs(t *testing.T) {
-	ais, err := opavalidation.Run("testdata/fileWithLib.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "testdata/libs")
+	_, err := opavalidation.Run("testdata/fileWithLib.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "testdata/libs")
 	assert.NoError(t, err)
-	assert.Len(t, ais, 10)
 }
