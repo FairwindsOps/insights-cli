@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  rok8s: fairwinds/rok8s-scripts@11
+  rok8s: fairwinds/rok8s-scripts@12.1.1
 
 references:
   install_vault: &install_vault
@@ -18,7 +18,7 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     docker:
       # Note the goreleaser version is also referenced in the release and snapshot jobs.
-      - image: goreleaser/goreleaser:v1.11.5
+      - image: goreleaser/goreleaser:v2.3.2
     steps:
       - checkout
       - run:
@@ -46,7 +46,7 @@ jobs:
     resource_class: large
     docker:
       # Note the goreleaser version is also referenced in the release and test jobs.
-      - image: goreleaser/goreleaser:v1.11.5
+      - image: goreleaser/goreleaser:v2.3.2
     steps:
       - checkout
       - setup_remote_docker:
@@ -62,7 +62,7 @@ jobs:
     shell: /bin/bash
     docker:
       # Note the goreleaser version is also referenced in the snapshot and test jobs.
-      - image: goreleaser/goreleaser:v1.11.5
+      - image: goreleaser/goreleaser:v2.3.2
     steps:
       - checkout
       - run: ./.circleci/scripts/e2e-env.sh
