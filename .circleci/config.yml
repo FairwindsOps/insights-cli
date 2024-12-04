@@ -18,7 +18,7 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     docker:
       # Note the goreleaser version is also referenced in the release and snapshot jobs.
-      - image: goreleaser/goreleaser:v2.3.2
+      - image: goreleaser/goreleaser:v1.11.5
     steps:
       - checkout
       - run:
@@ -50,7 +50,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: 20.10.11
+          version: default
       - run: goreleaser --snapshot
       # Avoid copying both archive files and the directories used to create them.
       - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.rb dist/*.json snapshot-artifacts
@@ -76,7 +76,7 @@ jobs:
               golangci-lint run -v --timeout 2m0s
               go test -tags e2e ./pkg/...
       - setup_remote_docker:
-          version: 20.10.11
+          version: default
       - rok8s/docker_login:
           registry: "quay.io"
           username: $FAIRWINDS_QUAY_USER
