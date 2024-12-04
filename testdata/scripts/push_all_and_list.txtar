@@ -144,7 +144,7 @@ spec:
    app-groups
        all
    policy-mappings
-       trivy-all (Block based on policy settings) (enabled)
-       polaris-all (Always block on these policies) (disabled)
        nova-all (Never block on these policies) (disabled)
+       polaris-all (Always block on these policies) (disabled)
+       trivy-all (Block based on policy settings) (enabled)
 
