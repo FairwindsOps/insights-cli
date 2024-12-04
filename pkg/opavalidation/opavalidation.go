@@ -184,5 +184,3 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 	}
 	return rs, nil
 }
-
-//query, err := rego.New(rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stdout)),
