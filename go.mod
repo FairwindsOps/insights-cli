@@ -1,6 +1,6 @@
 module github.com/fairwindsops/insights-cli
 
-go 1.22.7
+go 1.23
 
 require (
 	github.com/fairwindsops/insights-plugins/plugins/opa v0.0.0-20241126145703-73ccd19c1bbb
