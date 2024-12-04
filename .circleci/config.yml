@@ -54,7 +54,7 @@ jobs:
           version: docker24
       - run: goreleaser --snapshot
       # Avoid copying both archive files and the directories used to create them.
-      - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.rb dist/*.json snapshot-artifacts
+      - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.json snapshot-artifacts
       - store_artifacts:
           path: snapshot-artifacts
   release:
