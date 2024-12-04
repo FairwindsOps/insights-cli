@@ -31,7 +31,7 @@ jobs:
               exit 1
             fi
             go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2
-            golangci-lint run -v --timeout 2m0s
+            golangci-lint run -v --timeout 5m0s
       - run: ./.circleci/scripts/e2e-env.sh
       - *install_vault
       - rok8s/get_vault_env:
@@ -73,7 +73,7 @@ jobs:
           vault_path: repo/insights-cli/env
       - run: |
               go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2
-              golangci-lint run -v --timeout 2m0s
+              golangci-lint run -v --timeout 5m0s
               go test -tags e2e ./pkg/...
       - setup_remote_docker:
           version: docker24
