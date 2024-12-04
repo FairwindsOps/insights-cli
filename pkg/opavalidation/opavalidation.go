@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 
 	fwrego "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/rego"
@@ -175,8 +176,13 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 			fwrego.GetInsightsInfoFunction(&insightsInfo),
 		),
 	}
-	for libName, libContent := range libs {
-		opts = append(opts, rego.Module(libName, libContent))
+	var libNames []string
+	for libName := range libs {
+		libNames = append(libNames, libName)
+	}
+	slices.Sort(libNames)
+	for _, libName := range libNames {
+		opts = append(opts, rego.Module(libName, libs[libName]))
 	}
 	query, err := rego.New(opts...).PrepareForEval(ctx)
 	if err != nil {
