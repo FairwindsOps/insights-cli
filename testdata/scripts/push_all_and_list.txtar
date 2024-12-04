@@ -103,12 +103,32 @@ name: all
 spec: {}
 
 # A policy mapping
--- populated_dir/policy-mappings/match-all.yaml --
+-- populated_dir/policy-mappings/match-trivy.yaml --
 type: PolicyMapping
 name: trivy-all
 spec:
   appGroups: [all]
   policies: [trivy]
+
+# A policy mapping
+-- populated_dir/policy-mappings/match-polaris.yaml --
+type: PolicyMapping
+name: polaris-all
+spec:
+  enabled: false
+  appGroups: [all]
+  policies: [polaris]
+  block: true
+
+# A policy mapping
+-- populated_dir/policy-mappings/match-nova.yaml --
+type: PolicyMapping
+name: nova-all
+spec:
+  enabled: false
+  appGroups: [all]
+  policies: [nova]
+  block: false
 
 # The desired output from insights-cli list all, showing pushed OPA policies and automation rules.
 # Note the blank line at the end is required to match the insights-cli output.
@@ -124,5 +144,7 @@ spec:
    app-groups
        all
    policy-mappings
-       trivy-all (enabled)
+       trivy-all (Block based on policy settings) (enabled)
+       polaris-all (Always block on these policies) (disabled)
+       nova-all (Never block on these policies) (disabled)
 
