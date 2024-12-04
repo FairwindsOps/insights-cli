@@ -7,6 +7,7 @@ import (
 
 	"github.com/fairwindsops/insights-cli/pkg/opavalidation"
 	fwrego "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/rego"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateRego(t *testing.T) {
@@ -75,4 +76,10 @@ func TestValidateRego(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestRunWithLibs(t *testing.T) {
+	ais, err := opavalidation.Run("testdata/fileWithLib.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "testdata/libs")
+	assert.NoError(t, err)
+	assert.Len(t, ais, 10)
 }
