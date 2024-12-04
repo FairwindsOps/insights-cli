@@ -59,10 +59,10 @@ func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOp
 	actionItemsAsString, err := actionItems.StringWithValidation()
 	// If actionItems have errors, output the actionItems first to display more
 	// specific inline errors.
-	if err != nil {
-		logrus.Warnf("Errors in action items: %v", err)
-	}
 	fmt.Println(actionItemsAsString)
+	if err != nil {
+		return actionItems, err
+	}
 	expectAI := expectAIOptions.ForFileName(objectFileName)
 	if expectAI && len(actionItems) != 1 {
 		return actionItems, fmt.Errorf("%d action items were returned, but 1 is expected", len(actionItems))
