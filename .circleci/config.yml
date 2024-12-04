@@ -18,7 +18,7 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     docker:
       # Note the goreleaser version is also referenced in the release and snapshot jobs.
-      - image: goreleaser/goreleaser:v1.11.5
+      - image: goreleaser/goreleaser:v2.3.2
     steps:
       - checkout
       - run:
