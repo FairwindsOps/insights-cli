@@ -23,7 +23,15 @@ func AddPolicyMappingsBranch(tree treeprint.Tree, policyMappings []PolicyMapping
 		if policyMapping.Spec.Enabled != nil && !*policyMapping.Spec.Enabled {
 			enabled = "disabled"
 		}
-		policyMappingsBranch.AddBranch(fmt.Sprintf("%s (%s)", policyMapping.Name, enabled))
+		block := "Block based on policy settings"
+		if policyMapping.Spec.Block != nil {
+			if *policyMapping.Spec.Block {
+				block = "Always block on these policies"
+			} else {
+				block = "Never block on these policies"
+			}
+		}
+		policyMappingsBranch.AddBranch(fmt.Sprintf("%s (%s) (%s)", policyMapping.Name, block, enabled))
 	}
 	return nil
 }
@@ -76,12 +84,10 @@ func comparePolicyMappings(folder string, existingPolicyMappings []PolicyMapping
 	files, err := directory.ScanFolder(folder)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error scanning directory: %w", err)
-
 	}
 	filePolicyMappings, err := getPolicyMappingsFromFiles(files)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error reading policy-mapping from files: %w", err)
-
 	}
 	upserts, deletes = getPolicyMappingsDifferences(filePolicyMappings, existingPolicyMappings)
 	return upserts, deletes, nil

@@ -13,6 +13,7 @@ type PolicyMappingSpec struct {
 	AppGroups []string `json:"appGroups,omitempty" yaml:"appGroups,omitempty"`
 	Contexts  []string `json:"contexts,omitempty" yaml:"contexts,omitempty"`
 	Policies  []string `json:"policies,omitempty" yaml:"policies,omitempty"`
+	Block     *bool    `json:"block,omitempty" yaml:"block,omitempty"`
 }
 
 func (pm PolicyMapping) GetName() string {
