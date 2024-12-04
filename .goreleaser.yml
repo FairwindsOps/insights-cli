@@ -5,7 +5,7 @@ brews:
   # Do not update our tap repo if the git tag indicates prerelease. E.G. 1.0.0-rc1
   skip_upload: auto
   goarm: 6
-  tap:
+  repository:
     owner: FairwindsOps
     name: homebrew-tap
   directory: Formula
