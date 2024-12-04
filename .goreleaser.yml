@@ -8,7 +8,7 @@ brews:
   tap:
     owner: FairwindsOps
     name: homebrew-tap
-  folder: Formula
+  directory: Formula
   description: Command Line utility for Fairwinds Insights
   test: |
     system "#{bin}/insights version"
