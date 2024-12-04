@@ -82,4 +82,9 @@ func TestRunWithLibs(t *testing.T) {
 	ais, err := opavalidation.Run("testdata/fileWithLib.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "testdata/libs")
 	assert.NoError(t, err)
 	assert.Len(t, ais, 0)
+	ais, err = opavalidation.Run("testdata/fileWithLib.rego", "testdata/pod2.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "testdata/libs")
+	assert.Error(t, err)
+	assert.Equal(t, "1 action items were returned but none are expected", err.Error())
+	assert.Len(t, ais, 1)
+	assert.Equal(t, "Label is missing", ais[0].Title)
 }
