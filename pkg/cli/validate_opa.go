@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var regoFileName, objectFileName, batchDir, objectNamespaceOverride, insightsInfoCluster, insightsInfoContext string
+var regoFileName, objectFileName, batchDir, libsDir, objectNamespaceOverride, insightsInfoCluster, insightsInfoContext string
 var expectActionItem opavalidation.ExpectActionItemOptions
 
 // OPACmd represents the validate opa command
@@ -34,7 +34,7 @@ var OPACmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if regoFileName != "" {
-			_, err := opavalidation.Run(regoFileName, objectFileName, expectActionItem, fwrego.InsightsInfo{InsightsContext: insightsInfoContext, Cluster: insightsInfoCluster}, objectNamespaceOverride)
+			_, err := opavalidation.Run(regoFileName, objectFileName, expectActionItem, fwrego.InsightsInfo{InsightsContext: insightsInfoContext, Cluster: insightsInfoCluster}, objectNamespaceOverride, libsDir)
 			if err != nil {
 				fmt.Printf("OPA policy failed validation: %v\n", err)
 				os.Exit(1)
@@ -43,7 +43,7 @@ var OPACmd = &cobra.Command{
 		}
 
 		if batchDir != "" {
-			_, failedPolicies, err := opavalidation.RunBatch(batchDir, expectActionItem, fwrego.InsightsInfo{InsightsContext: insightsInfoContext, Cluster: insightsInfoCluster}, objectNamespaceOverride)
+			_, failedPolicies, err := opavalidation.RunBatch(batchDir, expectActionItem, fwrego.InsightsInfo{InsightsContext: insightsInfoContext, Cluster: insightsInfoCluster}, objectNamespaceOverride, libsDir)
 			fmt.Println() // separate output from RunBatch
 			if err != nil {
 				fmt.Printf("OPA policies failed validation: %v\n", err)
@@ -88,5 +88,6 @@ func init() {
 	OPACmd.Flags().StringVarP(&objectNamespaceOverride, "object-namespace", "N", "", "A Kubernetes namespace to override any defined in the Kubernetes object being passed as input to an OPA policy.")
 	OPACmd.Flags().StringVarP(&insightsInfoCluster, "insightsinfo-cluster", "l", "test", "A Kubernetes cluster name returned by the Insights-provided insightsinfo() rego function.")
 	OPACmd.Flags().StringVarP(&insightsInfoContext, "insightsinfo-context", "t", "Agent", "An Insights context returned by the Insights-provided insightsinfo() rego function. The context returned by Insights plugins is typically one of: CI/CD, Admission, or Agent.")
+	OPACmd.Flags().StringVarP(&libsDir, "libs-dir", "L", "", "A directory containing additional rego libraries to load. This option is not required, but can be used to load additional rego libraries.")
 	OPACmd.Flags().BoolVarP(&expectActionItem.Default, "expect-action-item", "i", true, "Whether to expect the OPA policy to output one action item (true) or 0 action items (false). This option is applied to Kubernetes manifest files with no .success.yaml nor .failure.yaml extension.")
 }
