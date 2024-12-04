@@ -58,7 +58,7 @@ func TestValidateRego(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error reading %s: %v", tc.objectFileName, err)
 			}
-			gotActionItems, gotErr := opavalidation.ValidateRego(context.TODO(), regoAsString, objectAsBytes, fwrego.InsightsInfo{}, "TestEvent", "")
+			gotActionItems, gotErr := opavalidation.ValidateRego(context.TODO(), regoAsString, objectAsBytes, fwrego.InsightsInfo{}, "TestEvent", "", nil)
 			if !tc.expectError && gotErr != nil {
 				t.Fatal(gotErr)
 			}
