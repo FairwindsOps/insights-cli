@@ -1,3 +1,5 @@
+version: 2
+
 brews:
 - name: insights
   # Do not update our tap repo if the git tag indicates prerelease. E.G. 1.0.0-rc1
