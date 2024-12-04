@@ -172,6 +172,7 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 	}
 	for libName, libContent := range libs {
 		opts = append(opts, rego.Module(libName, libContent))
+		fmt.Println("Loaded library:", libName, libContent)
 	}
 	query, err := rego.New(opts...).PrepareForEval(ctx)
 	if err != nil {
