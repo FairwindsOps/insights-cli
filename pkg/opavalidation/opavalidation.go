@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	fwrego "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/rego"
@@ -44,6 +45,10 @@ func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOp
 			libContent, err := os.ReadFile(lib)
 			if err != nil {
 				return nil, fmt.Errorf("error reading OPA library %s: %v", lib, err)
+			}
+			if !IsOPACustomLibrary(string(libContent)) {
+				logrus.Warnf("Skipping non-OPA library %s", lib)
+				continue
 			}
 			libName := strings.TrimSuffix(filepath.Base(lib), filepath.Ext(lib))
 			libs[libName] = string(libContent)
@@ -183,4 +188,16 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 		return nil, fmt.Errorf("error evaluating rego: %v", err)
 	}
 	return rs, nil
+}
+
+var isCheckRE = regexp.MustCompile(`^package\s+fairwinds\s*(#.*)?$`)
+
+func IsOPACustomLibrary(rego string) bool {
+	for _, line := range strings.Split(strings.TrimSuffix(rego, "\n"), "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "package") {
+			isCheck := isCheckRE.MatchString(strings.TrimSpace(line))
+			return !isCheck
+		}
+	}
+	return false
 }
