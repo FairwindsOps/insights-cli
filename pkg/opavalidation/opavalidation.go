@@ -8,7 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"slices"
+	"sort"
 	"strings"
 
 	fwrego "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/rego"
@@ -180,7 +180,7 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 	for libName := range libs {
 		libNames = append(libNames, libName)
 	}
-	slices.Sort(libNames)
+	sort.Strings(libNames)
 	for _, libName := range libNames {
 		opts = append(opts, rego.Module(libName, libs[libName]))
 	}
