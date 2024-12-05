@@ -145,5 +145,6 @@ func getHeaders(token string) map[string]string {
 		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
 		"Authorization":           fmt.Sprintf("Bearer %s", token),
 		"Accept":                  "application/json",
+		"Content-Type":            "application/yaml",
 	}
 }

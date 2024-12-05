@@ -310,5 +310,6 @@ func getHeaders(token string) map[string]string {
 	return map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"Accept":        "application/json",
+		"Content-Type":  "application/json",
 	}
 }
