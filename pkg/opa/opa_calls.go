@@ -335,7 +335,7 @@ func getExternalChecksFromFile(fileContent []byte, headers []string) ([]models.C
 	var checks []models.CustomCheckModel
 	for _, source := range externalSources.ExternalSources {
 		logrus.Debugf("getting checks from %s", source.URL)
-		resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), "")).Get(source.URL)
+		resp, err := req.C().R().SetHeaders(formatHeaders(headers)).Get(source.URL)
 		if err != nil {
 			return nil, fmt.Errorf("error getting remote checks: %w", err)
 		}
