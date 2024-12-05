@@ -1,7 +1,6 @@
 package appgroups
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/fairwindsops/insights-cli/pkg/utils"
@@ -38,11 +37,7 @@ func FetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
 func upsertAppGroup(org, token, hostName string, appGroup AppGroup) error {
 	url := fmt.Sprintf(appGroupURLFormat, hostName, org)
 	logrus.Debugf("upsertAppGroup: appGroups URL: %s", url)
-	bodyBytes, err := json.Marshal(appGroup)
-	if err != nil {
-		return err
-	}
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBodyBytes(bodyBytes).Post(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBody(&appGroup).Post(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
