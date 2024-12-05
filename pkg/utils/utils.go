@@ -2,15 +2,18 @@ package utils
 
 import (
 	"fmt"
-
-	"github.com/imroc/req"
 )
 
-func GetHeaders(version, token string) req.Header {
-	return req.Header{
+func GetHeaders(version, token, inputContentType string) map[string]string {
+	contentType := "application/json"
+	if inputContentType != "" {
+		contentType = inputContentType
+	}
+	return map[string]string{
 		"X-Fairwinds-CLI-Version": version,
 		"Authorization":           fmt.Sprintf("Bearer %s", token),
 		"Accept":                  "application/json",
+		"Content-Type":            contentType,
 	}
 }
 

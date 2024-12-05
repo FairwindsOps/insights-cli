@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/imroc/req"
+	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 
 	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
@@ -34,12 +34,16 @@ const policiesPutURLFormat = "%s/v0/organizations/%s/policies"
 // text/yaml, to the Insights API policies endpoint.
 func PutPolicies(policies io.Reader, org, token, hostName string) error {
 	url := fmt.Sprintf(policiesPutURLFormat, hostName, org)
-	resp, err := req.Post(url, getHeaders(token), policies)
+	bodyBytes, err := io.ReadAll(policies)
 	if err != nil {
 		return err
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		return fmt.Errorf("invalid HTTP response %d %s", resp.Response().StatusCode, string(resp.Bytes()))
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
+	if err != nil {
+		return err
+	}
+	if resp.Response.StatusCode != http.StatusOK {
+		return fmt.Errorf("invalid HTTP response %d %s", resp.Response.StatusCode, string(resp.Bytes()))
 	}
 	return nil
 }
@@ -74,11 +78,11 @@ func PushPolicies(pushDir, org, insightsToken, host string, dryrun bool) error {
 
 // getHeaders returns headers to be used when communicating with e Insights API for
 // policies configuration.
-func getHeaders(token string) req.Header {
-	return req.Header{
+func getHeaders(token string) map[string]string {
+	return map[string]string{
 		"Content-Type":            "text/yaml",
 		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
 		"Authorization":           fmt.Sprintf("Bearer %s", token),
-		"Accept":                  "application/json",
+		"Accept":                  "application/yaml",
 	}
 }

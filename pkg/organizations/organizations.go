@@ -5,7 +5,7 @@ import (
 
 	"github.com/fairwindsops/insights-cli/pkg/utils"
 	"github.com/fairwindsops/insights-cli/pkg/version"
-	"github.com/imroc/req"
+	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,12 +18,13 @@ func ManageOrganizationPolicyMappings(org, token, hostName string, enable bool) 
 	}
 	url := fmt.Sprintf(organizationURLFormat, hostName, org)
 	logrus.Debugf("enable/disable: policyMappings URL: %s, value: %v", url, enable)
-	resp, err := req.Patch(url, utils.GetHeaders(version.GetVersion(), token), req.BodyJSON(map[string]string{"PolicyStrategy": mode}))
+	body := map[string]string{"PolicyStrategy": mode}
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBody(&body).Patch(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mappings from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response().StatusCode) {
-		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
+	if !utils.IsSuccessful(resp.Response.StatusCode) {
+		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
 	}
 	return nil
 }

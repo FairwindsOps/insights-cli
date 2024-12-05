@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"github.com/imroc/req"
+	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml" // this lib correctly handles null slices
 )
@@ -150,17 +150,16 @@ func runVerifyRule(org, token, hostName string, rule verifyRule, dryRun bool) (*
 	if dryRun {
 		url += "?dryRun=true"
 	}
-
-	resp, err := req.Post(url, getRuleVerifyHeaders(token), req.BodyJSON(&rule))
+	resp, err := req.C().R().SetHeaders(getRuleVerifyHeaders(token)).SetBody(&rule).Post(url)
 	if err != nil {
 		return nil, fmt.Errorf("error verifying rule in Insights: %v", err)
 
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("invalid response code: %v - %s", resp.Response().StatusCode, string(resp.Bytes()))
+	if resp.Response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("invalid response code: %v - %s", resp.Response.StatusCode, string(resp.Bytes()))
 	}
 	var verify verifyWithEvents
-	err = resp.ToJSON(&verify)
+	err = resp.Unmarshal(&verify)
 	if err != nil {
 		return nil, fmt.Errorf("unable to convert response to json: %v", err)
 
@@ -351,8 +350,8 @@ func buildCmpOptions(expectedBytes []byte) ([]cmp.Option, error) {
 	return []cmp.Option{cmpopts.IgnoreFields(actionItem{}, ignoredFields...)}, nil
 }
 
-func getRuleVerifyHeaders(token string) req.Header {
-	return req.Header{
+func getRuleVerifyHeaders(token string) map[string]string {
+	return map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"Accept":        "application/json",
 		"Content-Type":  "application/yaml",

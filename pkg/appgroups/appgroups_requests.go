@@ -5,7 +5,7 @@ import (
 
 	"github.com/fairwindsops/insights-cli/pkg/utils"
 	"github.com/fairwindsops/insights-cli/pkg/version"
-	"github.com/imroc/req"
+	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,17 +18,17 @@ const (
 func FetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
 	url := fmt.Sprintf(appGroupURLFormat, hostName, org)
 	logrus.Debugf("fetchAppGroups: appGroups URL: %s", url)
-	resp, err := req.Get(url, utils.GetHeaders(version.GetVersion(), token))
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
 	var appGroups []AppGroup
-	if !utils.IsSuccessful(resp.Response().StatusCode) {
-		return nil, fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
+	if !utils.IsSuccessful(resp.Response.StatusCode) {
+		return nil, fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
 	}
-	err = resp.ToJSON(&appGroups)
+	err = resp.Unmarshal(&appGroups)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to convert response to json for app-groups: %w", err)
+		return nil, fmt.Errorf("unable to convert response to json for app-groups: %w", err)
 	}
 	return appGroups, nil
 }
@@ -37,15 +37,15 @@ func FetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
 func upsertAppGroup(org, token, hostName string, appGroup AppGroup) error {
 	url := fmt.Sprintf(appGroupURLFormat, hostName, org)
 	logrus.Debugf("upsertAppGroup: appGroups URL: %s", url)
-	resp, err := req.Post(url, utils.GetHeaders(version.GetVersion(), token), req.BodyJSON(&appGroup))
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBody(&appGroup).Post(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response().StatusCode) {
-		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
+	if !utils.IsSuccessful(resp.Response.StatusCode) {
+		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
 	}
 	var response AppGroup
-	err = resp.ToJSON(&response)
+	err = resp.Unmarshal(&response)
 	if err != nil {
 		return fmt.Errorf("Unable to convert response to json for app-groups: %w", err)
 
@@ -57,15 +57,15 @@ func upsertAppGroup(org, token, hostName string, appGroup AppGroup) error {
 func deleteAppGroup(org, token, hostName string, appGroup AppGroup) error {
 	url := fmt.Sprintf(appGroupURLSingleFormat, hostName, org, appGroup.Name)
 	logrus.Debugf("deleteAppGroup: appGroups URL: %s", url)
-	resp, err := req.Delete(url, utils.GetHeaders(version.GetVersion(), token))
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Delete(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response().StatusCode) {
-		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
+	if !utils.IsSuccessful(resp.Response.StatusCode) {
+		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
 	}
 	var response AppGroup
-	err = resp.ToJSON(&response)
+	err = resp.Unmarshal(&response)
 	if err != nil {
 		return fmt.Errorf("Unable to convert response to json for app-groups: %w", err)
 	}
