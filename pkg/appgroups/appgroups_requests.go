@@ -52,7 +52,7 @@ func upsertAppGroup(org, token, hostName string, appGroup AppGroup) error {
 	var response AppGroup
 	err = resp.Unmarshal(&response)
 	if err != nil {
-		return fmt.Errorf("unable to convert response to json for app-groups: %w", err)
+		return fmt.Errorf("Unable to convert response to json for app-groups: %w", err)
 
 	}
 	return nil
@@ -72,7 +72,7 @@ func deleteAppGroup(org, token, hostName string, appGroup AppGroup) error {
 	var response AppGroup
 	err = resp.Unmarshal(&response)
 	if err != nil {
-		return fmt.Errorf("unable to convert response to json for app-groups: %w", err)
+		return fmt.Errorf("Unable to convert response to json for app-groups: %w", err)
 	}
 	return nil
 }
