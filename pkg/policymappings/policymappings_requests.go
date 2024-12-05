@@ -1,7 +1,6 @@
 package policymappings
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/fairwindsops/insights-cli/pkg/utils"
@@ -37,11 +36,7 @@ func FetchPolicyMappings(org, token, hostName string) ([]PolicyMapping, error) {
 func upsertPolicyMapping(org, token, hostName string, policyMapping PolicyMapping) error {
 	url := fmt.Sprintf(policyMappingURLFormat, hostName, org)
 	logrus.Debugf("upsertPolicyMapping: policyMappings URL: %s", url)
-	bodyBytes, err := json.Marshal(policyMapping)
-	if err != nil {
-		return err
-	}
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBody(&policyMapping).Post(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mapping from insights: %w", err)
 	}
