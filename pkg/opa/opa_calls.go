@@ -130,7 +130,11 @@ func DeleteInstance(instance models.CustomCheckInstanceModel, org, token, hostNa
 // PutInstance upserts an Instance to Fairwinds Insights
 func PutInstance(instance models.CustomCheckInstanceModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaInstanceURLFormat, hostName, org, instance.CheckName, instance.InstanceName)
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBody(&instance).Put(url)
+	bodyBytes, err := yaml.Marshal(instance)
+	if err != nil {
+		return err
+	}
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBodyBytes(bodyBytes).Put(url)
 	if err != nil {
 		return err
 	}
