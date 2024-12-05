@@ -51,7 +51,7 @@ func upsertPolicyMapping(org, token, hostName string, policyMapping PolicyMappin
 	var response PolicyMapping
 	err = resp.Unmarshal(&response)
 	if err != nil {
-		return fmt.Errorf("unable to convert response to json for policy-mapping: %w", err)
+		return fmt.Errorf("Unable to convert response to json for policy-mapping: %w", err)
 
 	}
 	return nil
@@ -71,7 +71,7 @@ func deletePolicyMapping(org, token, hostName string, policyMapping PolicyMappin
 	var response PolicyMapping
 	err = resp.Unmarshal(&response)
 	if err != nil {
-		return fmt.Errorf("unable to convert response to json for policy-mapping: %w", err)
+		return fmt.Errorf("Unable to convert response to json for policy-mapping: %w", err)
 	}
 	return nil
 }
