@@ -45,7 +45,7 @@ const opaInstanceURLFormat = opaCheckInstancesURLFormat + "/%s"
 func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) {
 	url := fmt.Sprintf(opaURLFormat, hostName, org)
 	logrus.Debugf("OPA URL: %s", url)
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Get(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) 
 // GetInstances queries Fairwinds Insights to retrieve all of the instances for a given check
 func GetInstances(org, checkName, token, hostName string) ([]opaPlugin.CheckSetting, error) {
 	url := fmt.Sprintf(opaCheckInstancesURLFormat, hostName, org, checkName)
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Get(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func GetInstances(org, checkName, token, hostName string) ([]opaPlugin.CheckSett
 // DeleteCheck deletes an OPA Check from Fairwinds Insights
 func DeleteCheck(check models.CustomCheckModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaCheckURLFormat, hostName, org, check.CheckName)
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Delete(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Delete(url)
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func PutCheck(check models.CustomCheckModel, org, token, hostName string) error 
 	if err != nil {
 		return err
 	}
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).SetBodyBytes(bodyBytes).Put(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBodyBytes(bodyBytes).Put(url)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ func PutCheck(check models.CustomCheckModel, org, token, hostName string) error 
 // DeleteInstance deletes an Instance from Fairwinds Insights
 func DeleteInstance(instance models.CustomCheckInstanceModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaInstanceURLFormat, hostName, org, instance.CheckName, instance.InstanceName)
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Delete(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Delete(url)
 	if err != nil {
 		return err
 	}
@@ -135,7 +135,7 @@ func DeleteInstance(instance models.CustomCheckInstanceModel, org, token, hostNa
 // PutInstance upserts an Instance to Fairwinds Insights
 func PutInstance(instance models.CustomCheckInstanceModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaInstanceURLFormat, hostName, org, instance.CheckName, instance.InstanceName)
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Put(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).Put(url)
 	if err != nil {
 		return err
 	}

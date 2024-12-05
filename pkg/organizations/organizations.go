@@ -23,7 +23,7 @@ func ManageOrganizationPolicyMappings(org, token, hostName string, enable bool) 
 	if err != nil {
 		return err
 	}
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).SetBodyBytes(bodyBytes).Patch(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBodyBytes(bodyBytes).Patch(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mappings from insights: %w", err)
 	}
