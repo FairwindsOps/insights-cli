@@ -15,6 +15,7 @@
 package rules
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -22,7 +23,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/imroc/req"
+	"github.com/imroc/req/v3"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/xlab/treeprint"
@@ -57,17 +58,18 @@ type CompareResults struct {
 func getRules(org, token, hostName string) ([]Rule, error) {
 	url := fmt.Sprintf(rulesURLFormat, hostName, org)
 	logrus.Debugf("Rules URL: %s", url)
-	resp, err := req.Get(url, getHeaders(token))
+	r := req.C()
+	resp, err := r.R().SetHeaders(getHeaders(token)).Get(url)
 	if err != nil {
 		logrus.Errorf("Unable to get rules from insights: %v", err)
 		return nil, err
 	}
 	var rules []Rule
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("getRules: invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+	if resp.Response.StatusCode != http.StatusOK {
+		logrus.Errorf("getRules: invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
 		return nil, errors.New("getRules: invalid response code")
 	}
-	err = resp.ToJSON(&rules)
+	err = resp.Unmarshal(&rules)
 	if err != nil {
 		logrus.Errorf("Unable to convert response to json for rules: %v", err)
 		return nil, err
@@ -78,13 +80,18 @@ func getRules(org, token, hostName string) ([]Rule, error) {
 // insertRule adds a new rule
 func insertRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatCreate, hostName, org)
-	resp, err := req.Post(url, getHeaders(token), req.BodyJSON(&rule))
+	r := req.C()
+	bodyBytes, err := json.Marshal(rule)
+	if err != nil {
+		return err
+	}
+	resp, err := r.R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
 	if err != nil {
 		logrus.Errorf("Unable to add rule %s to insights: %v", rule.Name, err)
 		return err
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("insertRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+	if resp.Response.StatusCode != http.StatusOK {
+		logrus.Errorf("insertRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
 		return errors.New("insertRule: invalid response code")
 	}
 	return nil
@@ -93,13 +100,18 @@ func insertRule(org, token, hostName string, rule Rule) error {
 // updateRule updates an existing rule
 func updateRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
-	resp, err := req.Post(url, getHeaders(token), req.BodyJSON(&rule))
+	r := req.C()
+	bodyBytes, err := json.Marshal(rule)
+	if err != nil {
+		return err
+	}
+	resp, err := r.R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Put(url)
 	if err != nil {
 		logrus.Errorf("Unable to update rule %s to insights: %v", rule.Name, err)
 		return err
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("updateRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+	if resp.Response.StatusCode != http.StatusOK {
+		logrus.Errorf("updateRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
 		return errors.New("updateRule: invalid response code")
 	}
 	return nil
@@ -108,13 +120,14 @@ func updateRule(org, token, hostName string, rule Rule) error {
 // deleteRule deletes an existing rule
 func deleteRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
-	resp, err := req.Delete(url, getHeaders(token), nil)
+	r := req.C()
+	resp, err := r.R().SetHeaders(getHeaders(token)).Delete(url)
 	if err != nil {
 		logrus.Errorf("Unable to delete rule %s from insights: %v", rule.Name, err)
 		return err
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("deleteRule: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+	if resp.Response.StatusCode != http.StatusOK {
+		logrus.Errorf("deleteRule: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
 		return errors.New("deleteRule: invalid response code")
 	}
 	return nil
@@ -297,8 +310,8 @@ func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun b
 	return nil
 }
 
-func getHeaders(token string) req.Header {
-	return req.Header{
+func getHeaders(token string) map[string]string {
+	return map[string]string{
 		"Authorization": fmt.Sprintf("Bearer %s", token),
 		"Accept":        "application/json",
 	}

@@ -1,10 +1,11 @@
 package policymappings
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/fairwindsops/insights-cli/pkg/utils"
-	"github.com/imroc/req"
+	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,17 +18,17 @@ const (
 func FetchPolicyMappings(org, token, hostName string) ([]PolicyMapping, error) {
 	url := fmt.Sprintf(policyMappingURLFormat, hostName, org)
 	logrus.Debugf("fetchPolicyMappings: policyMappings URL: %s", url)
-	resp, err := req.Get(url, getHeaders(token))
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch policy-mappings from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response().StatusCode) {
-		return nil, fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
+	if !utils.IsSuccessful(resp.Response.StatusCode) {
+		return nil, fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
 	}
 	var policyMappings []PolicyMapping
-	err = resp.ToJSON(&policyMappings)
+	err = resp.Unmarshal(&policyMappings)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to convert response to json for policy-mappings: %w", err)
+		return nil, fmt.Errorf("unable to convert response to json for policy-mappings: %w", err)
 	}
 	return policyMappings, nil
 }
@@ -36,17 +37,21 @@ func FetchPolicyMappings(org, token, hostName string) ([]PolicyMapping, error) {
 func upsertPolicyMapping(org, token, hostName string, policyMapping PolicyMapping) error {
 	url := fmt.Sprintf(policyMappingURLFormat, hostName, org)
 	logrus.Debugf("upsertPolicyMapping: policyMappings URL: %s", url)
-	resp, err := req.Post(url, getHeaders(token), req.BodyJSON(&policyMapping))
+	bodyBytes, err := json.Marshal(policyMapping)
+	if err != nil {
+		return err
+	}
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mapping from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response().StatusCode) {
-		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
+	if !utils.IsSuccessful(resp.Response.StatusCode) {
+		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
 	}
 	var response PolicyMapping
-	err = resp.ToJSON(&response)
+	err = resp.Unmarshal(&response)
 	if err != nil {
-		return fmt.Errorf("Unable to convert response to json for policy-mapping: %w", err)
+		return fmt.Errorf("unable to convert response to json for policy-mapping: %w", err)
 
 	}
 	return nil
@@ -56,17 +61,17 @@ func upsertPolicyMapping(org, token, hostName string, policyMapping PolicyMappin
 func deletePolicyMapping(org, token, hostName string, policyMapping PolicyMapping) error {
 	url := fmt.Sprintf(policyMappingURLSingleFormat, hostName, org, policyMapping.Name)
 	logrus.Debugf("deletePolicyMapping: policyMappings URL: %s", url)
-	resp, err := req.Delete(url, getHeaders(token))
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).Delete(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mapping from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response().StatusCode) {
-		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response().StatusCode, string(resp.Bytes()))
+	if !utils.IsSuccessful(resp.Response.StatusCode) {
+		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
 	}
 	var response PolicyMapping
-	err = resp.ToJSON(&response)
+	err = resp.Unmarshal(&response)
 	if err != nil {
-		return fmt.Errorf("Unable to convert response to json for policy-mapping: %w", err)
+		return fmt.Errorf("unable to convert response to json for policy-mapping: %w", err)
 	}
 	return nil
 }

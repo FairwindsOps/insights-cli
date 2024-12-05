@@ -15,6 +15,7 @@
 package opa
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -27,7 +28,7 @@ import (
 	"github.com/fairwindsops/insights-cli/pkg/utils"
 	"github.com/fairwindsops/insights-cli/pkg/version"
 	opaPlugin "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/opa"
-	"github.com/imroc/req"
+	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
@@ -44,16 +45,16 @@ const opaInstanceURLFormat = opaCheckInstancesURLFormat + "/%s"
 func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) {
 	url := fmt.Sprintf(opaURLFormat, hostName, org)
 	logrus.Debugf("OPA URL: %s", url)
-	resp, err := req.Get(url, utils.GetHeaders(version.GetVersion(), token))
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Get(url)
 	if err != nil {
 		return nil, err
 	}
 	var checks []opaPlugin.OPACustomCheck
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("GetChecks: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+	if resp.Response.StatusCode != http.StatusOK {
+		logrus.Errorf("GetChecks: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
 		return nil, errors.New("GetChecks: invalid response code")
 	}
-	err = resp.ToJSON(&checks)
+	err = resp.Unmarshal(&checks)
 	if err != nil {
 		return nil, err
 	}
@@ -63,16 +64,16 @@ func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) 
 // GetInstances queries Fairwinds Insights to retrieve all of the instances for a given check
 func GetInstances(org, checkName, token, hostName string) ([]opaPlugin.CheckSetting, error) {
 	url := fmt.Sprintf(opaCheckInstancesURLFormat, hostName, org, checkName)
-	resp, err := req.Get(url, utils.GetHeaders(version.GetVersion(), token))
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Get(url)
 	if err != nil {
 		return nil, err
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("GetInstances: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+	if resp.Response.StatusCode != http.StatusOK {
+		logrus.Errorf("GetInstances: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
 		return nil, errors.New("GetInstances: invalid response code")
 	}
 	var instances []opaPlugin.CheckSetting
-	err = resp.ToJSON(&instances)
+	err = resp.Unmarshal(&instances)
 	if err != nil {
 		return nil, err
 	}
@@ -82,12 +83,12 @@ func GetInstances(org, checkName, token, hostName string) ([]opaPlugin.CheckSett
 // DeleteCheck deletes an OPA Check from Fairwinds Insights
 func DeleteCheck(check models.CustomCheckModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaCheckURLFormat, hostName, org, check.CheckName)
-	resp, err := req.Delete(url, utils.GetHeaders(version.GetVersion(), token))
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Delete(url)
 	if err != nil {
 		return err
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("DeleteCheck: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+	if resp.Response.StatusCode != http.StatusOK {
+		logrus.Errorf("DeleteCheck: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
 		return errors.New("DeleteCheck: invalid response code")
 	}
 	return nil
@@ -101,12 +102,17 @@ type PutCheckRequest struct {
 // PutCheck upserts an OPA Check to Fairwinds Insights
 func PutCheck(check models.CustomCheckModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaPutCheckURLFormat, hostName, org, check.CheckName, check.Version)
-	resp, err := req.Put(url, utils.GetHeaders(version.GetVersion(), token), req.BodyJSON(PutCheckRequest{Rego: check.Rego, Description: check.Description, Disabled: check.Disabled}))
+	body := PutCheckRequest{Rego: check.Rego, Description: check.Description, Disabled: check.Disabled}
+	bodyBytes, err := json.Marshal(body)
 	if err != nil {
 		return err
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("PutCheck: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).SetBodyBytes(bodyBytes).Put(url)
+	if err != nil {
+		return err
+	}
+	if resp.Response.StatusCode != http.StatusOK {
+		logrus.Errorf("PutCheck: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
 		return errors.New("PutCheck: invalid response code")
 	}
 	return nil
@@ -115,12 +121,12 @@ func PutCheck(check models.CustomCheckModel, org, token, hostName string) error 
 // DeleteInstance deletes an Instance from Fairwinds Insights
 func DeleteInstance(instance models.CustomCheckInstanceModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaInstanceURLFormat, hostName, org, instance.CheckName, instance.InstanceName)
-	resp, err := req.Delete(url, utils.GetHeaders(version.GetVersion(), token))
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Delete(url)
 	if err != nil {
 		return err
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("DeleteInstance: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+	if resp.Response.StatusCode != http.StatusOK {
+		logrus.Errorf("DeleteInstance: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
 		return errors.New("DeleteInstance: invalid response code")
 	}
 	return nil
@@ -129,12 +135,12 @@ func DeleteInstance(instance models.CustomCheckInstanceModel, org, token, hostNa
 // PutInstance upserts an Instance to Fairwinds Insights
 func PutInstance(instance models.CustomCheckInstanceModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaInstanceURLFormat, hostName, org, instance.CheckName, instance.InstanceName)
-	resp, err := req.Put(url, utils.GetHeaders(version.GetVersion(), token), req.BodyJSON(&instance))
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Put(url)
 	if err != nil {
 		return err
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		logrus.Errorf("PutInstance: Invalid response code: %s %v", string(resp.Bytes()), resp.Response().StatusCode)
+	if resp.Response.StatusCode != http.StatusOK {
+		logrus.Errorf("PutInstance: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
 		return errors.New("PutInstance: invalid response code")
 	}
 	return nil
@@ -329,12 +335,12 @@ func getExternalChecksFromFile(fileContent []byte, headers []string) ([]models.C
 	var checks []models.CustomCheckModel
 	for _, source := range externalSources.ExternalSources {
 		logrus.Debugf("getting checks from %s", source.URL)
-		resp, err := req.Get(source.URL, req.Header(formatHeaders(headers)))
+		resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), "")).Get(source.URL)
 		if err != nil {
 			return nil, fmt.Errorf("error getting remote checks: %w", err)
 		}
-		if resp.Response().StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("error getting remote checks: invalid response code (%v, expected 200)", resp.Response().StatusCode)
+		if resp.Response.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("error getting remote checks: invalid response code (%v, expected 200)", resp.Response.StatusCode)
 		}
 		rego, err := resp.ToString()
 		if err != nil {

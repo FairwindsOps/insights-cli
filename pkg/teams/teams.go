@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/imroc/req"
+	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 
@@ -49,12 +49,13 @@ func PostTeams(teamInput []TeamInput, deleteNonProvidedTeams bool, org, token, h
 	if err != nil {
 		return err
 	}
-	resp, err := req.Post(url, getHeaders(token), teamInputYaml)
+	r := req.C()
+	resp, err := r.R().SetHeaders(getHeaders(token)).SetBodyBytes(teamInputYaml).Post(url)
 	if err != nil {
 		return err
 	}
-	if resp.Response().StatusCode != http.StatusOK {
-		return fmt.Errorf("invalid HTTP response %d %s", resp.Response().StatusCode, string(resp.Bytes()))
+	if resp.Response.StatusCode != http.StatusOK {
+		return fmt.Errorf("invalid HTTP response %d %s", resp.Response.StatusCode, string(resp.Bytes()))
 	}
 	return nil
 }
@@ -104,8 +105,8 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 	return nil
 }
 
-func getHeaders(token string) req.Header {
-	return req.Header{
+func getHeaders(token string) map[string]string {
+	return map[string]string{
 		"Content-Type":            "application/yaml",
 		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
 		"Authorization":           fmt.Sprintf("Bearer %s", token),

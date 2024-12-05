@@ -8,7 +8,6 @@ import (
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
 	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
-	"github.com/imroc/req"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/xlab/treeprint"
@@ -141,8 +140,8 @@ func getPolicyMappingsDifferences(filePolicyMappings, existingPolicyMappings []P
 	return upserts, deletes
 }
 
-func getHeaders(token string) req.Header {
-	return req.Header{
+func getHeaders(token string) map[string]string {
+	return map[string]string{
 		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
 		"Authorization":           fmt.Sprintf("Bearer %s", token),
 		"Accept":                  "application/json",
