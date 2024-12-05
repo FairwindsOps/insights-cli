@@ -1,7 +1,6 @@
 package rules
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -151,11 +150,7 @@ func runVerifyRule(org, token, hostName string, rule verifyRule, dryRun bool) (*
 	if dryRun {
 		url += "?dryRun=true"
 	}
-	bodyBytes, err := json.Marshal(rule)
-	if err != nil {
-		return nil, fmt.Errorf("error marshalling rule: %v", err)
-	}
-	resp, err := req.C().R().SetHeaders(getRuleVerifyHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
+	resp, err := req.C().R().SetHeaders(getRuleVerifyHeaders(token)).SetBody(&rule).Post(url)
 	if err != nil {
 		return nil, fmt.Errorf("error verifying rule in Insights: %v", err)
 

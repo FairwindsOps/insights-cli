@@ -15,7 +15,6 @@
 package rules
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -79,11 +78,7 @@ func getRules(org, token, hostName string) ([]Rule, error) {
 // insertRule adds a new rule
 func insertRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatCreate, hostName, org)
-	bodyBytes, err := json.Marshal(rule)
-	if err != nil {
-		return err
-	}
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBody(&rule).Post(url)
 	if err != nil {
 		logrus.Errorf("Unable to add rule %s to insights: %v", rule.Name, err)
 		return err
@@ -98,11 +93,7 @@ func insertRule(org, token, hostName string, rule Rule) error {
 // updateRule updates an existing rule
 func updateRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
-	bodyBytes, err := json.Marshal(rule)
-	if err != nil {
-		return err
-	}
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBody(&rule).Post(url)
 	if err != nil {
 		logrus.Errorf("Unable to update rule %s to insights: %v", rule.Name, err)
 		return err
