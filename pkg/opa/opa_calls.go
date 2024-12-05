@@ -102,10 +102,6 @@ type PutCheckRequest struct {
 func PutCheck(check models.CustomCheckModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaPutCheckURLFormat, hostName, org, check.CheckName, check.Version)
 	body := PutCheckRequest{Rego: check.Rego, Description: check.Description, Disabled: check.Disabled}
-	//bodyBytes, err := yaml.Marshal(body)
-	//if err != nil {
-	//		return err//
-	//	}
 	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBody(&body).Put(url)
 	if err != nil {
 		return err
@@ -134,11 +130,7 @@ func DeleteInstance(instance models.CustomCheckInstanceModel, org, token, hostNa
 // PutInstance upserts an Instance to Fairwinds Insights
 func PutInstance(instance models.CustomCheckInstanceModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaInstanceURLFormat, hostName, org, instance.CheckName, instance.InstanceName)
-	bodyBytes, err := yaml.Marshal(instance)
-	if err != nil {
-		return err
-	}
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBodyBytes(bodyBytes).Put(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBody(&instance).Put(url)
 	if err != nil {
 		return err
 	}
