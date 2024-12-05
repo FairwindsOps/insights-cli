@@ -102,11 +102,11 @@ type PutCheckRequest struct {
 func PutCheck(check models.CustomCheckModel, org, token, hostName string) error {
 	url := fmt.Sprintf(opaPutCheckURLFormat, hostName, org, check.CheckName, check.Version)
 	body := PutCheckRequest{Rego: check.Rego, Description: check.Description, Disabled: check.Disabled}
-	bodyBytes, err := yaml.Marshal(body)
-	if err != nil {
-		return err
-	}
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBodyBytes(bodyBytes).Put(url)
+	//bodyBytes, err := yaml.Marshal(body)
+	//if err != nil {
+	//		return err//
+	//	}
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBody(&body).Put(url)
 	if err != nil {
 		return err
 	}
