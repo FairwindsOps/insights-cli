@@ -19,8 +19,7 @@ const (
 func FetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
 	url := fmt.Sprintf(appGroupURLFormat, hostName, org)
 	logrus.Debugf("fetchAppGroups: appGroups URL: %s", url)
-	r := req.C()
-	resp, err := r.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Get(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
@@ -39,12 +38,11 @@ func FetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
 func upsertAppGroup(org, token, hostName string, appGroup AppGroup) error {
 	url := fmt.Sprintf(appGroupURLFormat, hostName, org)
 	logrus.Debugf("upsertAppGroup: appGroups URL: %s", url)
-	r := req.C()
 	bodyBytes, err := json.Marshal(appGroup)
 	if err != nil {
 		return err
 	}
-	resp, err := r.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).SetBodyBytes(bodyBytes).Post(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).SetBodyBytes(bodyBytes).Post(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
@@ -64,8 +62,7 @@ func upsertAppGroup(org, token, hostName string, appGroup AppGroup) error {
 func deleteAppGroup(org, token, hostName string, appGroup AppGroup) error {
 	url := fmt.Sprintf(appGroupURLSingleFormat, hostName, org, appGroup.Name)
 	logrus.Debugf("deleteAppGroup: appGroups URL: %s", url)
-	r := req.C()
-	resp, err := r.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Delete(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).Delete(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}

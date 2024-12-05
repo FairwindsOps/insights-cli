@@ -18,8 +18,7 @@ func ManageOrganizationPolicyMappings(org, token, hostName string, enable bool) 
 	}
 	url := fmt.Sprintf(organizationURLFormat, hostName, org)
 	logrus.Debugf("enable/disable: policyMappings URL: %s, value: %v", url, enable)
-	r := req.C()
-	resp, err := r.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).SetBody(map[string]string{"PolicyStrategy": mode}).Patch(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token)).SetBody(map[string]string{"PolicyStrategy": mode}).Patch(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mappings from insights: %w", err)
 	}

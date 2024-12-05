@@ -49,8 +49,7 @@ func PostTeams(teamInput []TeamInput, deleteNonProvidedTeams bool, org, token, h
 	if err != nil {
 		return err
 	}
-	r := req.C()
-	resp, err := r.R().SetHeaders(getHeaders(token)).SetBodyBytes(teamInputYaml).Post(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(teamInputYaml).Post(url)
 	if err != nil {
 		return err
 	}

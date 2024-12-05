@@ -58,8 +58,7 @@ type CompareResults struct {
 func getRules(org, token, hostName string) ([]Rule, error) {
 	url := fmt.Sprintf(rulesURLFormat, hostName, org)
 	logrus.Debugf("Rules URL: %s", url)
-	r := req.C()
-	resp, err := r.R().SetHeaders(getHeaders(token)).Get(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).Get(url)
 	if err != nil {
 		logrus.Errorf("Unable to get rules from insights: %v", err)
 		return nil, err
@@ -80,12 +79,11 @@ func getRules(org, token, hostName string) ([]Rule, error) {
 // insertRule adds a new rule
 func insertRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatCreate, hostName, org)
-	r := req.C()
 	bodyBytes, err := json.Marshal(rule)
 	if err != nil {
 		return err
 	}
-	resp, err := r.R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
 	if err != nil {
 		logrus.Errorf("Unable to add rule %s to insights: %v", rule.Name, err)
 		return err
@@ -100,12 +98,11 @@ func insertRule(org, token, hostName string, rule Rule) error {
 // updateRule updates an existing rule
 func updateRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
-	r := req.C()
 	bodyBytes, err := json.Marshal(rule)
 	if err != nil {
 		return err
 	}
-	resp, err := r.R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Put(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Put(url)
 	if err != nil {
 		logrus.Errorf("Unable to update rule %s to insights: %v", rule.Name, err)
 		return err
@@ -120,8 +117,7 @@ func updateRule(org, token, hostName string, rule Rule) error {
 // deleteRule deletes an existing rule
 func deleteRule(org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
-	r := req.C()
-	resp, err := r.R().SetHeaders(getHeaders(token)).Delete(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).Delete(url)
 	if err != nil {
 		logrus.Errorf("Unable to delete rule %s from insights: %v", rule.Name, err)
 		return err

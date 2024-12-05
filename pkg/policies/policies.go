@@ -35,12 +35,11 @@ const policiesPutURLFormat = "%s/v0/organizations/%s/policies"
 // text/yaml, to the Insights API policies endpoint.
 func PutPolicies(policies io.Reader, org, token, hostName string) error {
 	url := fmt.Sprintf(policiesPutURLFormat, hostName, org)
-	r := req.C()
 	bodyBytes, err := json.Marshal(policies)
 	if err != nil {
 		return err
 	}
-	resp, err := r.R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Put(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Put(url)
 	if err != nil {
 		return err
 	}
