@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  rok8s: fairwinds/rok8s-scripts@11
+  rok8s: fairwinds/rok8s-scripts@12.1.1
 
 references:
   install_vault: &install_vault
@@ -16,9 +16,10 @@ references:
 jobs:
   test:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
+    resource_class: large
     docker:
       # Note the goreleaser version is also referenced in the release and snapshot jobs.
-      - image: goreleaser/goreleaser:v1.11.5
+      - image: goreleaser/goreleaser:v2.3.2
     steps:
       - checkout
       - run:
@@ -30,7 +31,7 @@ jobs:
               echo "$output"
               exit 1
             fi
-            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.50.0
+            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2
             golangci-lint run -v --timeout 2m0s
       - run: ./.circleci/scripts/e2e-env.sh
       - *install_vault
@@ -46,14 +47,14 @@ jobs:
     resource_class: large
     docker:
       # Note the goreleaser version is also referenced in the release and test jobs.
-      - image: goreleaser/goreleaser:v1.11.5
+      - image: goreleaser/goreleaser:v2.3.2
     steps:
       - checkout
       - setup_remote_docker:
           version: docker24
       - run: goreleaser --snapshot
       # Avoid copying both archive files and the directories used to create them.
-      - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.rb dist/*.json snapshot-artifacts
+      - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.json snapshot-artifacts
       - store_artifacts:
           path: snapshot-artifacts
   release:
@@ -62,7 +63,7 @@ jobs:
     shell: /bin/bash
     docker:
       # Note the goreleaser version is also referenced in the snapshot and test jobs.
-      - image: goreleaser/goreleaser:v1.11.5
+      - image: goreleaser/goreleaser:v2.3.2
     steps:
       - checkout
       - run: ./.circleci/scripts/e2e-env.sh
@@ -72,7 +73,7 @@ jobs:
       - rok8s/get_vault_env:
           vault_path: repo/insights-cli/env
       - run: |
-              go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2
+              go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.62.2
               golangci-lint run -v --timeout 2m0s
               go test -tags e2e ./pkg/...
       - setup_remote_docker:
