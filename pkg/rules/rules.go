@@ -102,7 +102,7 @@ func updateRule(org, token, hostName string, rule Rule) error {
 	if err != nil {
 		return err
 	}
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Put(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
 	if err != nil {
 		logrus.Errorf("Unable to update rule %s to insights: %v", rule.Name, err)
 		return err

@@ -39,7 +39,7 @@ func PutPolicies(policies io.Reader, org, token, hostName string) error {
 	if err != nil {
 		return err
 	}
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Put(url)
+	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
 	if err != nil {
 		return err
 	}
