@@ -16,7 +16,6 @@
 package policies
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -35,7 +34,7 @@ const policiesPutURLFormat = "%s/v0/organizations/%s/policies"
 // text/yaml, to the Insights API policies endpoint.
 func PutPolicies(policies io.Reader, org, token, hostName string) error {
 	url := fmt.Sprintf(policiesPutURLFormat, hostName, org)
-	bodyBytes, err := json.Marshal(policies)
+	bodyBytes, err := io.ReadAll(policies)
 	if err != nil {
 		return err
 	}
@@ -84,6 +83,6 @@ func getHeaders(token string) map[string]string {
 		"Content-Type":            "text/yaml",
 		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
 		"Authorization":           fmt.Sprintf("Bearer %s", token),
-		"Accept":                  "application/json",
+		"Accept":                  "application/yaml",
 	}
 }
