@@ -1,7 +1,6 @@
 package organizations
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/fairwindsops/insights-cli/pkg/utils"
@@ -19,11 +18,8 @@ func ManageOrganizationPolicyMappings(org, token, hostName string, enable bool) 
 	}
 	url := fmt.Sprintf(organizationURLFormat, hostName, org)
 	logrus.Debugf("enable/disable: policyMappings URL: %s, value: %v", url, enable)
-	bodyBytes, err := json.Marshal(map[string]string{"PolicyStrategy": mode})
-	if err != nil {
-		return err
-	}
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBodyBytes(bodyBytes).Patch(url)
+	body := map[string]string{"PolicyStrategy": mode}
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBody(&body).Patch(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mappings from insights: %w", err)
 	}
