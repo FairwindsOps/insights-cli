@@ -9,6 +9,7 @@ func GetHeaders(version, token string) map[string]string {
 		"X-Fairwinds-CLI-Version": version,
 		"Authorization":           fmt.Sprintf("Bearer %s", token),
 		"Accept":                  "application/json",
+		"Content-Type":            "application/json",
 	}
 }
 
