@@ -88,3 +88,9 @@ func TestRunWithLibs(t *testing.T) {
 	assert.Len(t, ais, 1)
 	assert.Equal(t, "Label is missing", ais[0].Title)
 }
+
+func TestMultipleRules(t *testing.T) {
+	ais, err := opavalidation.Run("test/multipleRules.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "")
+	assert.NoError(t, err)
+	assert.Len(t, ais, 0)
+}
