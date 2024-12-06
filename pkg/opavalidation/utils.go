@@ -22,9 +22,11 @@ func arrayFromRegoOutput(results rego.ResultSet) []interface{} {
 
 	for _, result := range results {
 		for _, pack := range result.Bindings["results"].(map[string]interface{}) {
-			if _, ok := pack.(map[string]interface{}); !ok {
+			if _, ok := pack.(map[string]interface{}); ok {
 				for _, outputArray := range pack.(map[string]interface{}) {
-					returnSet = append(returnSet, outputArray.([]interface{})...)
+					if _, ok := outputArray.([]interface{}); ok {
+						returnSet = append(returnSet, outputArray.([]interface{})...)
+					}
 				}
 			}
 		}

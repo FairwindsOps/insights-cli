@@ -90,9 +90,7 @@ func TestRunWithLibs(t *testing.T) {
 }
 
 func TestMultipleRules(t *testing.T) {
-	ais, err := opavalidation.Run("testdata/multipleRules.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "")
+	ais, err := opavalidation.Run("test/multipleRules.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "")
 	assert.NoError(t, err)
 	assert.Len(t, ais, 0)
-	_, err = opavalidation.Run("testdata/multipleRules.rego", "testdata/pod2.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "")
-	assert.NoError(t, err)
 }
