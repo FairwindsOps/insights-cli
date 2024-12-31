@@ -92,7 +92,10 @@ func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insights
 		return successfulPolicies, failedPolicies, fmt.Errorf("unable to list .rego files: %v", err)
 	}
 	for _, regoFileName := range regoFiles {
-		objectFileNames, ok := expectAIOptions.getObjectFileNamesForPolicy(regoFileName)
+		objectFileNames, ok, err := expectAIOptions.getObjectFileNamesForPolicy(batchDir, regoFileName)
+		if err != nil {
+			return nil, nil, fmt.Errorf("error finding object files for policy %s: %w", regoFileName, err)
+		}
 		if !ok {
 			logrus.Errorf("No Kubernetes manifest files found to use as input for validation of OPA policy %s", regoFileName)
 			failedPolicies = append(failedPolicies, regoFileName)

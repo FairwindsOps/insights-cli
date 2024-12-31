@@ -3,8 +3,8 @@ package opavalidation
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/fatih/color"
@@ -194,22 +194,38 @@ func (o ExpectActionItemOptions) ForFileName(fileName string) bool {
 // getObjectFileNamesForPolicy returns a list of existing file names matching
 // the pattern {base rego file name}.yaml|.success.yaml|.failure.yaml (the
 // latter two being configurable via the expectActionItemOptions struct).
-func (o ExpectActionItemOptions) getObjectFileNamesForPolicy(regoFileName string) (objectFileNames []string, foundAny bool) {
+func (o ExpectActionItemOptions) getObjectFileNamesForPolicy(batchDir, regoFileName string) (objectFileNames []string, foundAny bool, err error) {
 	baseFileName := strings.TrimSuffix(regoFileName, filepath.Ext(regoFileName))
-	var lookForFileNames []string = []string{
-		baseFileName + ".yaml",
-		baseFileName + o.SuccessFileExtension,
-		baseFileName + o.FailureFileExtension}
-	logrus.Debugf("Looking for these object files for policy %s: %v", regoFileName, lookForFileNames)
-	for _, potentialFileName := range lookForFileNames {
-		_, err := os.Stat(potentialFileName)
-		if err == nil {
-			objectFileNames = append(objectFileNames, potentialFileName)
-			foundAny = true
+
+	filenameYaml := fmt.Sprintf(`^%s\.yaml$`, regexp.QuoteMeta(baseFileName))
+	anythingFailureYaml := fmt.Sprintf(`^%s(\.[a-zA-Z0-9_-]+)?\.failure\.yaml$`, regexp.QuoteMeta(baseFileName))
+	anythingSuccessYaml := fmt.Sprintf(`^%s(\.[a-zA-Z0-9_-]+)?\.success\.yaml$`, regexp.QuoteMeta(baseFileName))
+
+	filenameYamlRegex := regexp.MustCompile(filenameYaml)
+	anythingFailureYamlRegex := regexp.MustCompile(anythingFailureYaml)
+	anythingSuccessYamlRegex := regexp.MustCompile(anythingSuccessYaml)
+
+	files, err := ListAllFilesInDir(batchDir, true)
+	if err != nil {
+		return nil, false, err
+	}
+
+	for _, file := range files {
+		if filenameYamlRegex.MatchString(file) {
+			objectFileNames = append(objectFileNames, file)
+		}
+		if anythingFailureYamlRegex.MatchString(file) {
+			objectFileNames = append(objectFileNames, file)
+		}
+		if anythingSuccessYamlRegex.MatchString(file) {
+			objectFileNames = append(objectFileNames, file)
 		}
 	}
-	if foundAny {
+
+	if len(objectFileNames) > 0 {
 		logrus.Debugf("Matched these object files for policy %s: %v", regoFileName, objectFileNames)
+		foundAny = true
 	}
+
 	return
 }
