@@ -174,7 +174,7 @@ type ExpectActionItemOptions struct {
 }
 
 // ForFileName returns true if the given Kubernetes manifest file name should
-// expectan OPA policy to output an action item.
+// expect an OPA policy to output an action item.
 func (o ExpectActionItemOptions) ForFileName(fileName string) bool {
 	LCFileName := strings.ToLower(fileName)
 	LCSuccessExtension := strings.ToLower(o.SuccessFileExtension)
@@ -192,20 +192,21 @@ func (o ExpectActionItemOptions) ForFileName(fileName string) bool {
 }
 
 // getObjectFileNamesForPolicy returns a list of existing file names matching
-// the pattern {base rego file name}.yaml|.success.yaml|.failure.yaml (the
+// the pattern {base rego file name}.yaml|{base rego file name}.<anything>.success.yaml|{base rego file name}.<anything>.failure.yaml (the
 // latter two being configurable via the expectActionItemOptions struct).
-func (o ExpectActionItemOptions) getObjectFileNamesForPolicy(batchDir, regoFileName string) (objectFileNames []string, foundAny bool, err error) {
+func (o ExpectActionItemOptions) getObjectFileNamesForPolicy(regoFileName string) (objectFileNames []string, foundAny bool, err error) {
 	baseFileName := strings.TrimSuffix(regoFileName, filepath.Ext(regoFileName))
+	dir := filepath.Dir(regoFileName)
 
 	filenameYaml := fmt.Sprintf(`^%s\.yaml$`, regexp.QuoteMeta(baseFileName))
-	anythingFailureYaml := fmt.Sprintf(`^%s(\.[a-zA-Z0-9_-]+)?\.failure\.yaml$`, regexp.QuoteMeta(baseFileName))
-	anythingSuccessYaml := fmt.Sprintf(`^%s(\.[a-zA-Z0-9_-]+)?\.success\.yaml$`, regexp.QuoteMeta(baseFileName))
+	anythingFailureYaml := fmt.Sprintf(`^%s(\.[a-zA-Z0-9_-]+)?%s$`, regexp.QuoteMeta(baseFileName), regexp.QuoteMeta(o.FailureFileExtension))
+	anythingSuccessYaml := fmt.Sprintf(`^%s(\.[a-zA-Z0-9_-]+)?%s$`, regexp.QuoteMeta(baseFileName), regexp.QuoteMeta(o.SuccessFileExtension))
 
 	filenameYamlRegex := regexp.MustCompile(filenameYaml)
 	anythingFailureYamlRegex := regexp.MustCompile(anythingFailureYaml)
 	anythingSuccessYamlRegex := regexp.MustCompile(anythingSuccessYaml)
 
-	files, err := ListAllFilesInDir(batchDir, true)
+	files, err := ListAllFilesInDir(dir, true)
 	if err != nil {
 		return nil, false, err
 	}

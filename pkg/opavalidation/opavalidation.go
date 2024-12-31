@@ -92,7 +92,7 @@ func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insights
 		return successfulPolicies, failedPolicies, fmt.Errorf("unable to list .rego files: %v", err)
 	}
 	for _, regoFileName := range regoFiles {
-		objectFileNames, ok, err := expectAIOptions.getObjectFileNamesForPolicy(batchDir, regoFileName)
+		objectFileNames, ok, err := expectAIOptions.getObjectFileNamesForPolicy(regoFileName)
 		if err != nil {
 			return nil, nil, fmt.Errorf("error finding object files for policy %s: %w", regoFileName, err)
 		}
