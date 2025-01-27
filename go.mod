@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.4
 
 require (
-	github.com/fairwindsops/insights-plugins/plugins/opa v0.0.0-20250117124835-529c5e1ef151
+	github.com/fairwindsops/insights-plugins/plugins/opa v0.0.0-20241126145703-73ccd19c1bbb
 	github.com/fatih/color v1.18.0
 	github.com/google/go-cmp v0.6.0
 	github.com/hashicorp/go-multierror v1.1.1
