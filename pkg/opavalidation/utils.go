@@ -11,7 +11,7 @@ import (
 	"io/fs"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/open-policy-agent/opa/rego"
+	"github.com/open-policy-agent/opa/v1/rego"
 	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
