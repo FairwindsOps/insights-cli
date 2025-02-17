@@ -14,7 +14,7 @@ require (
 	github.com/rogpeppe/go-internal v1.13.1
 	github.com/samber/lo v1.49.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/spf13/cobra v1.8.1
+	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/xlab/treeprint v1.2.0
 	golang.org/x/net v0.34.0
@@ -74,7 +74,7 @@ require (
 	github.com/quic-go/quic-go v0.49.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/refraction-networking/utls v1.6.7 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/tchap/go-patricia/v2 v2.3.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
