@@ -38,6 +38,7 @@ type TeamInput struct {
 	Name                   string   `json:"name" yaml:"name"`
 	Namespaces             []string `json:"namespaces" yaml:"namespaces"`
 	Repositories           []string `json:"repositories" yaml:"repositories"`
+	AppGroups              []string `json:"appGroups" yaml:"appGroups"`
 }
 
 func PostTeams(teamInput []TeamInput, deleteNonProvidedTeams bool, org, token, hostName string) error {
@@ -89,6 +90,7 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 			logrus.Infof("  DisallowedClusters: %v", team.DisallowedClusters)
 			logrus.Infof("  DisallowedNamespaces: %v", team.DisallowedNamespaces)
 			logrus.Infof("  DisallowedRepositories: %v", team.DisallowedRepositories)
+			logrus.Infof("  AppGroups: %v", team.AppGroups)
 		}
 		return nil
 	}
