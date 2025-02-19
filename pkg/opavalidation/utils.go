@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -229,4 +230,23 @@ func FindFilesWithExtension(dir, ext string) ([]string, error) {
 		return nil
 	})
 	return files, err
+}
+
+func ListAllFilesInDir(dirPath string, includeDirPath bool) ([]string, error) {
+	files, err := os.ReadDir(dirPath)
+	if err != nil {
+		return nil, err
+	}
+	var fileNames []string
+	for _, file := range files {
+		if !file.IsDir() {
+			if includeDirPath {
+				fullPath := filepath.Join(dirPath, file.Name())
+				fileNames = append(fileNames, fullPath)
+			} else {
+				fileNames = append(fileNames, file.Name())
+			}
+		}
+	}
+	return fileNames, nil
 }
