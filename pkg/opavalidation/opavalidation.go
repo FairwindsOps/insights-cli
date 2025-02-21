@@ -12,10 +12,10 @@ import (
 	"strings"
 
 	fwrego "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/rego"
-	"github.com/open-policy-agent/opa/ast"
-	"github.com/open-policy-agent/opa/rego"
-	"github.com/open-policy-agent/opa/topdown"
-	"github.com/open-policy-agent/opa/types"
+	"github.com/open-policy-agent/opa/v1/ast"
+	"github.com/open-policy-agent/opa/v1/rego"
+	"github.com/open-policy-agent/opa/v1/topdown"
+	"github.com/open-policy-agent/opa/v1/types"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 )
@@ -26,7 +26,7 @@ const (
 
 // Run is a ValidateRego() wrapper that validates and prints resulting actionItems. This is
 // meant to be called from a cobra.Command{}.
-func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride, libsDir string) (actionItems, error) {
+func Run(regoVersion, regoFileName, objectFileName string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride, libsDir string) (actionItems, error) {
 	b, err := os.ReadFile(regoFileName)
 	if err != nil {
 		return nil, fmt.Errorf("error reading OPA policy %s: %v", regoFileName, err)
@@ -58,7 +58,7 @@ func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOp
 
 	baseRegoFileName := filepath.Base(regoFileName)
 	eventType := strings.TrimSuffix(baseRegoFileName, filepath.Ext(baseRegoFileName))
-	actionItems, err := ValidateRego(context.TODO(), regoContent, b, insightsInfo, eventType, objectNamespaceOverride, libs)
+	actionItems, err := ValidateRego(context.TODO(), regoContent, &regoVersion, b, insightsInfo, eventType, objectNamespaceOverride, libs)
 	if err != nil {
 		return actionItems, err
 	}
@@ -86,7 +86,7 @@ func Run(regoFileName, objectFileName string, expectAIOptions ExpectActionItemOp
 // Each OPA policy is validated with a Kubernetes manifest file named of the
 // form {base rego filename} and the extensions .yaml, .success.yaml, and
 // .failure.yaml (the last two of which are configurable).
-func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride, libsDir string) (successfulPolicies, failedPolicies []string, err error) {
+func RunBatch(regoVersion, batchDir string, expectAIOptions ExpectActionItemOptions, insightsInfo fwrego.InsightsInfo, objectNamespaceOverride, libsDir string) (successfulPolicies, failedPolicies []string, err error) {
 	regoFiles, err := FindFilesWithExtension(batchDir, ".rego")
 	if err != nil {
 		return successfulPolicies, failedPolicies, fmt.Errorf("unable to list .rego files: %v", err)
@@ -103,7 +103,7 @@ func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insights
 		}
 		for _, objectFileName := range objectFileNames {
 			logrus.Infof("Validating OPA policy %s with input %s (expectActionItem=%v)", regoFileName, objectFileName, expectAIOptions.ForFileName(objectFileName))
-			_, err := Run(regoFileName, objectFileName, expectAIOptions, insightsInfo, objectNamespaceOverride, libsDir)
+			_, err := Run(regoFileName, regoVersion, objectFileName, expectAIOptions, insightsInfo, objectNamespaceOverride, libsDir)
 			if err != nil {
 				logrus.Errorf("Failed validation of OPA policy %s using input %s: %v\n", regoFileName, objectFileName, err)
 				if !lo.Contains(failedPolicies, regoFileName) {
@@ -124,7 +124,7 @@ func RunBatch(batchDir string, expectAIOptions ExpectActionItemOptions, insights
 
 // ValidateRego validates rego by executing rego with an input object.
 // Validation includes signatures for Insights-provided rego functions.
-func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte, insightsInfo fwrego.InsightsInfo, eventType string, objectNamespaceOverride string, libs map[string]string) (actionItems, error) {
+func ValidateRego(ctx context.Context, regoAsString string, regoVersion *string, objectAsBytes []byte, insightsInfo fwrego.InsightsInfo, eventType string, objectNamespaceOverride string, libs map[string]string) (actionItems, error) {
 	if !strings.Contains(regoAsString, "package fairwinds") {
 		return nil, errors.New("policy must be within a fairwinds package. The policy must contain the statement: package fairwinds")
 	}
@@ -136,7 +136,7 @@ func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte
 	if err != nil {
 		return nil, fmt.Errorf("while overriding object namespace with %q: %v", objectNamespaceOverride, err)
 	}
-	regoResult, err := runRegoForObject(ctx, regoAsString, objectAsMap, insightsInfo, libs)
+	regoResult, err := runRegoForObject(ctx, regoAsString, regoVersion, objectAsMap, insightsInfo, libs)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +153,7 @@ func ValidateRego(ctx context.Context, regoAsString string, objectAsBytes []byte
 }
 
 // runRegoForObject executes rego with a Kubernetes object as input.
-func runRegoForObject(ctx context.Context, regoAsString string, object map[string]interface{}, insightsInfo fwrego.InsightsInfo, libs map[string]string) (rego.ResultSet, error) {
+func runRegoForObject(ctx context.Context, regoAsString string, regoVersion *string, object map[string]interface{}, insightsInfo fwrego.InsightsInfo, libs map[string]string) (rego.ResultSet, error) {
 	opts := []func(r *rego.Rego){rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stdout)),
 		rego.Query("results = data"),
 		rego.Module("fairwinds", regoAsString),
@@ -178,6 +178,11 @@ func runRegoForObject(ctx context.Context, regoAsString string, object map[strin
 			},
 			fwrego.GetInsightsInfoFunction(&insightsInfo),
 		),
+	}
+	if regoVersion != nil && *regoVersion == "v1" {
+		opts = append(opts, rego.SetRegoVersion(ast.RegoV1))
+	} else {
+		opts = append(opts, rego.SetRegoVersion(ast.RegoV0))
 	}
 	var libNames []string
 	for libName := range libs {
