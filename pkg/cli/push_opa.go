@@ -23,6 +23,7 @@ import (
 
 var pushOPASubDir string
 var deleteMissingOPA bool
+var pushRegoVersion string
 
 const defaultPushOPASubDir = "opa"
 
@@ -30,6 +31,7 @@ func init() {
 	pushOPACmd.PersistentFlags().BoolVarP(&deleteMissingOPA, "delete", "D", false, "Delete any OPA policies from Insights that are not present in the local directory.")
 	// This flag sets a variable defined in the parent `push` command.
 	pushOPACmd.PersistentFlags().StringVarP(&pushOPASubDir, "push-opa-subdirectory", "", defaultPushOPASubDir, "Sub-directory within push-directory, to contain OPA policies.")
+	pushOPACmd.PersistentFlags().StringVarP(&pushRegoVersion, "rego-version", "", "", "The version of the OPA policy to push.")
 	pushCmd.AddCommand(pushOPACmd)
 }
 
