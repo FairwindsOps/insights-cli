@@ -26,6 +26,7 @@ import (
 var pushExternalOPAFile string
 var pushExternalOPASubDir string
 var pushExternalOPAHeaders []string
+var pushExternalRegoVersion string
 
 const defaultPushExternalOPASubDir = "external-opa"
 
@@ -35,6 +36,7 @@ func init() {
 	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPASubDir, "subdirectory", "s", defaultPushExternalOPASubDir, "Sub-directory within push-directory, to contain the external OPA file definition.")
 	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPAFile, "file", "f", "external-sources.yaml", "file name of the external OPA file definition.")
 	pushExternalOPACmd.PersistentFlags().StringSliceVarP(&pushExternalOPAHeaders, "header", "", []string{}, "these headers are passed to the external service provider. i.e.: for authentication")
+	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalRegoVersion, "rego-version", "", "", "The version of Rego used to compile the policies.")
 	pushCmd.AddCommand(pushExternalOPACmd)
 }
 
@@ -47,7 +49,7 @@ var pushExternalOPACmd = &cobra.Command{
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
 		filePath := fmt.Sprintf("%s/%s/%s", pushDir, pushExternalOPASubDir, pushExternalOPAFile)
-		err := opa.PushExternalOPAChecks(filePath, org, insightsToken, pushExternalOPAHeaders, host, deleteMissingOPA, pushDryRun)
+		err := opa.PushExternalOPAChecks(filePath, org, insightsToken, pushExternalOPAHeaders, host, deleteMissingOPA, pushDryRun, &pushExternalRegoVersion)
 		if err != nil {
 			logrus.Fatalf("Unable to push external OPA checks: %v", err)
 		}
