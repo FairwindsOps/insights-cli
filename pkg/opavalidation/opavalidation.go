@@ -103,7 +103,7 @@ func RunBatch(regoVersion, batchDir string, expectAIOptions ExpectActionItemOpti
 		}
 		for _, objectFileName := range objectFileNames {
 			logrus.Infof("Validating OPA policy %s with input %s (expectActionItem=%v)", regoFileName, objectFileName, expectAIOptions.ForFileName(objectFileName))
-			_, err := Run(regoFileName, regoVersion, objectFileName, expectAIOptions, insightsInfo, objectNamespaceOverride, libsDir)
+			_, err := Run(regoVersion, regoFileName, objectFileName, expectAIOptions, insightsInfo, objectNamespaceOverride, libsDir)
 			if err != nil {
 				logrus.Errorf("Failed validation of OPA policy %s using input %s: %v\n", regoFileName, objectFileName, err)
 				if !lo.Contains(failedPolicies, regoFileName) {
