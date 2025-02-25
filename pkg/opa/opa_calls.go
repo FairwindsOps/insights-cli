@@ -32,7 +32,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-const opaURLFormat = "%s/v0/organizations/%s/opa/customChecks"
+const opaURLFormat = "%s/v0/organizations/%s/opa/customChecks?includeRegoV1=true"
 
 const opaCheckURLFormat = opaURLFormat + "/%s"
 const opaPutCheckURLFormat = opaCheckURLFormat + "?version=%.1f"
