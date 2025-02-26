@@ -34,7 +34,7 @@ import (
 
 const opaURLFormat = "%s/v0/organizations/%s/opa/customChecks"
 
-const opaCheckURLFormat = opaURLFormat + "/%s?includeRegoV1=true"
+const opaCheckURLFormat = opaURLFormat + "/%s"
 const opaPutCheckURLFormat = opaCheckURLFormat + "?version=%.1f&?includeRegoV1=true"
 const opaCheckInstancesURLFormat = opaCheckURLFormat + "/instances"
 
