@@ -7,7 +7,6 @@ import (
 
 	"github.com/fairwindsops/insights-cli/pkg/opavalidation"
 	fwrego "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/rego"
-	"github.com/samber/lo"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,7 +59,7 @@ func TestValidateRego(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error reading %s: %v", tc.objectFileName, err)
 			}
-			gotActionItems, gotErr := opavalidation.ValidateRego(context.TODO(), regoAsString, lo.ToPtr("v0"), objectAsBytes, fwrego.InsightsInfo{}, "TestEvent", "", nil)
+			gotActionItems, gotErr := opavalidation.ValidateRego(context.TODO(), regoAsString, "v0", objectAsBytes, fwrego.InsightsInfo{}, "TestEvent", "", nil)
 			if !tc.expectError && gotErr != nil {
 				t.Fatal(gotErr)
 			}

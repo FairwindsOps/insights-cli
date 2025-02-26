@@ -58,7 +58,7 @@ func Run(regoVersion, regoFileName, objectFileName string, expectAIOptions Expec
 
 	baseRegoFileName := filepath.Base(regoFileName)
 	eventType := strings.TrimSuffix(baseRegoFileName, filepath.Ext(baseRegoFileName))
-	actionItems, err := ValidateRego(context.TODO(), regoContent, &regoVersion, b, insightsInfo, eventType, objectNamespaceOverride, libs)
+	actionItems, err := ValidateRego(context.TODO(), regoContent, regoVersion, b, insightsInfo, eventType, objectNamespaceOverride, libs)
 	if err != nil {
 		return actionItems, err
 	}
@@ -124,7 +124,7 @@ func RunBatch(regoVersion, batchDir string, expectAIOptions ExpectActionItemOpti
 
 // ValidateRego validates rego by executing rego with an input object.
 // Validation includes signatures for Insights-provided rego functions.
-func ValidateRego(ctx context.Context, regoAsString string, regoVersion *string, objectAsBytes []byte, insightsInfo fwrego.InsightsInfo, eventType string, objectNamespaceOverride string, libs map[string]string) (actionItems, error) {
+func ValidateRego(ctx context.Context, regoAsString string, regoVersion string, objectAsBytes []byte, insightsInfo fwrego.InsightsInfo, eventType string, objectNamespaceOverride string, libs map[string]string) (actionItems, error) {
 	if !strings.Contains(regoAsString, "package fairwinds") {
 		return nil, errors.New("policy must be within a fairwinds package. The policy must contain the statement: package fairwinds")
 	}
@@ -153,7 +153,7 @@ func ValidateRego(ctx context.Context, regoAsString string, regoVersion *string,
 }
 
 // runRegoForObject executes rego with a Kubernetes object as input.
-func runRegoForObject(ctx context.Context, regoAsString string, regoVersion *string, object map[string]interface{}, insightsInfo fwrego.InsightsInfo, libs map[string]string) (rego.ResultSet, error) {
+func runRegoForObject(ctx context.Context, regoAsString string, regoVersion string, object map[string]interface{}, insightsInfo fwrego.InsightsInfo, libs map[string]string) (rego.ResultSet, error) {
 	opts := []func(r *rego.Rego){rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stdout)),
 		rego.Query("results = data"),
 		rego.Module("fairwinds", regoAsString),
@@ -179,7 +179,7 @@ func runRegoForObject(ctx context.Context, regoAsString string, regoVersion *str
 			fwrego.GetInsightsInfoFunction(&insightsInfo),
 		),
 	}
-	if regoVersion != nil && *regoVersion == "v1" {
+	if regoVersion == "v1" {
 		opts = append(opts, rego.SetRegoVersion(ast.RegoV1))
 	} else {
 		opts = append(opts, rego.SetRegoVersion(ast.RegoV0))
