@@ -36,7 +36,7 @@ func init() {
 	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPASubDir, "subdirectory", "s", defaultPushExternalOPASubDir, "Sub-directory within push-directory, to contain the external OPA file definition.")
 	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPAFile, "file", "f", "external-sources.yaml", "file name of the external OPA file definition.")
 	pushExternalOPACmd.PersistentFlags().StringSliceVarP(&pushExternalOPAHeaders, "header", "", []string{}, "these headers are passed to the external service provider. i.e.: for authentication")
-	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalRegoVersion, "rego-version", "", "", "The version of Rego used to compile the policies.")
+	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalRegoVersion, "rego-version", "v", "v0", "The version of Rego used to compile the policies.")
 	pushCmd.AddCommand(pushExternalOPACmd)
 }
 
