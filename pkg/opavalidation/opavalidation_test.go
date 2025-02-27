@@ -59,7 +59,7 @@ func TestValidateRego(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error reading %s: %v", tc.objectFileName, err)
 			}
-			gotActionItems, gotErr := opavalidation.ValidateRego(context.TODO(), regoAsString, objectAsBytes, fwrego.InsightsInfo{}, "TestEvent", "", nil)
+			gotActionItems, gotErr := opavalidation.ValidateRego(context.TODO(), regoAsString, "v0", objectAsBytes, fwrego.InsightsInfo{}, "TestEvent", "", nil)
 			if !tc.expectError && gotErr != nil {
 				t.Fatal(gotErr)
 			}
@@ -79,10 +79,10 @@ func TestValidateRego(t *testing.T) {
 }
 
 func TestRunWithLibs(t *testing.T) {
-	ais, err := opavalidation.Run("testdata/fileWithLib.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "testdata/libs")
+	ais, err := opavalidation.Run("v0", "testdata/fileWithLib.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "testdata/libs")
 	assert.NoError(t, err)
 	assert.Len(t, ais, 0)
-	ais, err = opavalidation.Run("testdata/fileWithLib.rego", "testdata/pod2.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "testdata/libs")
+	ais, err = opavalidation.Run("v0", "testdata/fileWithLib.rego", "testdata/pod2.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "testdata/libs")
 	assert.Error(t, err)
 	assert.Equal(t, "1 action items were returned but none are expected", err.Error())
 	assert.Len(t, ais, 1)
@@ -90,7 +90,7 @@ func TestRunWithLibs(t *testing.T) {
 }
 
 func TestMultipleRules(t *testing.T) {
-	ais, err := opavalidation.Run("test/multipleRules.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "")
+	ais, err := opavalidation.Run("v0", "test/multipleRules.rego", "testdata/pod1.yaml", opavalidation.ExpectActionItemOptions{}, fwrego.InsightsInfo{}, "", "")
 	assert.NoError(t, err)
 	assert.Len(t, ais, 0)
 }

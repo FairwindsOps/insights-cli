@@ -23,6 +23,7 @@ import (
 
 var pushOPASubDir string
 var deleteMissingOPA bool
+var pushRegoVersion string
 
 const defaultPushOPASubDir = "opa"
 
@@ -30,6 +31,7 @@ func init() {
 	pushOPACmd.PersistentFlags().BoolVarP(&deleteMissingOPA, "delete", "D", false, "Delete any OPA policies from Insights that are not present in the local directory.")
 	// This flag sets a variable defined in the parent `push` command.
 	pushOPACmd.PersistentFlags().StringVarP(&pushOPASubDir, "push-opa-subdirectory", "", defaultPushOPASubDir, "Sub-directory within push-directory, to contain OPA policies.")
+	pushOPACmd.PersistentFlags().StringVarP(&pushRegoVersion, "rego-version", "v", "v0", "The version of Rego used to compile the policies.")
 	pushCmd.AddCommand(pushOPACmd)
 }
 
@@ -41,7 +43,7 @@ var pushOPACmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		err := opa.PushOPAChecks(pushDir+"/"+pushOPASubDir, org, insightsToken, host, deleteMissingOPA, pushDryRun)
+		err := opa.PushOPAChecks(pushDir+"/"+pushOPASubDir, org, insightsToken, host, deleteMissingOPA, pushDryRun, pushRegoVersion)
 		if err != nil {
 			logrus.Fatalf("Unable to push OPA Checks: %v", err)
 		}

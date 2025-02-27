@@ -96,12 +96,18 @@ func DeleteCheck(check models.CustomCheckModel, org, token, hostName string) err
 type PutCheckRequest struct {
 	Rego, Description string
 	Disabled          *bool
+	RegoVersion       string
 }
 
 // PutCheck upserts an OPA Check to Fairwinds Insights
-func PutCheck(check models.CustomCheckModel, org, token, hostName string) error {
+func PutCheck(check models.CustomCheckModel, org, token, hostName string, pushRegoVersion string) error {
 	url := fmt.Sprintf(opaPutCheckURLFormat, hostName, org, check.CheckName, check.Version)
 	body := PutCheckRequest{Rego: check.Rego, Description: check.Description, Disabled: check.Disabled}
+	if pushRegoVersion != "" {
+		body.RegoVersion = pushRegoVersion
+	} else {
+		body.RegoVersion = "v0"
+	}
 	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBody(&body).Put(url)
 	if err != nil {
 		return err
@@ -146,7 +152,7 @@ func PutInstance(instance models.CustomCheckInstanceModel, org, token, hostName 
 }
 
 // PushOPAChecks pushes OPA checks to Insights.
-func PushOPAChecks(pushDir, org, insightsToken, host string, deleteMissing, dryRun bool) error {
+func PushOPAChecks(pushDir, org, insightsToken, host string, deleteMissing, dryRun bool, pushRegoVersion string) error {
 	logrus.Debugln("Pushing OPA policies")
 	_, err := os.Stat(pushDir)
 	if err != nil {
@@ -185,7 +191,7 @@ func PushOPAChecks(pushDir, org, insightsToken, host string, deleteMissing, dryR
 	for _, check := range results.CheckInsert {
 		logrus.Infof("Adding v%.0f OPA policy: %s", check.Version, check.CheckName)
 		if !dryRun {
-			err := PutCheck(check, org, insightsToken, host)
+			err := PutCheck(check, org, insightsToken, host, pushRegoVersion)
 			if err != nil {
 				return err
 			}
@@ -194,7 +200,7 @@ func PushOPAChecks(pushDir, org, insightsToken, host string, deleteMissing, dryR
 	for _, check := range results.CheckUpdate {
 		logrus.Infof("Updating v%.0f OPA policy: %s", check.Version, check.CheckName)
 		if !dryRun {
-			err := PutCheck(check, org, insightsToken, host)
+			err := PutCheck(check, org, insightsToken, host, pushRegoVersion)
 			if err != nil {
 				return err
 			}
@@ -223,7 +229,7 @@ func PushOPAChecks(pushDir, org, insightsToken, host string, deleteMissing, dryR
 }
 
 // PushExternalOPAChecks pushes external OPA checks to Insights.
-func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string, host string, deleteMissing, dryRun bool) error {
+func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string, host string, deleteMissing, dryRun bool, pushRegoVersion string) error {
 	logrus.Debugln("Pushing external OPA policies")
 	_, err := os.Stat(filePath)
 	if err != nil {
@@ -271,7 +277,7 @@ func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string
 	for _, check := range results.CheckInsert {
 		logrus.Infof("Adding v%.0f OPA policy: %s", check.Version, check.CheckName)
 		if !dryRun {
-			err := PutCheck(check, org, insightsToken, host)
+			err := PutCheck(check, org, insightsToken, host, pushRegoVersion)
 			if err != nil {
 				return fmt.Errorf("error adding check: %w", err)
 			}
@@ -280,7 +286,7 @@ func PushExternalOPAChecks(filePath, org, insightsToken string, headers []string
 	for _, check := range results.CheckUpdate {
 		logrus.Infof("Updating v%.0f OPA policy: %s", check.Version, check.CheckName)
 		if !dryRun {
-			err := PutCheck(check, org, insightsToken, host)
+			err := PutCheck(check, org, insightsToken, host, pushRegoVersion)
 			if err != nil {
 				return fmt.Errorf("error updating check: %w", err)
 			}

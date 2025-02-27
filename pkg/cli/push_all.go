@@ -63,7 +63,7 @@ var pushAllCmd = &cobra.Command{
 			logrus.Warnf("Unable to start push OPA directory: %v", err)
 			numWarnings++
 		} else {
-			err = opa.PushOPAChecks(absPushOPADir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
+			err = opa.PushOPAChecks(absPushOPADir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun, pushRegoVersion)
 			if err != nil {
 				logrus.Errorf("Unable to push OPA policies: %v", err)
 				numFailures++
