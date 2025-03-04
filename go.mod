@@ -1,16 +1,13 @@
 module github.com/fairwindsops/insights-cli
 
 go 1.23.0
-
-toolchain go1.23.4
-
 require (
 	github.com/fairwindsops/insights-plugins/plugins/opa v0.0.0-20241126145703-73ccd19c1bbb
 	github.com/fatih/color v1.18.0
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imroc/req/v3 v3.49.1
-	github.com/open-policy-agent/opa v1.1.0
+	github.com/open-policy-agent/opa v1.2.0
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/samber/lo v1.49.1
 	github.com/sirupsen/logrus v1.9.3
@@ -25,8 +22,7 @@ require (
 )
 
 require (
-	github.com/OneOfOne/xxhash v1.2.8 // indirect
-	github.com/agnivade/levenshtein v1.2.0 // indirect
+	github.com/agnivade/levenshtein v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -66,7 +62,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.20.5 // indirect
+	github.com/prometheus/client_golang v1.21.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
@@ -94,7 +90,7 @@ require (
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/term v0.29.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
-	golang.org/x/time v0.9.0 // indirect
+	golang.org/x/time v0.10.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.4.0 // indirect
 	google.golang.org/protobuf v1.36.4 // indirect
