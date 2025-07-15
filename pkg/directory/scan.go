@@ -25,7 +25,7 @@ import (
 
 // ScanOPAFolder looks through a given folder and returns a map[string][]string
 // keyed on the OPA policy name, and the value listing files providing rego
-// and V1 yaml instances for that policy.
+// for V2 OPA policies.
 func ScanOPAFolder(folder string) (map[string][]string, error) {
 	fileMap := map[string][]string{}
 	regoFiles, err := findRegoFilesOtherThanPolicy(folder)
@@ -44,24 +44,6 @@ func ScanOPAFolder(folder string) (map[string][]string, error) {
 			fileMap[policyName] = append(fileMap[policyName], rf)
 		}
 	}
-	// Now process policies in individual directories.
-	err = filepath.Walk(folder, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-		if filepath.Ext(path) != ".yaml" && !strings.HasPrefix(filepath.Base(path), "policy") {
-			return nil
-		}
-		if filepath.Dir(path) == folder { // Any top-level .rego files are already processed
-			return nil
-		}
-		policyName := filepath.Base(filepath.Dir(path))
-		fileMap[policyName] = append(fileMap[policyName], path)
-		return nil
-	})
 	logrus.Debugf("OPA fileScan returning: %#v\n", fileMap)
 	return fileMap, err
 }
