@@ -101,14 +101,14 @@ type PutCheckRequest struct {
 
 // PutCheck upserts an OPA Check to Fairwinds Insights
 func PutCheck(check models.CustomCheckModel, org, token, hostName string, pushRegoVersion string) error {
-	url := fmt.Sprintf(opaCheckURLFormat, hostName, org, check.CheckName)
-	request := PutCheckRequest{
-		Rego:        check.Rego,
-		Description: check.Description,
-		Disabled:    check.Disabled,
-		RegoVersion: pushRegoVersion,
+	url := fmt.Sprintf(opaPutCheckURLFormat, hostName, org, check.CheckName, check.Version)
+	body := PutCheckRequest{Rego: check.Rego, Description: check.Description, Disabled: check.Disabled}
+	if pushRegoVersion != "" {
+		body.RegoVersion = pushRegoVersion
+	} else {
+		body.RegoVersion = "v0"
 	}
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/json")).SetBodyJsonMarshal(request).Put(url)
+	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBody(&body).Put(url)
 	if err != nil {
 		return fmt.Errorf("PutCheck: %w", err)
 	}
