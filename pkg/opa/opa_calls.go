@@ -122,6 +122,10 @@ func PutCheck(check models.CustomCheckModel, org, token, hostName string, pushRe
 // PushOPAChecks pushes OPA checks to Insights.
 func PushOPAChecks(pushDir, org, insightsToken, host string, deleteMissing, dryRun bool, pushRegoVersion string) error {
 	logrus.Debugln("Pushing OPA policies")
+	_, err := os.Stat(pushDir)
+	if err != nil {
+		return fmt.Errorf("error opening file: %w", err)
+	}
 	fileMap, err := directory.ScanOPAFolder(pushDir)
 	if err != nil {
 		return err

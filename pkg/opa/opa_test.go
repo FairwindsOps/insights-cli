@@ -53,6 +53,4 @@ func TestCompareCheck(t *testing.T) {
 	assert.Equal(t, 1, len(results.CheckDelete))
 	assert.Equal(t, 0, len(results.CheckInsert))
 	assert.Equal(t, 0, len(results.CheckUpdate))
-
-	// TODO implement checks for updates and deletes
 }
