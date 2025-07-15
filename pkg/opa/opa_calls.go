@@ -36,9 +36,6 @@ const opaURLFormat = "%s/v0/organizations/%s/opa/customChecks"
 
 const opaCheckURLFormat = opaURLFormat + "/%s"
 const opaPutCheckURLFormat = opaCheckURLFormat + "?version=%.1f"
-const opaCheckInstancesURLFormat = opaCheckURLFormat + "/instances"
-
-const opaInstanceURLFormat = opaCheckInstancesURLFormat + "/%s"
 
 // GetChecks queries Fairwinds Insights to retrieve all of the Checks for an organization
 func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) {
@@ -58,25 +55,6 @@ func GetChecks(org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) 
 		return nil, err
 	}
 	return checks, nil
-}
-
-// GetInstances queries Fairwinds Insights to retrieve all of the instances for a given check
-func GetInstances(org, checkName, token, hostName string) ([]opaPlugin.CheckSetting, error) {
-	url := fmt.Sprintf(opaCheckInstancesURLFormat, hostName, org, checkName)
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Get(url)
-	if err != nil {
-		return nil, err
-	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("GetInstances: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
-		return nil, errors.New("GetInstances: invalid response code")
-	}
-	var instances []opaPlugin.CheckSetting
-	err = resp.Unmarshal(&instances)
-	if err != nil {
-		return nil, err
-	}
-	return instances, nil
 }
 
 // DeleteCheck deletes an OPA Check from Fairwinds Insights
