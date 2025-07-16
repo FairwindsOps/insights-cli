@@ -15,10 +15,8 @@ mkdir populated_dir/opa
 # OPA policies can live in sub-directories.
 # The difference between Insights V1 and V2 OPA policies is whether the policy
 # is accompanied by an "instance yaml file."
-mkdir populated_dir/opa/v1test
 mkdir populated_dir/opa/v2test
 cp policy.rego populated_dir/opa/anotherv2test.rego
-cp policy.rego populated_dir/opa/v1test/policy.rego
 cp policy.rego populated_dir/opa/v2test/policy.rego
 mkdir populated_dir/rules
 mkdir populated_dir/app-groups
@@ -136,8 +134,6 @@ spec:
 .
    opa
        anotherv2test (v2)
-       v1test (v1)
-           deployments
        v2test (v2)
    rules
        pluto-severity-increase
