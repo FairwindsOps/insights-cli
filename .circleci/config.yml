@@ -19,7 +19,7 @@ jobs:
     resource_class: large
     docker:
       # Note the goreleaser version is also referenced in the release and snapshot jobs.
-      - image: goreleaser/goreleaser:v2.9.0
+      - image: goreleaser/goreleaser:v2.10.2
     steps:
       - checkout
       - run:
@@ -47,7 +47,7 @@ jobs:
     resource_class: large
     docker:
       # Note the goreleaser version is also referenced in the release and test jobs.
-      - image: goreleaser/goreleaser:v2.9.0
+      - image: goreleaser/goreleaser:v2.10.2
     steps:
       - checkout
       - setup_remote_docker:
@@ -63,7 +63,7 @@ jobs:
     shell: /bin/bash
     docker:
       # Note the goreleaser version is also referenced in the snapshot and test jobs.
-      - image: goreleaser/goreleaser:v2.9.0
+      - image: goreleaser/goreleaser:v2.10.2
     steps:
       - checkout
       - run: ./.circleci/scripts/e2e-env.sh
