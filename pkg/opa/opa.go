@@ -26,7 +26,6 @@ import (
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/xlab/treeprint"
-	"gopkg.in/yaml.v3"
 
 	"github.com/fairwindsops/insights-cli/pkg/models"
 )
@@ -195,9 +194,7 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 	var checks []models.CustomCheckModel
 	for checkName, checkFiles := range files {
 		var check models.CustomCheckModel
-		var instances []models.CustomCheckInstanceModel
-		var onlyRegoFormat bool = true
-		check.Version = 1.0
+		check.Version = 2.0
 		for _, filePath := range checkFiles {
 			fileContents, err := os.ReadFile(filePath)
 			if err != nil {
@@ -210,36 +207,8 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 				check.Rego = string(fileContents)
 				continue
 			}
-			if strings.ToLower(filepath.Base(filePath)) == "policy.yaml" {
-				onlyRegoFormat = false
-				logrus.Debugf("using content of file %s as instance and rego for V1 OPA policy %s\n", filePath, checkName)
-				err = yaml.Unmarshal(fileContents, &check)
-				if err != nil {
-					logrus.Error(err, "Error Unmarshalling check YAML", filePath)
-					return nil, err
-				}
-				continue
-			}
-			if extension == ".yaml" {
-				logrus.Debugf("using content of file %s as instance for V1 OPA policy %s\n", filePath, checkName)
-				onlyRegoFormat = false
-				var instance models.CustomCheckInstanceModel
-				err = yaml.Unmarshal(fileContents, &instance)
-				if err != nil {
-					logrus.Error(err, "Error Unmarshalling instance YAML", filePath)
-					return nil, err
-				}
-				instance.InstanceName = strings.TrimSuffix(filepath.Base(filePath), filepath.Ext(filePath))
-				instance.CheckName = checkName
-				instances = append(instances, instance)
-			}
 		}
 		check.CheckName = checkName
-		if len(instances) == 0 && onlyRegoFormat {
-			check.Version = 2.0
-		} else {
-			check.Instances = instances
-		}
 		logrus.Debugf("processed files %s as v%.1f OPA policy %s\n", checkFiles, check.Version, check.CheckName)
 		checks = append(checks, check)
 	}
