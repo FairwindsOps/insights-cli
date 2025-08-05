@@ -51,7 +51,6 @@ var pushAllCmd = &cobra.Command{
 		}
 
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
 		const resourcesTypeToPush = 5
 
 		var numWarnings, numFailures int
@@ -62,7 +61,7 @@ var pushAllCmd = &cobra.Command{
 			logrus.Warnf("Unable to start push OPA directory (%s): %v", absPushOPADir, err)
 			numWarnings++
 		} else {
-			err = opa.PushOPAChecks(client, absPushOPADir, org, insightsToken, host, pushDelete, pushDryRun, pushRegoVersion)
+			err = opa.PushOPAChecks(client, absPushOPADir, org, pushDelete, pushDryRun, pushRegoVersion)
 			if err != nil {
 				logrus.Errorf("Unable to push OPA policies: %v", err)
 				numFailures++
@@ -75,7 +74,7 @@ var pushAllCmd = &cobra.Command{
 			logrus.Warnf("Unable to push automation rules (%s): %v", absPushRulesDir, err)
 			numWarnings++
 		} else {
-			err = rules.PushRules(client, absPushRulesDir, org, insightsToken, host, pushDelete, pushDryRun)
+			err = rules.PushRules(client, absPushRulesDir, org, pushDelete, pushDryRun)
 			if err != nil {
 				logrus.Errorf("Unable to push automation rules: %v", err)
 				numFailures++
@@ -88,7 +87,7 @@ var pushAllCmd = &cobra.Command{
 			logrus.Warnf("Unable to push policies configuration (%s): %v", absPushPoliciesConfigFile, err)
 			numWarnings++
 		} else {
-			err = policies.PushPolicies(client, pushDir, org, insightsToken, host, pushDryRun)
+			err = policies.PushPolicies(client, pushDir, org, pushDryRun)
 			if err != nil {
 				logrus.Errorf("Unable to push policies configuration: %v", err)
 				numFailures++
@@ -101,7 +100,7 @@ var pushAllCmd = &cobra.Command{
 			logrus.Warnf("Unable to push app-groups (%s): %v", absPushAppGroupsDir, err)
 			numWarnings++
 		} else {
-			err = appgroups.PushAppGroups(client, absPushAppGroupsDir, org, insightsToken, host, pushDelete, pushDryRun)
+			err = appgroups.PushAppGroups(client, absPushAppGroupsDir, org, pushDelete, pushDryRun)
 			if err != nil {
 				logrus.Errorf("Unable to push app-groups: %v", err)
 				numFailures++
@@ -114,7 +113,7 @@ var pushAllCmd = &cobra.Command{
 			logrus.Warnf("Unable to push policy-mappings (%s): %v", absPushPolicyMappingsDir, err)
 			numWarnings++
 		} else {
-			err = policymappings.PushPolicyMappings(client, absPushPolicyMappingsDir, org, insightsToken, host, pushDelete, pushDryRun)
+			err = policymappings.PushPolicyMappings(client, absPushPolicyMappingsDir, org, pushDelete, pushDryRun)
 			if err != nil {
 				logrus.Errorf("Unable to push policy-mappings: %v", err)
 				numFailures++

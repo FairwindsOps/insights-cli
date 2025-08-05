@@ -24,21 +24,19 @@ import (
 
 	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
-
-	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
 )
 
-const policiesPutURLFormat = "%s/v0/organizations/%s/policies"
+const policiesPutURLFormat = "/v0/organizations/%s/policies"
 
 // PutPolicies submits the io.Reader as an HTTP PUT request, content-type
 // text/yaml, to the Insights API policies endpoint.
-func PutPolicies(client *req.Client, policies io.Reader, org, token, hostName string) error {
-	url := fmt.Sprintf(policiesPutURLFormat, hostName, org)
+func PutPolicies(client *req.Client, policies io.Reader, org string) error {
+	url := fmt.Sprintf(policiesPutURLFormat, org)
 	bodyBytes, err := io.ReadAll(policies)
 	if err != nil {
 		return err
 	}
-	resp, err := client.R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
+	resp, err := client.R().SetHeaders(getHeaders()).SetBodyBytes(bodyBytes).Post(url)
 	if err != nil {
 		return err
 	}
@@ -50,7 +48,7 @@ func PutPolicies(client *req.Client, policies io.Reader, org, token, hostName st
 
 // PushPolicies verifies the policies settings file is readable, then pushes
 // it to the Insights API.
-func PushPolicies(client *req.Client, pushDir, org, insightsToken, host string, dryrun bool) error {
+func PushPolicies(client *req.Client, pushDir, org string, dryrun bool) error {
 	if pushDir == "" {
 		return errors.New("pushDir cannot be empty")
 	}
@@ -68,7 +66,7 @@ func PushPolicies(client *req.Client, pushDir, org, insightsToken, host string, 
 	if err != nil {
 		return err
 	}
-	err = PutPolicies(client, policies, org, insightsToken, host)
+	err = PutPolicies(client, policies, org)
 	if err != nil {
 		return err
 	}
@@ -78,11 +76,9 @@ func PushPolicies(client *req.Client, pushDir, org, insightsToken, host string, 
 
 // getHeaders returns headers to be used when communicating with e Insights API for
 // policies configuration.
-func getHeaders(token string) map[string]string {
+func getHeaders() map[string]string {
 	return map[string]string{
-		"Content-Type":            "text/yaml",
-		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
-		"Authorization":           fmt.Sprintf("Bearer %s", token),
-		"Accept":                  "application/yaml",
+		"Content-Type": "text/yaml",
+		"Accept":       "application/yaml",
 	}
 }

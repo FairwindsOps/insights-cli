@@ -7,7 +7,6 @@ import (
 	"reflect"
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
-	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
 	"github.com/imroc/req/v3"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
@@ -37,14 +36,14 @@ func AddPolicyMappingsBranch(tree treeprint.Tree, policyMappings []PolicyMapping
 }
 
 // PushPolicyMappings pushes policy-mapping to insights
-func PushPolicyMappings(client *req.Client, pushDir, org, insightsToken, host string, deleteMissing, dryRun bool) error {
+func PushPolicyMappings(client *req.Client, pushDir, org string, deleteMissing, dryRun bool) error {
 	logrus.Debugln("Pushing policy-mapping")
 	_, err := os.Stat(pushDir)
 	if err != nil {
 		return err
 	}
 
-	existingPolicyMappings, err := FetchPolicyMappings(client, org, insightsToken, host)
+	existingPolicyMappings, err := FetchPolicyMappings(client, org)
 	if err != nil {
 		return fmt.Errorf("error during API call: %w", err)
 	}
@@ -57,7 +56,7 @@ func PushPolicyMappings(client *req.Client, pushDir, org, insightsToken, host st
 	for _, policyMapping := range upserts {
 		logrus.Infof("upsert policy-mapping: %s", policyMapping.Name)
 		if !dryRun {
-			err = upsertPolicyMapping(client, org, insightsToken, host, policyMapping)
+			err = upsertPolicyMapping(client, org, policyMapping)
 			if err != nil {
 				return fmt.Errorf("Error while upsert policy-mapping %s to Fairwinds Insights: %w", policyMapping.Name, err)
 			}
@@ -68,7 +67,7 @@ func PushPolicyMappings(client *req.Client, pushDir, org, insightsToken, host st
 		for _, policyMappingForDelete := range deletes {
 			logrus.Infof("Deleting policy-mapping: %s", policyMappingForDelete.Name)
 			if !dryRun {
-				err = deletePolicyMapping(client, org, insightsToken, host, policyMappingForDelete)
+				err = deletePolicyMapping(client, org, policyMappingForDelete)
 				if err != nil {
 					return fmt.Errorf("Error while deleting policy-mapping %s from insights: %w", policyMappingForDelete.Name, err)
 				}
@@ -141,11 +140,9 @@ func getPolicyMappingsDifferences(filePolicyMappings, existingPolicyMappings []P
 	return upserts, deletes
 }
 
-func getHeaders(token string) map[string]string {
+func getHeaders() map[string]string {
 	return map[string]string{
-		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
-		"Authorization":           fmt.Sprintf("Bearer %s", token),
-		"Accept":                  "application/json",
-		"Content-Type":            "application/yaml",
+		"Accept":       "application/json",
+		"Content-Type": "application/yaml",
 	}
 }

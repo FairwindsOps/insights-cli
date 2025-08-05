@@ -20,6 +20,7 @@ import (
 	"io"
 	"os"
 
+	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
 	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -30,7 +31,6 @@ import (
 var client = req.C()
 
 var logLevel string
-var insightsToken string
 var configFile string
 var organization string
 var noDecoration bool
@@ -100,15 +100,15 @@ func init() {
 }
 
 func validateAndLoadInsightsAPIConfigWrapper(cmd *cobra.Command, args []string) {
-	err := validateAndLoadInsightsAPIConfig()
+	err := validateAndLoadInsightsAPIConfig(client)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 }
 
 // validateAndLoadInsightsAPIConfig checks to make sure the user has set the FAIRWINDS_TOKEN environment variable and has a valid config file.
-func validateAndLoadInsightsAPIConfig() error {
-	insightsToken = os.Getenv("FAIRWINDS_TOKEN")
+func validateAndLoadInsightsAPIConfig(client *req.Client) error {
+	insightsToken := os.Getenv("FAIRWINDS_TOKEN")
 	if insightsToken == "" {
 		return errors.New("FAIRWINDS_TOKEN must be set.")
 	}
@@ -135,6 +135,15 @@ func validateAndLoadInsightsAPIConfig() error {
 	if err != nil {
 		return fmt.Errorf("Error parsing fairwinds-insights.yaml: %v", err)
 	}
+
+	// common client configuration
+	client.SetCommonHeaders(map[string]string{
+		"Authorization":           fmt.Sprintf("Bearer %s", insightsToken),
+		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
+	})
+
+	client.SetBaseURL(configurationObject.Options.Hostname)
+
 	return nil
 }
 

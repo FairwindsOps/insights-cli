@@ -40,8 +40,7 @@ var pushRulesCmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
-		err := rules.PushRules(client, pushDir+"/"+pushRulesSubDir, org, insightsToken, host, deleteMissingRules, pushDryRun)
+		err := rules.PushRules(client, pushDir+"/"+pushRulesSubDir, org, deleteMissingRules, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push rules: %v", err)
 		}

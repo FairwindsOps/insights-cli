@@ -24,11 +24,9 @@ import (
 	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
-
-	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
 )
 
-const teamsPutURLFormat = "%s/v0/organizations/%s/teams-bulk"
+const teamsPutURLFormat = "/v0/organizations/%s/teams-bulk"
 
 type TeamInput struct {
 	Clusters               []string `json:"clusters" yaml:"clusters"`
@@ -41,12 +39,12 @@ type TeamInput struct {
 	AppGroups              []string `json:"appGroups" yaml:"appGroups"`
 }
 
-func PostTeams(client *req.Client, teamInput []TeamInput, deleteNonProvidedTeams bool, org, token, hostName string) error {
-	url := fmt.Sprintf(teamsPutURLFormat, hostName, org)
+func PostTeams(client *req.Client, teamInput []TeamInput, deleteNonProvidedTeams bool, org string) error {
+	url := fmt.Sprintf(teamsPutURLFormat, org)
 	if deleteNonProvidedTeams {
 		url += "?deleteNonProvidedTeams=true"
 	}
-	resp, err := client.R().SetHeaders(getHeaders(token)).SetBody(&teamInput).Post(url)
+	resp, err := client.R().SetHeaders(getHeaders()).SetBody(&teamInput).Post(url)
 	if err != nil {
 		return err
 	}
@@ -56,7 +54,7 @@ func PostTeams(client *req.Client, teamInput []TeamInput, deleteNonProvidedTeams
 	return nil
 }
 
-func PushTeams(client *req.Client, pushDir, org, insightsToken, host string, deleteNonProvidedTeams, dryrun bool) error {
+func PushTeams(client *req.Client, pushDir, org string, deleteNonProvidedTeams, dryrun bool) error {
 	if pushDir == "" {
 		return errors.New("pushDir cannot be empty")
 	}
@@ -94,7 +92,7 @@ func PushTeams(client *req.Client, pushDir, org, insightsToken, host string, del
 		}
 		return nil
 	}
-	err = PostTeams(client, teams, deleteNonProvidedTeams, org, insightsToken, host)
+	err = PostTeams(client, teams, deleteNonProvidedTeams, org)
 	if err != nil {
 		return err
 	}
@@ -102,11 +100,9 @@ func PushTeams(client *req.Client, pushDir, org, insightsToken, host string, del
 	return nil
 }
 
-func getHeaders(token string) map[string]string {
+func getHeaders() map[string]string {
 	return map[string]string{
-		"Content-Type":            "application/yaml",
-		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
-		"Authorization":           fmt.Sprintf("Bearer %s", token),
-		"Accept":                  "application/json",
+		"Content-Type": "application/yaml",
+		"Accept":       "application/json",
 	}
 }

@@ -1,19 +1,13 @@
 package utils
 
-import (
-	"fmt"
-)
-
-func GetHeaders(version, token, inputContentType string) map[string]string {
+func GetHeaders(inputContentType string) map[string]string {
 	contentType := "application/json"
 	if inputContentType != "" {
 		contentType = inputContentType
 	}
 	return map[string]string{
-		"X-Fairwinds-CLI-Version": version,
-		"Authorization":           fmt.Sprintf("Bearer %s", token),
-		"Accept":                  "application/json",
-		"Content-Type":            contentType,
+		"Accept":       "application/json",
+		"Content-Type": contentType,
 	}
 }
 

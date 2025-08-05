@@ -32,8 +32,7 @@ var pushSettingsCmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
-		err := policies.PushPolicies(client, pushDir, org, insightsToken, host, pushDryRun)
+		err := policies.PushPolicies(client, pushDir, org, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push policies configuration: %v", err)
 		}

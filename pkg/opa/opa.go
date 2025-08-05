@@ -42,9 +42,9 @@ type CompareResults struct {
 }
 
 // CompareChecks compares a folder vs the checks returned by the API.
-func CompareChecks(client *req.Client, folder, org, token, hostName string, fileChecks []models.CustomCheckModel, deleteMissing bool) (CompareResults, error) {
+func CompareChecks(client *req.Client, folder, org string, fileChecks []models.CustomCheckModel, deleteMissing bool) (CompareResults, error) {
 	var results CompareResults
-	apiChecks, err := GetChecks(client, org, token, hostName)
+	apiChecks, err := GetChecks(client, org)
 	if err != nil {
 		logrus.Error("Error getting checks from Insights")
 		return results, err
@@ -62,7 +62,7 @@ func CompareChecks(client *req.Client, folder, org, token, hostName string, file
 	var apiInstances []opa.CheckSetting
 	// TODO replace with org wide get.
 	for _, check := range apiChecks {
-		newInstances, err := GetInstances(client, org, check.Name, token, hostName)
+		newInstances, err := GetInstances(client, org, check.Name)
 		if err != nil {
 			logrus.Error("Error getting instances from Insights")
 			return results, err
@@ -217,8 +217,8 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 }
 
 // AddOPAChecksBranch builds the tree for OPA checks
-func AddOPAChecksBranch(client *req.Client, org, token, hostName string, tree treeprint.Tree) error {
-	checks, err := GetChecks(client, org, token, hostName)
+func AddOPAChecksBranch(client *req.Client, org string, tree treeprint.Tree) error {
+	checks, err := GetChecks(client, org)
 	if err != nil {
 		logrus.Errorf("Unable to get checks from insights: %v", err)
 		return err
@@ -226,7 +226,7 @@ func AddOPAChecksBranch(client *req.Client, org, token, hostName string, tree tr
 	opaBranch := tree.AddBranch("opa")
 	for _, check := range checks {
 		branch := opaBranch.AddBranch(fmt.Sprintf("%s (v%.0f)", check.Name, check.Version))
-		instances, err := GetInstances(client, org, check.Name, token, hostName)
+		instances, err := GetInstances(client, org, check.Name)
 		if err != nil {
 			logrus.Errorf("Unable to get instances from insights: %v", err)
 			return err

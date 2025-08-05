@@ -25,14 +25,13 @@ import (
 	"github.com/fairwindsops/insights-cli/pkg/directory"
 	"github.com/fairwindsops/insights-cli/pkg/models"
 	"github.com/fairwindsops/insights-cli/pkg/utils"
-	"github.com/fairwindsops/insights-cli/pkg/version"
 	opaPlugin "github.com/fairwindsops/insights-plugins/plugins/opa/pkg/opa"
 	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
-const opaURLFormat = "%s/v0/organizations/%s/opa/customChecks"
+const opaURLFormat = "/v0/organizations/%s/opa/customChecks"
 
 const opaCheckURLFormat = opaURLFormat + "/%s"
 const opaPutCheckURLFormat = opaCheckURLFormat + "?version=%.1f"
@@ -41,10 +40,10 @@ const opaCheckInstancesURLFormat = opaCheckURLFormat + "/instances"
 const opaInstanceURLFormat = opaCheckInstancesURLFormat + "/%s"
 
 // GetChecks queries Fairwinds Insights to retrieve all of the Checks for an organization
-func GetChecks(client *req.Client, org, token, hostName string) ([]opaPlugin.OPACustomCheck, error) {
-	url := fmt.Sprintf(opaURLFormat, hostName, org)
+func GetChecks(client *req.Client, org string) ([]opaPlugin.OPACustomCheck, error) {
+	url := fmt.Sprintf(opaURLFormat, org)
 	logrus.Debugf("OPA URL: %s", url)
-	resp, err := client.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Get(url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +60,9 @@ func GetChecks(client *req.Client, org, token, hostName string) ([]opaPlugin.OPA
 }
 
 // GetInstances queries Fairwinds Insights to retrieve all of the instances for a given check
-func GetInstances(client *req.Client, org, checkName, token, hostName string) ([]opaPlugin.CheckSetting, error) {
-	url := fmt.Sprintf(opaCheckInstancesURLFormat, hostName, org, checkName)
-	resp, err := client.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Get(url)
+func GetInstances(client *req.Client, org, checkName string) ([]opaPlugin.CheckSetting, error) {
+	url := fmt.Sprintf(opaCheckInstancesURLFormat, org, checkName)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Get(url)
 	if err != nil {
 		return nil, err
 	}
@@ -80,9 +79,9 @@ func GetInstances(client *req.Client, org, checkName, token, hostName string) ([
 }
 
 // DeleteCheck deletes an OPA Check from Fairwinds Insights
-func DeleteCheck(client *req.Client, check models.CustomCheckModel, org, token, hostName string) error {
-	url := fmt.Sprintf(opaCheckURLFormat, hostName, org, check.CheckName)
-	resp, err := client.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Delete(url)
+func DeleteCheck(client *req.Client, check models.CustomCheckModel, org string) error {
+	url := fmt.Sprintf(opaCheckURLFormat, org, check.CheckName)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Delete(url)
 	if err != nil {
 		return err
 	}
@@ -100,15 +99,15 @@ type PutCheckRequest struct {
 }
 
 // PutCheck upserts an OPA Check to Fairwinds Insights
-func PutCheck(client *req.Client, check models.CustomCheckModel, org, token, hostName string, pushRegoVersion string) error {
-	url := fmt.Sprintf(opaPutCheckURLFormat, hostName, org, check.CheckName, check.Version)
+func PutCheck(client *req.Client, check models.CustomCheckModel, org string, pushRegoVersion string) error {
+	url := fmt.Sprintf(opaPutCheckURLFormat, org, check.CheckName, check.Version)
 	body := PutCheckRequest{Rego: check.Rego, Description: check.Description, Disabled: check.Disabled}
 	if pushRegoVersion != "" {
 		body.RegoVersion = pushRegoVersion
 	} else {
 		body.RegoVersion = "v0"
 	}
-	resp, err := client.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBody(&body).Put(url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("application/yaml")).SetBody(&body).Put(url)
 	if err != nil {
 		return err
 	}
@@ -120,9 +119,9 @@ func PutCheck(client *req.Client, check models.CustomCheckModel, org, token, hos
 }
 
 // DeleteInstance deletes an Instance from Fairwinds Insights
-func DeleteInstance(client *req.Client, instance models.CustomCheckInstanceModel, org, token, hostName string) error {
-	url := fmt.Sprintf(opaInstanceURLFormat, hostName, org, instance.CheckName, instance.InstanceName)
-	resp, err := client.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Delete(url)
+func DeleteInstance(client *req.Client, instance models.CustomCheckInstanceModel, org string) error {
+	url := fmt.Sprintf(opaInstanceURLFormat, org, instance.CheckName, instance.InstanceName)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Delete(url)
 	if err != nil {
 		return err
 	}
@@ -134,13 +133,13 @@ func DeleteInstance(client *req.Client, instance models.CustomCheckInstanceModel
 }
 
 // PutInstance upserts an Instance to Fairwinds Insights
-func PutInstance(client *req.Client, instance models.CustomCheckInstanceModel, org, token, hostName string) error {
-	url := fmt.Sprintf(opaInstanceURLFormat, hostName, org, instance.CheckName, instance.InstanceName)
+func PutInstance(client *req.Client, instance models.CustomCheckInstanceModel, org string) error {
+	url := fmt.Sprintf(opaInstanceURLFormat, org, instance.CheckName, instance.InstanceName)
 	bodyBytes, err := yaml.Marshal(instance)
 	if err != nil {
 		return err
 	}
-	resp, err := client.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "application/yaml")).SetBodyBytes(bodyBytes).Put(url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("application/yaml")).SetBodyBytes(bodyBytes).Put(url)
 	if err != nil {
 		return err
 	}
@@ -152,7 +151,7 @@ func PutInstance(client *req.Client, instance models.CustomCheckInstanceModel, o
 }
 
 // PushOPAChecks pushes OPA checks to Insights.
-func PushOPAChecks(client *req.Client, pushDir, org, insightsToken, host string, deleteMissing, dryRun bool, pushRegoVersion string) error {
+func PushOPAChecks(client *req.Client, pushDir, org string, deleteMissing, dryRun bool, pushRegoVersion string) error {
 	logrus.Debugln("Pushing OPA policies")
 	_, err := os.Stat(pushDir)
 	if err != nil {
@@ -166,14 +165,14 @@ func PushOPAChecks(client *req.Client, pushDir, org, insightsToken, host string,
 	if err != nil {
 		return fmt.Errorf("error Reading checks from files: %w", err)
 	}
-	results, err := CompareChecks(client, pushDir, org, insightsToken, host, fileChecks, deleteMissing)
+	results, err := CompareChecks(client, pushDir, org, fileChecks, deleteMissing)
 	if err != nil {
 		return err
 	}
 	for _, instance := range results.InstanceDelete {
 		logrus.Infof("Deleting instance: %s for OPA policy %s", instance.InstanceName, instance.CheckName)
 		if !dryRun {
-			err := DeleteInstance(client, instance, org, insightsToken, host)
+			err := DeleteInstance(client, instance, org)
 			if err != nil {
 				return err
 			}
@@ -182,7 +181,7 @@ func PushOPAChecks(client *req.Client, pushDir, org, insightsToken, host string,
 	for _, check := range results.CheckDelete {
 		logrus.Infof("Deleting OPA policy: %s", check.CheckName)
 		if !dryRun {
-			err := DeleteCheck(client, check, org, insightsToken, host)
+			err := DeleteCheck(client, check, org)
 			if err != nil {
 				return err
 			}
@@ -191,7 +190,7 @@ func PushOPAChecks(client *req.Client, pushDir, org, insightsToken, host string,
 	for _, check := range results.CheckInsert {
 		logrus.Infof("Adding v%.0f OPA policy: %s", check.Version, check.CheckName)
 		if !dryRun {
-			err := PutCheck(client, check, org, insightsToken, host, pushRegoVersion)
+			err := PutCheck(client, check, org, pushRegoVersion)
 			if err != nil {
 				return err
 			}
@@ -200,7 +199,7 @@ func PushOPAChecks(client *req.Client, pushDir, org, insightsToken, host string,
 	for _, check := range results.CheckUpdate {
 		logrus.Infof("Updating v%.0f OPA policy: %s", check.Version, check.CheckName)
 		if !dryRun {
-			err := PutCheck(client, check, org, insightsToken, host, pushRegoVersion)
+			err := PutCheck(client, check, org, pushRegoVersion)
 			if err != nil {
 				return err
 			}
@@ -209,7 +208,7 @@ func PushOPAChecks(client *req.Client, pushDir, org, insightsToken, host string,
 	for _, instance := range results.InstanceInsert {
 		logrus.Infof("Adding instance: %s for OPA policy %s", instance.InstanceName, instance.CheckName)
 		if !dryRun {
-			err := PutInstance(client, instance, org, insightsToken, host)
+			err := PutInstance(client, instance, org)
 			if err != nil {
 				return err
 			}
@@ -218,7 +217,7 @@ func PushOPAChecks(client *req.Client, pushDir, org, insightsToken, host string,
 	for _, instance := range results.InstanceUpdate {
 		logrus.Infof("Updating instance: %s for OPA policy %s", instance.InstanceName, instance.CheckName)
 		if !dryRun {
-			err := PutInstance(client, instance, org, insightsToken, host)
+			err := PutInstance(client, instance, org)
 			if err != nil {
 				return err
 			}
@@ -229,7 +228,7 @@ func PushOPAChecks(client *req.Client, pushDir, org, insightsToken, host string,
 }
 
 // PushExternalOPAChecks pushes external OPA checks to Insights.
-func PushExternalOPAChecks(client *req.Client, filePath, org, insightsToken string, headers []string, host string, deleteMissing, dryRun bool, pushRegoVersion string) error {
+func PushExternalOPAChecks(client *req.Client, filePath, org string, headers []string, deleteMissing, dryRun bool, pushRegoVersion string) error {
 	logrus.Debugln("Pushing external OPA policies")
 	_, err := os.Stat(filePath)
 	if err != nil {
@@ -252,14 +251,14 @@ func PushExternalOPAChecks(client *req.Client, filePath, org, insightsToken stri
 		return fmt.Errorf("error getting remote checks: %w", err)
 	}
 
-	results, err := CompareChecks(client, filePath, org, insightsToken, host, checks, deleteMissing)
+	results, err := CompareChecks(client, filePath, org, checks, deleteMissing)
 	if err != nil {
 		return fmt.Errorf("error comparing checks: %w", err)
 	}
 	for _, instance := range results.InstanceDelete {
 		logrus.Infof("Deleting instance: %s for OPA policy %s", instance.InstanceName, instance.CheckName)
 		if !dryRun {
-			err := DeleteInstance(client, instance, org, insightsToken, host)
+			err := DeleteInstance(client, instance, org)
 			if err != nil {
 				return fmt.Errorf("error deleting instance: %w", err)
 			}
@@ -268,7 +267,7 @@ func PushExternalOPAChecks(client *req.Client, filePath, org, insightsToken stri
 	for _, check := range results.CheckDelete {
 		logrus.Infof("Deleting OPA policy: %s", check.CheckName)
 		if !dryRun {
-			err := DeleteCheck(client, check, org, insightsToken, host)
+			err := DeleteCheck(client, check, org)
 			if err != nil {
 				return fmt.Errorf("error deleting check: %w", err)
 			}
@@ -277,7 +276,7 @@ func PushExternalOPAChecks(client *req.Client, filePath, org, insightsToken stri
 	for _, check := range results.CheckInsert {
 		logrus.Infof("Adding v%.0f OPA policy: %s", check.Version, check.CheckName)
 		if !dryRun {
-			err := PutCheck(client, check, org, insightsToken, host, pushRegoVersion)
+			err := PutCheck(client, check, org, pushRegoVersion)
 			if err != nil {
 				return fmt.Errorf("error adding check: %w", err)
 			}
@@ -286,7 +285,7 @@ func PushExternalOPAChecks(client *req.Client, filePath, org, insightsToken stri
 	for _, check := range results.CheckUpdate {
 		logrus.Infof("Updating v%.0f OPA policy: %s", check.Version, check.CheckName)
 		if !dryRun {
-			err := PutCheck(client, check, org, insightsToken, host, pushRegoVersion)
+			err := PutCheck(client, check, org, pushRegoVersion)
 			if err != nil {
 				return fmt.Errorf("error updating check: %w", err)
 			}
@@ -295,7 +294,7 @@ func PushExternalOPAChecks(client *req.Client, filePath, org, insightsToken stri
 	for _, instance := range results.InstanceInsert {
 		logrus.Infof("Adding instance: %s for OPA policy %s", instance.InstanceName, instance.CheckName)
 		if !dryRun {
-			err := PutInstance(client, instance, org, insightsToken, host)
+			err := PutInstance(client, instance, org)
 			if err != nil {
 				return fmt.Errorf("error adding instance: %w", err)
 			}
@@ -304,7 +303,7 @@ func PushExternalOPAChecks(client *req.Client, filePath, org, insightsToken stri
 	for _, instance := range results.InstanceUpdate {
 		logrus.Infof("Updating instance: %s for OPA policy %s", instance.InstanceName, instance.CheckName)
 		if !dryRun {
-			err := PutInstance(client, instance, org, insightsToken, host)
+			err := PutInstance(client, instance, org)
 			if err != nil {
 				return fmt.Errorf("error updating instance: %w", err)
 			}

@@ -38,8 +38,7 @@ var pushAppGroupsCmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
-		err := appgroups.PushAppGroups(client, pushDir+"/"+pushAppGroupsSubDir, org, insightsToken, host, deleteMissingAppGroups, pushDryRun)
+		err := appgroups.PushAppGroups(client, pushDir+"/"+pushAppGroupsSubDir, org, deleteMissingAppGroups, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push app-groups: %v", err)
 		}

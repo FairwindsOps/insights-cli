@@ -47,9 +47,8 @@ var pushExternalOPACmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
 		filePath := fmt.Sprintf("%s/%s/%s", pushDir, pushExternalOPASubDir, pushExternalOPAFile)
-		err := opa.PushExternalOPAChecks(client, filePath, org, insightsToken, pushExternalOPAHeaders, host, deleteMissingOPA, pushDryRun, pushExternalRegoVersion)
+		err := opa.PushExternalOPAChecks(client, filePath, org, pushExternalOPAHeaders, deleteMissingOPA, pushDryRun, pushExternalRegoVersion)
 		if err != nil {
 			logrus.Fatalf("Unable to push external OPA checks: %v", err)
 		}
