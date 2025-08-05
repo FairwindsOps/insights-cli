@@ -19,7 +19,7 @@ jobs:
     resource_class: large
     docker:
       # Note the goreleaser version is also referenced in the release and snapshot jobs.
-      - image: goreleaser/goreleaser:v2.10.2
+      - image: goreleaser/goreleaser:v2.11.2
     steps:
       - checkout
       - run:
@@ -31,7 +31,7 @@ jobs:
               echo "$output"
               exit 1
             fi
-            go install github.com/golangci/golangci-lint/cmd/golangci-lint@v2.3.1
+            wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s v2.3.1
             golangci-lint run -v --timeout 2m0s
       - run: ./.circleci/scripts/e2e-env.sh
       - *install_vault
@@ -47,7 +47,7 @@ jobs:
     resource_class: large
     docker:
       # Note the goreleaser version is also referenced in the release and test jobs.
-      - image: goreleaser/goreleaser:v2.10.2
+      - image: goreleaser/goreleaser:v2.11.2
     steps:
       - checkout
       - setup_remote_docker:
@@ -63,7 +63,7 @@ jobs:
     shell: /bin/bash
     docker:
       # Note the goreleaser version is also referenced in the snapshot and test jobs.
-      - image: goreleaser/goreleaser:v2.10.2
+      - image: goreleaser/goreleaser:v2.11.2
     steps:
       - checkout
       - run: ./.circleci/scripts/e2e-env.sh
@@ -73,7 +73,7 @@ jobs:
       - rok8s/get_vault_env:
           vault_path: repo/insights-cli/env
       - run: |
-              go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.63.4
+              wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s v2.3.1
               golangci-lint run -v --timeout 2m0s
               go test -tags e2e ./pkg/...
       - setup_remote_docker:
