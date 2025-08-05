@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -16,7 +15,7 @@ import (
 	"sigs.k8s.io/yaml" // this lib correctly handles null slices
 )
 
-const rulesURLVerify = "%s/v0/organizations/%s/rules/verify-with-events"
+const rulesURLVerify = "/v0/organizations/%s/rules/verify-with-events"
 
 type verifyActionItemTicketProvider string
 
@@ -145,18 +144,18 @@ type verifyRule struct {
 }
 
 // runVerifyRule verifies rule against one action item
-func runVerifyRule(org, token, hostName string, rule verifyRule, dryRun bool) (*verifyWithEvents, error) {
-	url := fmt.Sprintf(rulesURLVerify, hostName, org)
+func runVerifyRule(client *req.Client, org string, rule verifyRule, dryRun bool) (*verifyWithEvents, error) {
+	url := fmt.Sprintf(rulesURLVerify, org)
 	if dryRun {
 		url += "?dryRun=true"
 	}
-	resp, err := req.C().R().SetHeaders(getRuleVerifyHeaders(token)).SetBody(&rule).Post(url)
+	resp, err := client.R().SetHeaders(getRuleVerifyHeaders()).SetBody(&rule).Post(url)
 	if err != nil {
 		return nil, fmt.Errorf("error verifying rule in Insights: %v", err)
 
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("invalid response code: %v - %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return nil, fmt.Errorf("invalid response code: %v - %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	var verify verifyWithEvents
 	err = resp.Unmarshal(&verify)
@@ -167,7 +166,7 @@ func runVerifyRule(org, token, hostName string, rule verifyRule, dryRun bool) (*
 	return &verify, nil
 }
 
-func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, insightsContext string, dryRun bool) error {
+func ValidateRule(client *req.Client, org, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, insightsContext string, dryRun bool) error {
 	aiInput, err := os.Open(actionItemFilePath)
 	if err != nil {
 		return fmt.Errorf("error when trying to open action item file %s: %v", actionItemFilePath, err)
@@ -205,7 +204,7 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 		ReportType: *ai.ReportType,
 		Script:     string(ruleBytes),
 	}
-	r, err := runVerifyRule(org, insightsToken, host, verifyRule, dryRun)
+	r, err := runVerifyRule(client, org, verifyRule, dryRun)
 	if err != nil {
 		return fmt.Errorf("unable to verify rule: %v", err)
 	}
@@ -350,10 +349,9 @@ func buildCmpOptions(expectedBytes []byte) ([]cmp.Option, error) {
 	return []cmp.Option{cmpopts.IgnoreFields(actionItem{}, ignoredFields...)}, nil
 }
 
-func getRuleVerifyHeaders(token string) map[string]string {
+func getRuleVerifyHeaders() map[string]string {
 	return map[string]string{
-		"Authorization": fmt.Sprintf("Bearer %s", token),
-		"Accept":        "application/json",
-		"Content-Type":  "application/yaml",
+		"Accept":       "application/json",
+		"Content-Type": "application/yaml",
 	}
 }

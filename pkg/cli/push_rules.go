@@ -22,12 +22,10 @@ import (
 )
 
 var pushRulesSubDir string
-var deleteMissingRules bool
 
 const defaultPushRulesSubDir = "rules"
 
 func init() {
-	pushRulesCmd.PersistentFlags().BoolVarP(&deleteMissingRules, "delete", "D", false, "Delete any automation rules from Insights that are not present in the local directory.")
 	// This flag sets a variable defined in the parent `push` command.
 	pushRulesCmd.PersistentFlags().StringVarP(&pushRulesSubDir, "push-rules-subdirectory", "", defaultPushRulesSubDir, "Sub-directory within push-directory, to contain automation rules.")
 	pushCmd.AddCommand(pushRulesCmd)
@@ -40,8 +38,7 @@ var pushRulesCmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
-		err := rules.PushRules(pushDir+"/"+pushRulesSubDir, org, insightsToken, host, deleteMissingRules, pushDryRun)
+		err := rules.PushRules(client, pushDir+"/"+pushRulesSubDir, org, pushDelete, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push rules: %v", err)
 		}

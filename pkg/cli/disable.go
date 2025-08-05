@@ -28,7 +28,7 @@ var disablePolicyMappings = &cobra.Command{
 	Long:   "Disable policy mappings",
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
-		err := organizations.ManageOrganizationPolicyMappings(configurationObject.Options.Organization, insightsToken, configurationObject.Options.Hostname, false)
+		err := organizations.ManageOrganizationPolicyMappings(client, configurationObject.Options.Organization, false)
 		if err != nil {
 			logrus.Fatal(err)
 		}

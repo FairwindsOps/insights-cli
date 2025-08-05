@@ -20,14 +20,17 @@ import (
 	"io"
 	"os"
 
+	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
+	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/xlab/treeprint"
 	"gopkg.in/yaml.v3"
 )
 
+var client = req.C()
+
 var logLevel string
-var insightsToken string
 var configFile string
 var organization string
 var noDecoration bool
@@ -82,41 +85,41 @@ func exitWithError(message string, err error) {
 }
 
 func init() {
-	logrus.SetFormatter(&logrus.TextFormatter{DisableTimestamp: true, DisableLevelTruncation: true})
-
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", logrus.InfoLevel.String(), "Logrus log level.")
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./fairwinds-insights.yaml", "Configuration file")
 	rootCmd.PersistentFlags().StringVarP(&organization, "organization", "", "", "Fairwinds Insights Organization name")
 	rootCmd.PersistentFlags().BoolVarP(&noDecoration, "no-decoration", "", false, "Do not include decorative characters in output, such as tree visualization.")
+
+	logrus.SetFormatter(&logrus.TextFormatter{DisableTimestamp: true, DisableLevelTruncation: true})
 }
 
 func validateAndLoadInsightsAPIConfigWrapper(cmd *cobra.Command, args []string) {
-	err := validateAndLoadInsightsAPIConfig()
+	err := validateAndLoadInsightsAPIConfig(client)
 	if err != nil {
 		logrus.Fatal(err)
 	}
 }
 
 // validateAndLoadInsightsAPIConfig checks to make sure the user has set the FAIRWINDS_TOKEN environment variable and has a valid config file.
-func validateAndLoadInsightsAPIConfig() error {
-	insightsToken = os.Getenv("FAIRWINDS_TOKEN")
+func validateAndLoadInsightsAPIConfig(client *req.Client) error {
+	insightsToken := os.Getenv("FAIRWINDS_TOKEN")
 	if insightsToken == "" {
-		return errors.New("FAIRWINDS_TOKEN must be set.")
+		return errors.New("FAIRWINDS_TOKEN must be set")
 	}
 	configHandler, err := os.Open(configFile)
 	if err == nil {
 		configContents, err := io.ReadAll(configHandler)
 		if err != nil {
-			return fmt.Errorf("Could not read fairwinds-insights.yaml: %v", err)
+			return fmt.Errorf("could not read fairwinds-insights.yaml: %v", err)
 		}
 		err = yaml.Unmarshal(configContents, &configurationObject)
 		if err != nil {
-			return fmt.Errorf("Could not parse fairwinds-insights.yaml: %v", err)
+			return fmt.Errorf("could not parse fairwinds-insights.yaml: %v", err)
 		}
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("Could not open fairwinds-insights.yaml: %v", err)
+		return fmt.Errorf("could not open fairwinds-insights.yaml: %v", err)
 	} else if organization == "" {
-		return fmt.Errorf("Please add fairwinds-insights.yaml to the base of your repository: %v", err)
+		return fmt.Errorf("please add fairwinds-insights.yaml to the base of your repository: %v", err)
 	}
 	configurationObject.SetDefaults()
 	if organization != "" {
@@ -124,8 +127,17 @@ func validateAndLoadInsightsAPIConfig() error {
 	}
 	err = configurationObject.CheckForErrors()
 	if err != nil {
-		return fmt.Errorf("Error parsing fairwinds-insights.yaml: %v", err)
+		return fmt.Errorf("error parsing fairwinds-insights.yaml: %v", err)
 	}
+
+	// common client configuration
+	client.SetCommonHeaders(map[string]string{
+		"Authorization":           fmt.Sprintf("Bearer %s", insightsToken),
+		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
+	})
+
+	client.SetBaseURL(configurationObject.Options.Hostname)
+
 	return nil
 }
 

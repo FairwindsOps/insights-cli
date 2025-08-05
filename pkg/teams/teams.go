@@ -18,17 +18,14 @@ package teams
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
-
-	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
 )
 
-const teamsPutURLFormat = "%s/v0/organizations/%s/teams-bulk"
+const teamsPutURLFormat = "/v0/organizations/%s/teams-bulk"
 
 type TeamInput struct {
 	Clusters               []string `json:"clusters" yaml:"clusters"`
@@ -41,22 +38,22 @@ type TeamInput struct {
 	AppGroups              []string `json:"appGroups" yaml:"appGroups"`
 }
 
-func PostTeams(teamInput []TeamInput, deleteNonProvidedTeams bool, org, token, hostName string) error {
-	url := fmt.Sprintf(teamsPutURLFormat, hostName, org)
+func PostTeams(client *req.Client, teamInput []TeamInput, deleteNonProvidedTeams bool, org string) error {
+	url := fmt.Sprintf(teamsPutURLFormat, org)
 	if deleteNonProvidedTeams {
 		url += "?deleteNonProvidedTeams=true"
 	}
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBody(&teamInput).Post(url)
+	resp, err := client.R().SetHeaders(getHeaders()).SetBody(&teamInput).Post(url)
 	if err != nil {
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		return fmt.Errorf("invalid HTTP response %d %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return fmt.Errorf("invalid HTTP response %d %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	return nil
 }
 
-func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams, dryrun bool) error {
+func PushTeams(client *req.Client, pushDir, org string, deleteNonProvidedTeams, dryRun bool) error {
 	if pushDir == "" {
 		return errors.New("pushDir cannot be empty")
 	}
@@ -70,7 +67,12 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 	if err != nil {
 		return err
 	}
-	defer teamsFile.Close()
+	defer func() {
+		if err := teamsFile.Close(); err != nil {
+			logrus.Errorf("error closing teams file: %v", err)
+		}
+	}()
+
 	teams := []TeamInput{}
 	b, err := os.ReadFile(teamsFileName)
 	if err != nil {
@@ -80,7 +82,7 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 	if err != nil {
 		return err
 	}
-	if dryrun {
+	if dryRun {
 		logrus.Infof("Dry run: Would have pushed the following teams configuration:")
 		for _, team := range teams {
 			logrus.Infof("Team: %s", team.Name)
@@ -94,7 +96,7 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 		}
 		return nil
 	}
-	err = PostTeams(teams, deleteNonProvidedTeams, org, insightsToken, host)
+	err = PostTeams(client, teams, deleteNonProvidedTeams, org)
 	if err != nil {
 		return err
 	}
@@ -102,11 +104,9 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 	return nil
 }
 
-func getHeaders(token string) map[string]string {
+func getHeaders() map[string]string {
 	return map[string]string{
-		"Content-Type":            "application/yaml",
-		"X-Fairwinds-CLI-Version": cliversion.GetVersion(),
-		"Authorization":           fmt.Sprintf("Bearer %s", token),
-		"Accept":                  "application/json",
+		"Content-Type": "application/yaml",
+		"Accept":       "application/json",
 	}
 }

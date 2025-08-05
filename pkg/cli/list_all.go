@@ -38,17 +38,16 @@ var listAllCmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
 		tree := treeprint.New()
-		err := opa.AddOPAChecksBranch(org, insightsToken, host, tree)
+		err := opa.AddOPAChecksBranch(client, org, tree)
 		if err != nil {
 			logrus.Fatalf("Unable to get OPA checks from insights: %v", err)
 		}
-		err = rules.AddRulesBranch(org, insightsToken, host, tree)
+		err = rules.AddRulesBranch(client, org, tree)
 		if err != nil {
 			logrus.Fatalf("Unable to get rules from insights: %v", err)
 		}
-		appGroups, err := appgroups.FetchAppGroups(org, insightsToken, host)
+		appGroups, err := appgroups.FetchAppGroups(client, org)
 		if err != nil {
 			logrus.Fatalf("unable to fetch app-groups from insights: %v", err)
 		}
@@ -57,7 +56,7 @@ var listAllCmd = &cobra.Command{
 			logrus.Fatalf("error building app-groups tree: %v", err)
 		}
 
-		policyMappings, err := policymappings.FetchPolicyMappings(org, insightsToken, host)
+		policyMappings, err := policymappings.FetchPolicyMappings(client, org)
 		if err != nil {
 			logrus.Fatalf("unable to fetch policy-mappings from insights: %v", err)
 		}

@@ -28,8 +28,7 @@ var verifyRuleCmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
-		err := rules.ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, insightsContext, dryRun)
+		err := rules.ValidateRule(client, org, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, insightsContext, dryRun)
 		if err != nil {
 			exitWithError("", err)
 		}

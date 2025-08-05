@@ -28,7 +28,7 @@ type actionItem struct {
 // Valid returns true if an actionItem has required fields set, or false and
 // an error describing which fields are missing.
 func (AI actionItem) valid() (bool, error) {
-	var allErrs *multierror.Error = new(multierror.Error)
+	allErrs := new(multierror.Error)
 	if AI.ResourceKind == "" {
 		allErrs = multierror.Append(allErrs, errors.New("ResourceKind is not set. Perhaps the input Kubernetes manifest has no `kind` field?"))
 	}

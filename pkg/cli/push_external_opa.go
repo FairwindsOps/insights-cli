@@ -31,7 +31,6 @@ var pushExternalRegoVersion string
 const defaultPushExternalOPASubDir = "external-opa"
 
 func init() {
-	pushExternalOPACmd.PersistentFlags().BoolVarP(&deleteMissingOPA, "delete", "D", false, "Delete any OPA policies from Insights that are not present in the external OPA file definition.")
 	// This flag sets a variable defined in the parent `push` command.
 	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPASubDir, "subdirectory", "s", defaultPushExternalOPASubDir, "Sub-directory within push-directory, to contain the external OPA file definition.")
 	pushExternalOPACmd.PersistentFlags().StringVarP(&pushExternalOPAFile, "file", "f", "external-sources.yaml", "file name of the external OPA file definition.")
@@ -47,9 +46,8 @@ var pushExternalOPACmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
 		filePath := fmt.Sprintf("%s/%s/%s", pushDir, pushExternalOPASubDir, pushExternalOPAFile)
-		err := opa.PushExternalOPAChecks(filePath, org, insightsToken, pushExternalOPAHeaders, host, deleteMissingOPA, pushDryRun, pushExternalRegoVersion)
+		err := opa.PushExternalOPAChecks(client, filePath, org, pushExternalOPAHeaders, pushDelete, pushDryRun, pushExternalRegoVersion)
 		if err != nil {
 			logrus.Fatalf("Unable to push external OPA checks: %v", err)
 		}

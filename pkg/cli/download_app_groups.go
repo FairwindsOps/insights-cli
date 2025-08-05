@@ -22,8 +22,7 @@ var downloadAppGroupsCmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
-		appGroups, err := appgroups.FetchAppGroups(org, insightsToken, host)
+		appGroups, err := appgroups.FetchAppGroups(client, org)
 		if err != nil {
 			logrus.Fatalf("unable to fetch app-groups from insights: %v", err)
 		}

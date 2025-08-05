@@ -20,12 +20,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var deleteMissingPolicyMappings bool
 var pushPolicyMappingsSubDir string
 var defaultPushPolicyMappingsSubDir = "policy-mappings"
 
 func init() {
-	pushPolicyMappingsCmd.PersistentFlags().BoolVarP(&deleteMissingPolicyMappings, "delete", "D", false, "Delete any policy-mappings from Fairwinds Insights that are not present in the local directory.")
 	// This flag sets a variable defined in the parent `push` command.
 	pushPolicyMappingsCmd.PersistentFlags().StringVarP(&pushPolicyMappingsSubDir, "push-policy-mappings-subdirectory", "", defaultPushPolicyMappingsSubDir, "Sub-directory within push-directory, to contain policy-mappings.")
 	pushCmd.AddCommand(pushPolicyMappingsCmd)
@@ -38,8 +36,7 @@ var pushPolicyMappingsCmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
-		err := policymappings.PushPolicyMappings(pushDir+"/"+pushPolicyMappingsSubDir, org, insightsToken, host, deleteMissingPolicyMappings, pushDryRun)
+		err := policymappings.PushPolicyMappings(client, pushDir+"/"+pushPolicyMappingsSubDir, org, pushDelete, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push policy-mappings: %v", err)
 		}

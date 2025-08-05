@@ -35,9 +35,8 @@ var listOPACmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
 		tree := treeprint.New()
-		err := opa.AddOPAChecksBranch(org, insightsToken, host, tree)
+		err := opa.AddOPAChecksBranch(client, org, tree)
 		if err != nil {
 			logrus.Fatalf("Unable to get OPA checks from insights: %v", err)
 		}

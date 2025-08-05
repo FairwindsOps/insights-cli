@@ -40,7 +40,7 @@ func arrayFromRegoOutput(results rego.ResultSet) []interface{} {
 func actionItemsFromRegoResult(results rego.ResultSet) (actionItems, error) {
 	actionItems := make(actionItems, 0)
 	resultsAsArray := arrayFromRegoOutput(results)
-	var allErrs *multierror.Error = new(multierror.Error)
+	allErrs := new(multierror.Error)
 	for n, result := range resultsAsArray {
 		var AI actionItem
 		resultAsMap, ok := result.(map[string]interface{})
@@ -104,7 +104,7 @@ func HumanizeMapOutput(m map[string]error, keyNoun string) string {
 		message.WriteString("s")
 	}
 	message.WriteString(": ")
-	var n int = 1 // counter of keys processed
+	n := 1 // counter of keys processed
 	for k, v := range m {
 		if n == len(m) && len(m) == 2 {
 			message.WriteString(" and ")
@@ -133,7 +133,7 @@ func HumanizeStringsOutput(s []string, noun string) string {
 		message.WriteString("s")
 	}
 	message.WriteString(": ")
-	var n int = 1 // counter of keys processed
+	n := 1 // counter of keys processed
 	for _, v := range s {
 		if n == len(s) && len(s) == 2 {
 			message.WriteString(" and ")

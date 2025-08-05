@@ -17,22 +17,21 @@ package rules
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/imroc/req/v3"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/xlab/treeprint"
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
+	"github.com/imroc/req/v3"
 )
 
-const rulesURLFormat = "%s/v0/organizations/%s/rules"
-const rulesURLFormatCreate = "%s/v0/organizations/%s/rules/create"
-const rulesURLFormatUpdateDelete = "%s/v0/organizations/%s/rules/%d"
+const rulesURLFormat = "/v0/organizations/%s/rules"
+const rulesURLFormatCreate = "/v0/organizations/%s/rules/create"
+const rulesURLFormatUpdateDelete = "/v0/organizations/%s/rules/%d"
 
 // Rule is the struct to hold the information for a rule
 type Rule struct {
@@ -54,17 +53,17 @@ type CompareResults struct {
 }
 
 // getRules queries Fairwinds Insights to retrieve all of the Rules for an organization
-func getRules(org, token, hostName string) ([]Rule, error) {
-	url := fmt.Sprintf(rulesURLFormat, hostName, org)
+func getRules(client *req.Client, org string) ([]Rule, error) {
+	url := fmt.Sprintf(rulesURLFormat, org)
 	logrus.Debugf("Rules URL: %s", url)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).Get(url)
+	resp, err := client.R().SetHeaders(getHeaders()).Get(url)
 	if err != nil {
 		logrus.Errorf("Unable to get rules from insights: %v", err)
 		return nil, err
 	}
 	var rules []Rule
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("getRules: invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if !resp.IsSuccessState() {
+		logrus.Errorf("getRules: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return nil, errors.New("getRules: invalid response code")
 	}
 	err = resp.Unmarshal(&rules)
@@ -76,53 +75,53 @@ func getRules(org, token, hostName string) ([]Rule, error) {
 }
 
 // insertRule adds a new rule
-func insertRule(org, token, hostName string, rule Rule) error {
-	url := fmt.Sprintf(rulesURLFormatCreate, hostName, org)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBody(&rule).Post(url)
+func insertRule(client *req.Client, org string, rule Rule) error {
+	url := fmt.Sprintf(rulesURLFormatCreate, org)
+	resp, err := client.R().SetHeaders(getHeaders()).SetBody(&rule).Post(url)
 	if err != nil {
 		logrus.Errorf("Unable to add rule %s to insights: %v", rule.Name, err)
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("insertRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("insertRule: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("insertRule: invalid response code")
 	}
 	return nil
 }
 
 // updateRule updates an existing rule
-func updateRule(org, token, hostName string, rule Rule) error {
-	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBody(&rule).Post(url)
+func updateRule(client *req.Client, org string, rule Rule) error {
+	url := fmt.Sprintf(rulesURLFormatUpdateDelete, org, rule.ID)
+	resp, err := client.R().SetHeaders(getHeaders()).SetBody(&rule).Post(url)
 	if err != nil {
 		logrus.Errorf("Unable to update rule %s to insights: %v", rule.Name, err)
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("updateRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("updateRule: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("updateRule: invalid response code")
 	}
 	return nil
 }
 
 // deleteRule deletes an existing rule
-func deleteRule(org, token, hostName string, rule Rule) error {
-	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).Delete(url)
+func deleteRule(client *req.Client, org string, rule Rule) error {
+	url := fmt.Sprintf(rulesURLFormatUpdateDelete, org, rule.ID)
+	resp, err := client.R().SetHeaders(getHeaders()).Delete(url)
 	if err != nil {
 		logrus.Errorf("Unable to delete rule %s from insights: %v", rule.Name, err)
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("deleteRule: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("deleteRule: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("deleteRule: invalid response code")
 	}
 	return nil
 }
 
 // AddRulesBranch builds a tree for rules
-func AddRulesBranch(org, token, hostName string, tree treeprint.Tree) error {
-	rules, err := getRules(org, token, hostName)
+func AddRulesBranch(client *req.Client, org string, tree treeprint.Tree) error {
+	rules, err := getRules(client, org)
 	if err != nil {
 		logrus.Errorf("Unable to get rules from insights: %v", err)
 		return err
@@ -223,7 +222,7 @@ func getRuleDifferences(fileRules, existingRules []Rule) CompareResults {
 }
 
 // compareRules compares a folder vs the rules returned by the API.
-func compareRules(folder, org, token, hostName string) (CompareResults, error) {
+func compareRules(client *req.Client, folder, org string) (CompareResults, error) {
 	var results CompareResults
 	files, err := directory.ScanFolder(folder)
 	if err != nil {
@@ -236,7 +235,7 @@ func compareRules(folder, org, token, hostName string) (CompareResults, error) {
 		logrus.Error("Error reading checks from files")
 		return results, err
 	}
-	existingRules, err := getRules(org, token, hostName)
+	existingRules, err := getRules(client, org)
 	if err != nil {
 		logrus.Error("Error during API call")
 		return results, err
@@ -247,13 +246,13 @@ func compareRules(folder, org, token, hostName string) (CompareResults, error) {
 }
 
 // PushRules pushes automation rules to insights
-func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun bool) error {
+func PushRules(client *req.Client, pushDir, org string, deleteMissing, dryRun bool) error {
 	logrus.Debugln("Pushing automation rules")
 	_, err := os.Stat(pushDir)
 	if err != nil {
 		return err
 	}
-	results, err := compareRules(pushDir, org, insightsToken, host)
+	results, err := compareRules(client, pushDir, org)
 	if err != nil {
 		logrus.Errorf("unable to compare and push rules to Insights: %v", err)
 		return err
@@ -261,8 +260,8 @@ func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun b
 
 	for _, ruleForInsert := range results.RuleInsert {
 		logrus.Infof("Adding automation rule: %s", ruleForInsert.Name)
-		if !dryrun {
-			err = insertRule(org, insightsToken, host, ruleForInsert)
+		if !dryRun {
+			err = insertRule(client, org, ruleForInsert)
 			if err != nil {
 				logrus.Errorf("Error while adding rule %s to insights: %v", ruleForInsert.Name, err)
 				return err
@@ -272,8 +271,8 @@ func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun b
 
 	for _, ruleForUpdate := range results.RuleUpdate {
 		logrus.Infof("Updating automation rule: %s", ruleForUpdate.Name)
-		if !dryrun {
-			err = updateRule(org, insightsToken, host, ruleForUpdate)
+		if !dryRun {
+			err = updateRule(client, org, ruleForUpdate)
 			if err != nil {
 				logrus.Errorf("Error while updating rule %s to insights: %v", ruleForUpdate.Name, err)
 				return err
@@ -284,8 +283,8 @@ func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun b
 	if deleteMissing {
 		for _, ruleForDelete := range results.RuleDelete {
 			logrus.Infof("Deleting automation rule: %s", ruleForDelete.Name)
-			if !dryrun {
-				err = deleteRule(org, insightsToken, host, ruleForDelete)
+			if !dryRun {
+				err = deleteRule(client, org, ruleForDelete)
 				if err != nil {
 					logrus.Errorf("Error while deleting rule %s from insights: %v", ruleForDelete.Name, err)
 					return err
@@ -297,10 +296,9 @@ func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun b
 	return nil
 }
 
-func getHeaders(token string) map[string]string {
+func getHeaders() map[string]string {
 	return map[string]string{
-		"Authorization": fmt.Sprintf("Bearer %s", token),
-		"Accept":        "application/json",
-		"Content-Type":  "application/json",
+		"Accept":       "application/json",
+		"Content-Type": "application/json",
 	}
 }

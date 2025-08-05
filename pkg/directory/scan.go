@@ -136,7 +136,7 @@ func prettyPrintDuplicateFiles(m map[string][]string) string {
 		message.WriteString("s")
 	}
 	message.WriteString(": ")
-	var n int = 1 // counter of keys processed
+	n := 1 // counter of keys processed
 	for k, v := range m {
 		if n == len(m) && len(m) == 2 {
 			message.WriteString(" and ")

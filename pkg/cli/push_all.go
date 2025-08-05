@@ -47,47 +47,47 @@ var pushAllCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		_, err := os.Stat(pushDir)
 		if err != nil {
-			logrus.Fatalf("Unable to push  to Insights: %v", err)
+			logrus.Fatalf("Unable to push to Insights (%s): %v", pushDir, err)
 		}
+
 		org := configurationObject.Options.Organization
-		host := configurationObject.Options.Hostname
-		const (
-			doNotDeleteMissingResources bool = false
-			numExpectedSuccesses             = 5
-		)
+		const resourcesTypeToPush = 5
+
 		var numWarnings, numFailures int
 		logrus.Infoln("Pushing OPA policies, automation rules, and policies configuration to Insights.")
 		absPushOPADir := filepath.Join(pushDir, pushOPASubDir)
 		_, err = os.Stat(absPushOPADir)
 		if err != nil {
-			logrus.Warnf("Unable to start push OPA directory: %v", err)
+			logrus.Warnf("Unable to start push OPA directory (%s): %v", absPushOPADir, err)
 			numWarnings++
 		} else {
-			err = opa.PushOPAChecks(absPushOPADir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun, pushRegoVersion)
+			err = opa.PushOPAChecks(client, absPushOPADir, org, pushDelete, pushDryRun, pushRegoVersion)
 			if err != nil {
 				logrus.Errorf("Unable to push OPA policies: %v", err)
 				numFailures++
 			}
 		}
+
 		absPushRulesDir := filepath.Join(pushDir, pushRulesSubDir)
 		_, err = os.Stat(absPushRulesDir)
 		if err != nil {
-			logrus.Warnf("Unable to push automation rules: %v", err)
+			logrus.Warnf("Unable to push automation rules (%s): %v", absPushRulesDir, err)
 			numWarnings++
 		} else {
-			err = rules.PushRules(absPushRulesDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
+			err = rules.PushRules(client, absPushRulesDir, org, pushDelete, pushDryRun)
 			if err != nil {
 				logrus.Errorf("Unable to push automation rules: %v", err)
 				numFailures++
 			}
 		}
+
 		absPushPoliciesConfigFile := filepath.Join(pushDir, "settings.yaml")
 		_, err = os.Stat(absPushPoliciesConfigFile)
 		if err != nil {
-			logrus.Warnf("Unable to push policies configuration: %v", err)
+			logrus.Warnf("Unable to push policies configuration (%s): %v", absPushPoliciesConfigFile, err)
 			numWarnings++
 		} else {
-			err = policies.PushPolicies(pushDir, org, insightsToken, host, pushDryRun)
+			err = policies.PushPolicies(client, pushDir, org, pushDryRun)
 			if err != nil {
 				logrus.Errorf("Unable to push policies configuration: %v", err)
 				numFailures++
@@ -97,10 +97,10 @@ var pushAllCmd = &cobra.Command{
 		absPushAppGroupsDir := filepath.Join(pushDir, pushAppGroupsSubDir)
 		_, err = os.Stat(absPushAppGroupsDir)
 		if err != nil {
-			logrus.Warnf("Unable to push app-groups: %v", err)
+			logrus.Warnf("Unable to push app-groups (%s): %v", absPushAppGroupsDir, err)
 			numWarnings++
 		} else {
-			err = appgroups.PushAppGroups(absPushAppGroupsDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
+			err = appgroups.PushAppGroups(client, absPushAppGroupsDir, org, pushDelete, pushDryRun)
 			if err != nil {
 				logrus.Errorf("Unable to push app-groups: %v", err)
 				numFailures++
@@ -110,10 +110,10 @@ var pushAllCmd = &cobra.Command{
 		absPushPolicyMappingsDir := filepath.Join(pushDir, pushPolicyMappingsSubDir)
 		_, err = os.Stat(absPushPolicyMappingsDir)
 		if err != nil {
-			logrus.Warnf("Unable to push policy-mappings: %v", err)
+			logrus.Warnf("Unable to push policy-mappings (%s): %v", absPushPolicyMappingsDir, err)
 			numWarnings++
 		} else {
-			err = policymappings.PushPolicyMappings(absPushPolicyMappingsDir, org, insightsToken, host, doNotDeleteMissingResources, pushDryRun)
+			err = policymappings.PushPolicyMappings(client, absPushPolicyMappingsDir, org, pushDelete, pushDryRun)
 			if err != nil {
 				logrus.Errorf("Unable to push policy-mappings: %v", err)
 				numFailures++
@@ -121,20 +121,24 @@ var pushAllCmd = &cobra.Command{
 		}
 
 		if numFailures == 0 && numWarnings == 0 {
-			logrus.Infoln("Push succeeded")
+			logrus.Infoln("Push succeeded.")
 			return
 		}
+
 		if !warningsAreFatal && numFailures == 0 && numWarnings > 0 {
 			logrus.Warnf("Push failed with %d warning(s)", numWarnings)
 			return
 		}
+
 		if warningsAreFatal {
 			numFailures += numWarnings
 		}
-		if numFailures > 0 && numFailures < numExpectedSuccesses {
+
+		if numFailures > 0 && numFailures < resourcesTypeToPush {
 			logrus.Fatalln("Push partially failed.")
 		}
-		if numFailures == numExpectedSuccesses {
+
+		if numFailures == resourcesTypeToPush {
 			logrus.Fatalln("Push failed.")
 		}
 	},

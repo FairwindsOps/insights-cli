@@ -15,3 +15,5 @@
 # vendor/
 main
 insights-cli
+
+.tool-versions

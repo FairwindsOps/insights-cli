@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/imroc/req/v3"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,7 +38,7 @@ func TestGetExternalChecksFromFileWrongCreds(t *testing.T) {
 	header := "Authorization: Basic " + encodedAuth
 
 	content := fmt.Sprintf(fileContent, externalServer.URL, externalServer.URL)
-	c, err := getExternalChecksFromFile([]byte(content), []string{header})
+	c, err := getExternalChecksFromFile(req.C(), []byte(content), []string{header})
 	assert.EqualError(t, err, "error getting remote checks: invalid response code (401, expected 200)")
 	assert.Len(t, c, 0)
 }
@@ -49,7 +51,7 @@ func TestGetExternalChecksFromFile(t *testing.T) {
 	header := "Authorization: Basic " + encodedAuth
 
 	content := fmt.Sprintf(fileContent, externalServer.URL, externalServer.URL)
-	c, err := getExternalChecksFromFile([]byte(content), []string{header})
+	c, err := getExternalChecksFromFile(req.C(), []byte(content), []string{header})
 	assert.NoError(t, err)
 	assert.Len(t, c, 2)
 }
@@ -64,7 +66,10 @@ func simpleExternalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, check, user)
+	_, err := fmt.Fprint(w, check, user)
+	if err != nil {
+		logrus.Errorf("error writing to response writer: %v", err)
+	}
 }
 
 func validateCredentials(username, password string) bool {
