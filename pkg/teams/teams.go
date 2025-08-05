@@ -18,7 +18,6 @@ package teams
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 
 	"github.com/imroc/req/v3"
@@ -48,8 +47,8 @@ func PostTeams(client *req.Client, teamInput []TeamInput, deleteNonProvidedTeams
 	if err != nil {
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		return fmt.Errorf("invalid HTTP response %d %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return fmt.Errorf("invalid HTTP response %d %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	return nil
 }
@@ -68,7 +67,12 @@ func PushTeams(client *req.Client, pushDir, org string, deleteNonProvidedTeams, 
 	if err != nil {
 		return err
 	}
-	defer teamsFile.Close()
+	defer func() {
+		if err := teamsFile.Close(); err != nil {
+			logrus.Errorf("error closing teams file: %v", err)
+		}
+	}()
+
 	teams := []TeamInput{}
 	b, err := os.ReadFile(teamsFileName)
 	if err != nil {

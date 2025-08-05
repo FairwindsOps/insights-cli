@@ -22,8 +22,8 @@ func FetchAppGroups(client *req.Client, org string) ([]AppGroup, error) {
 		return nil, fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
 	var appGroups []AppGroup
-	if !utils.IsSuccessful(resp.Response.StatusCode) {
-		return nil, fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return nil, fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	err = resp.Unmarshal(&appGroups)
 	if err != nil {
@@ -40,14 +40,13 @@ func upsertAppGroup(client *req.Client, org string, appGroup AppGroup) error {
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response.StatusCode) {
-		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	var response AppGroup
 	err = resp.Unmarshal(&response)
 	if err != nil {
-		return fmt.Errorf("Unable to convert response to json for app-groups: %w", err)
-
+		return fmt.Errorf("unable to convert response to json for app-groups: %w", err)
 	}
 	return nil
 }
@@ -60,13 +59,13 @@ func deleteAppGroup(client *req.Client, org string, appGroup AppGroup) error {
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response.StatusCode) {
-		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	var response AppGroup
 	err = resp.Unmarshal(&response)
 	if err != nil {
-		return fmt.Errorf("Unable to convert response to json for app-groups: %w", err)
+		return fmt.Errorf("unable to convert response to json for app-groups: %w", err)
 	}
 	return nil
 }

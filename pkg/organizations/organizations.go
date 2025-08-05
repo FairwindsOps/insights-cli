@@ -22,8 +22,8 @@ func ManageOrganizationPolicyMappings(client *req.Client, org string, enable boo
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mappings from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response.StatusCode) {
-		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	return nil
 }

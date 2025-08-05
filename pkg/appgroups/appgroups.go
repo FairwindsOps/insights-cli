@@ -46,7 +46,7 @@ func PushAppGroups(client *req.Client, pushDir, org string, deleteMissing, dryRu
 		if !dryRun {
 			err = upsertAppGroup(client, org, appGroup)
 			if err != nil {
-				return fmt.Errorf("Error while upsert app-group %s to Fairwinds Insights: %w", appGroup.Name, err)
+				return fmt.Errorf("error while upsert app-group %s to Fairwinds Insights: %w", appGroup.Name, err)
 			}
 		}
 	}
@@ -57,7 +57,7 @@ func PushAppGroups(client *req.Client, pushDir, org string, deleteMissing, dryRu
 			if !dryRun {
 				err = deleteAppGroup(client, org, appGroupForDelete)
 				if err != nil {
-					return fmt.Errorf("Error while deleting app-group %s from insights: %w", appGroupForDelete.Name, err)
+					return fmt.Errorf("error while deleting app-group %s from insights: %w", appGroupForDelete.Name, err)
 				}
 			}
 		}

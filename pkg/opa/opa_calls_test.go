@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/imroc/req/v3"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,7 +66,10 @@ func simpleExternalHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, check, user)
+	_, err := fmt.Fprint(w, check, user)
+	if err != nil {
+		logrus.Errorf("error writing to response writer: %v", err)
+	}
 }
 
 func validateCredentials(username, password string) bool {

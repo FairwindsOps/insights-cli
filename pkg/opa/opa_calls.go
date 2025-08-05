@@ -18,7 +18,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strings"
 
@@ -48,8 +47,8 @@ func GetChecks(client *req.Client, org string) ([]opaPlugin.OPACustomCheck, erro
 		return nil, err
 	}
 	var checks []opaPlugin.OPACustomCheck
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("GetChecks: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("GetChecks: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return nil, errors.New("GetChecks: invalid response code")
 	}
 	err = resp.Unmarshal(&checks)
@@ -66,8 +65,8 @@ func GetInstances(client *req.Client, org, checkName string) ([]opaPlugin.CheckS
 	if err != nil {
 		return nil, err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("GetInstances: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("GetInstances: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return nil, errors.New("GetInstances: invalid response code")
 	}
 	var instances []opaPlugin.CheckSetting
@@ -85,8 +84,8 @@ func DeleteCheck(client *req.Client, check models.CustomCheckModel, org string) 
 	if err != nil {
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("DeleteCheck: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("DeleteCheck: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("DeleteCheck: invalid response code")
 	}
 	return nil
@@ -111,8 +110,8 @@ func PutCheck(client *req.Client, check models.CustomCheckModel, org string, pus
 	if err != nil {
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("PutCheck: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("PutCheck: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("PutCheck: invalid response code")
 	}
 	return nil
@@ -125,8 +124,8 @@ func DeleteInstance(client *req.Client, instance models.CustomCheckInstanceModel
 	if err != nil {
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("DeleteInstance: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("DeleteInstance: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("DeleteInstance: invalid response code")
 	}
 	return nil
@@ -143,8 +142,8 @@ func PutInstance(client *req.Client, instance models.CustomCheckInstanceModel, o
 	if err != nil {
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("PutInstance: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("PutInstance: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("PutInstance: invalid response code")
 	}
 	return nil
@@ -239,7 +238,11 @@ func PushExternalOPAChecks(client *req.Client, filePath, org string, headers []s
 	if err != nil {
 		return fmt.Errorf("error opening file: %w", err)
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			logrus.Errorf("error closing file %s: %v", filePath, err)
+		}
+	}()
 
 	b, err := io.ReadAll(f)
 	if err != nil {
@@ -343,8 +346,8 @@ func getExternalChecksFromFile(client *req.Client, fileContent []byte, headers [
 		if err != nil {
 			return nil, fmt.Errorf("error getting remote checks: %w", err)
 		}
-		if resp.Response.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("error getting remote checks: invalid response code (%v, expected 200)", resp.Response.StatusCode)
+		if resp.IsErrorState() {
+			return nil, fmt.Errorf("error getting remote checks: invalid response code (%v, expected 200)", resp.StatusCode)
 		}
 		rego, err := resp.ToString()
 		if err != nil {

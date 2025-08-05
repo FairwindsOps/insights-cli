@@ -58,7 +58,7 @@ func PushPolicyMappings(client *req.Client, pushDir, org string, deleteMissing, 
 		if !dryRun {
 			err = upsertPolicyMapping(client, org, policyMapping)
 			if err != nil {
-				return fmt.Errorf("Error while upsert policy-mapping %s to Fairwinds Insights: %w", policyMapping.Name, err)
+				return fmt.Errorf("error while upsert policy-mapping %s to Fairwinds Insights: %w", policyMapping.Name, err)
 			}
 		}
 	}
@@ -69,7 +69,7 @@ func PushPolicyMappings(client *req.Client, pushDir, org string, deleteMissing, 
 			if !dryRun {
 				err = deletePolicyMapping(client, org, policyMappingForDelete)
 				if err != nil {
-					return fmt.Errorf("Error while deleting policy-mapping %s from insights: %w", policyMappingForDelete.Name, err)
+					return fmt.Errorf("error while deleting policy-mapping %s from insights: %w", policyMappingForDelete.Name, err)
 				}
 			}
 		}

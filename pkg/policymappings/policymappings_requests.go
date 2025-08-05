@@ -3,7 +3,6 @@ package policymappings
 import (
 	"fmt"
 
-	"github.com/fairwindsops/insights-cli/pkg/utils"
 	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -21,8 +20,8 @@ func FetchPolicyMappings(client *req.Client, org string) ([]PolicyMapping, error
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch policy-mappings from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response.StatusCode) {
-		return nil, fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return nil, fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	var policyMappings []PolicyMapping
 	err = resp.Unmarshal(&policyMappings)
@@ -40,13 +39,13 @@ func upsertPolicyMapping(client *req.Client, org string, policyMapping PolicyMap
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mapping from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response.StatusCode) {
-		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	var response PolicyMapping
 	err = resp.Unmarshal(&response)
 	if err != nil {
-		return fmt.Errorf("Unable to convert response to json for policy-mapping: %w", err)
+		return fmt.Errorf("unable to convert response to json for policy-mapping: %w", err)
 
 	}
 	return nil
@@ -60,13 +59,13 @@ func deletePolicyMapping(client *req.Client, org string, policyMapping PolicyMap
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mapping from insights: %w", err)
 	}
-	if !utils.IsSuccessful(resp.Response.StatusCode) {
-		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return fmt.Errorf("invalid response code - expected 200, got %d: %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	var response PolicyMapping
 	err = resp.Unmarshal(&response)
 	if err != nil {
-		return fmt.Errorf("Unable to convert response to json for policy-mapping: %w", err)
+		return fmt.Errorf("unable to convert response to json for policy-mapping: %w", err)
 	}
 	return nil
 }

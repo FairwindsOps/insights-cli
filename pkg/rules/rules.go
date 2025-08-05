@@ -17,7 +17,6 @@ package rules
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -63,8 +62,8 @@ func getRules(client *req.Client, org string) ([]Rule, error) {
 		return nil, err
 	}
 	var rules []Rule
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("getRules: invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if !resp.IsSuccessState() {
+		logrus.Errorf("getRules: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return nil, errors.New("getRules: invalid response code")
 	}
 	err = resp.Unmarshal(&rules)
@@ -83,8 +82,8 @@ func insertRule(client *req.Client, org string, rule Rule) error {
 		logrus.Errorf("Unable to add rule %s to insights: %v", rule.Name, err)
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("insertRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("insertRule: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("insertRule: invalid response code")
 	}
 	return nil
@@ -98,8 +97,8 @@ func updateRule(client *req.Client, org string, rule Rule) error {
 		logrus.Errorf("Unable to update rule %s to insights: %v", rule.Name, err)
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("updateRule: invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("updateRule: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("updateRule: invalid response code")
 	}
 	return nil
@@ -113,8 +112,8 @@ func deleteRule(client *req.Client, org string, rule Rule) error {
 		logrus.Errorf("Unable to delete rule %s from insights: %v", rule.Name, err)
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		logrus.Errorf("deleteRule: Invalid response code: %s %v", string(resp.Bytes()), resp.Response.StatusCode)
+	if resp.IsErrorState() {
+		logrus.Errorf("deleteRule: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("deleteRule: invalid response code")
 	}
 	return nil

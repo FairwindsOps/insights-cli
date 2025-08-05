@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 
 	"github.com/imroc/req/v3"
@@ -40,8 +39,8 @@ func PutPolicies(client *req.Client, policies io.Reader, org string) error {
 	if err != nil {
 		return err
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		return fmt.Errorf("invalid HTTP response %d %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return fmt.Errorf("invalid HTTP response %d %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/fairwindsops/insights-cli/pkg/utils"
+	"github.com/sirupsen/logrus"
 )
 
 type Message struct {
@@ -71,7 +72,11 @@ func sendRequest(ctx context.Context, apiKey string, request Request) (string, e
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			logrus.Errorf("error closing response body: %v", err)
+		}
+	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -89,7 +94,7 @@ func sendRequest(ctx context.Context, apiKey string, request Request) (string, e
 	}
 	if len(response.Choices) == 0 {
 		fmt.Println("Bad response:\n" + string(body))
-		return "", errors.New("Bad response from OpenAI")
+		return "", errors.New("bad response from OpenAI")
 	}
 
 	return response.Choices[0].Message.Content, nil

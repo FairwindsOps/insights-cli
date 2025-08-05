@@ -104,22 +104,22 @@ func validateAndLoadInsightsAPIConfigWrapper(cmd *cobra.Command, args []string) 
 func validateAndLoadInsightsAPIConfig(client *req.Client) error {
 	insightsToken := os.Getenv("FAIRWINDS_TOKEN")
 	if insightsToken == "" {
-		return errors.New("FAIRWINDS_TOKEN must be set.")
+		return errors.New("FAIRWINDS_TOKEN must be set")
 	}
 	configHandler, err := os.Open(configFile)
 	if err == nil {
 		configContents, err := io.ReadAll(configHandler)
 		if err != nil {
-			return fmt.Errorf("Could not read fairwinds-insights.yaml: %v", err)
+			return fmt.Errorf("could not read fairwinds-insights.yaml: %v", err)
 		}
 		err = yaml.Unmarshal(configContents, &configurationObject)
 		if err != nil {
-			return fmt.Errorf("Could not parse fairwinds-insights.yaml: %v", err)
+			return fmt.Errorf("could not parse fairwinds-insights.yaml: %v", err)
 		}
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("Could not open fairwinds-insights.yaml: %v", err)
+		return fmt.Errorf("could not open fairwinds-insights.yaml: %v", err)
 	} else if organization == "" {
-		return fmt.Errorf("Please add fairwinds-insights.yaml to the base of your repository: %v", err)
+		return fmt.Errorf("please add fairwinds-insights.yaml to the base of your repository: %v", err)
 	}
 	configurationObject.SetDefaults()
 	if organization != "" {
@@ -127,7 +127,7 @@ func validateAndLoadInsightsAPIConfig(client *req.Client) error {
 	}
 	err = configurationObject.CheckForErrors()
 	if err != nil {
-		return fmt.Errorf("Error parsing fairwinds-insights.yaml: %v", err)
+		return fmt.Errorf("error parsing fairwinds-insights.yaml: %v", err)
 	}
 
 	// common client configuration

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -155,8 +154,8 @@ func runVerifyRule(client *req.Client, org string, rule verifyRule, dryRun bool)
 		return nil, fmt.Errorf("error verifying rule in Insights: %v", err)
 
 	}
-	if resp.Response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("invalid response code: %v - %s", resp.Response.StatusCode, string(resp.Bytes()))
+	if resp.IsErrorState() {
+		return nil, fmt.Errorf("invalid response code: %v - %s", resp.StatusCode, string(resp.Bytes()))
 	}
 	var verify verifyWithEvents
 	err = resp.Unmarshal(&verify)
