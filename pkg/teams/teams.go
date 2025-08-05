@@ -54,7 +54,7 @@ func PostTeams(client *req.Client, teamInput []TeamInput, deleteNonProvidedTeams
 	return nil
 }
 
-func PushTeams(client *req.Client, pushDir, org string, deleteNonProvidedTeams, dryrun bool) error {
+func PushTeams(client *req.Client, pushDir, org string, deleteNonProvidedTeams, dryRun bool) error {
 	if pushDir == "" {
 		return errors.New("pushDir cannot be empty")
 	}
@@ -78,7 +78,7 @@ func PushTeams(client *req.Client, pushDir, org string, deleteNonProvidedTeams, 
 	if err != nil {
 		return err
 	}
-	if dryrun {
+	if dryRun {
 		logrus.Infof("Dry run: Would have pushed the following teams configuration:")
 		for _, team := range teams {
 			logrus.Infof("Team: %s", team.Name)

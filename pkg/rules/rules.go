@@ -247,7 +247,7 @@ func compareRules(client *req.Client, folder, org string) (CompareResults, error
 }
 
 // PushRules pushes automation rules to insights
-func PushRules(client *req.Client, pushDir, org string, deleteMissing, dryrun bool) error {
+func PushRules(client *req.Client, pushDir, org string, deleteMissing, dryRun bool) error {
 	logrus.Debugln("Pushing automation rules")
 	_, err := os.Stat(pushDir)
 	if err != nil {
@@ -261,7 +261,7 @@ func PushRules(client *req.Client, pushDir, org string, deleteMissing, dryrun bo
 
 	for _, ruleForInsert := range results.RuleInsert {
 		logrus.Infof("Adding automation rule: %s", ruleForInsert.Name)
-		if !dryrun {
+		if !dryRun {
 			err = insertRule(client, org, ruleForInsert)
 			if err != nil {
 				logrus.Errorf("Error while adding rule %s to insights: %v", ruleForInsert.Name, err)
@@ -272,7 +272,7 @@ func PushRules(client *req.Client, pushDir, org string, deleteMissing, dryrun bo
 
 	for _, ruleForUpdate := range results.RuleUpdate {
 		logrus.Infof("Updating automation rule: %s", ruleForUpdate.Name)
-		if !dryrun {
+		if !dryRun {
 			err = updateRule(client, org, ruleForUpdate)
 			if err != nil {
 				logrus.Errorf("Error while updating rule %s to insights: %v", ruleForUpdate.Name, err)
@@ -284,7 +284,7 @@ func PushRules(client *req.Client, pushDir, org string, deleteMissing, dryrun bo
 	if deleteMissing {
 		for _, ruleForDelete := range results.RuleDelete {
 			logrus.Infof("Deleting automation rule: %s", ruleForDelete.Name)
-			if !dryrun {
+			if !dryRun {
 				err = deleteRule(client, org, ruleForDelete)
 				if err != nil {
 					logrus.Errorf("Error while deleting rule %s from insights: %v", ruleForDelete.Name, err)

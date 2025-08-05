@@ -48,7 +48,7 @@ func PutPolicies(client *req.Client, policies io.Reader, org string) error {
 
 // PushPolicies verifies the policies settings file is readable, then pushes
 // it to the Insights API.
-func PushPolicies(client *req.Client, pushDir, org string, dryrun bool) error {
+func PushPolicies(client *req.Client, pushDir, org string, dryRun bool) error {
 	if pushDir == "" {
 		return errors.New("pushDir cannot be empty")
 	}
@@ -58,7 +58,7 @@ func PushPolicies(client *req.Client, pushDir, org string, dryrun bool) error {
 	if err != nil {
 		return err
 	}
-	if dryrun {
+	if dryRun {
 		logrus.Infoln("NOTE: The policies configuration is currently validated at the time it is submitted to Insights. Pushing this configuration in dry-run mode only validates the file is readable.")
 		return nil
 	}
