@@ -37,7 +37,7 @@ var listRulesCmd = &cobra.Command{
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
 		tree := treeprint.New()
-		err := rules.AddRulesBranch(org, insightsToken, host, tree)
+		err := rules.AddRulesBranch(client, org, insightsToken, host, tree)
 		if err != nil {
 			logrus.Fatalf("Unable to get rules from insights: %v", err)
 		}

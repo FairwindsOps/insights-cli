@@ -7,6 +7,7 @@ import (
 	"reflect"
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
+	"github.com/imroc/req/v3"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/xlab/treeprint"
@@ -23,14 +24,14 @@ func AddAppGroupsBranch(tree treeprint.Tree, appGroups []AppGroup) error {
 }
 
 // PushAppGroups pushes app-groups to insights
-func PushAppGroups(pushDir, org, insightsToken, host string, deleteMissing, dryRun bool) error {
+func PushAppGroups(client *req.Client, pushDir, org, insightsToken, host string, deleteMissing, dryRun bool) error {
 	logrus.Debugln("Pushing app-groups")
 	_, err := os.Stat(pushDir)
 	if err != nil {
 		return err
 	}
 
-	existingAppGroups, err := FetchAppGroups(org, insightsToken, host)
+	existingAppGroups, err := FetchAppGroups(client, org, insightsToken, host)
 	if err != nil {
 		return fmt.Errorf("error during API call: %w", err)
 	}
@@ -43,7 +44,7 @@ func PushAppGroups(pushDir, org, insightsToken, host string, deleteMissing, dryR
 	for _, appGroup := range upserts {
 		logrus.Infof("upsert app-group: %s", appGroup.Name)
 		if !dryRun {
-			err = upsertAppGroup(org, insightsToken, host, appGroup)
+			err = upsertAppGroup(client, org, insightsToken, host, appGroup)
 			if err != nil {
 				return fmt.Errorf("Error while upsert app-group %s to Fairwinds Insights: %w", appGroup.Name, err)
 			}
@@ -54,7 +55,7 @@ func PushAppGroups(pushDir, org, insightsToken, host string, deleteMissing, dryR
 		for _, appGroupForDelete := range deletes {
 			logrus.Infof("Deleting app-group: %s", appGroupForDelete.Name)
 			if !dryRun {
-				err = deleteAppGroup(org, insightsToken, host, appGroupForDelete)
+				err = deleteAppGroup(client, org, insightsToken, host, appGroupForDelete)
 				if err != nil {
 					return fmt.Errorf("Error while deleting app-group %s from insights: %w", appGroupForDelete.Name, err)
 				}

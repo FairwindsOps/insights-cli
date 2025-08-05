@@ -145,12 +145,12 @@ type verifyRule struct {
 }
 
 // runVerifyRule verifies rule against one action item
-func runVerifyRule(org, token, hostName string, rule verifyRule, dryRun bool) (*verifyWithEvents, error) {
+func runVerifyRule(client *req.Client, org, token, hostName string, rule verifyRule, dryRun bool) (*verifyWithEvents, error) {
 	url := fmt.Sprintf(rulesURLVerify, hostName, org)
 	if dryRun {
 		url += "?dryRun=true"
 	}
-	resp, err := req.C().R().SetHeaders(getRuleVerifyHeaders(token)).SetBody(&rule).Post(url)
+	resp, err := client.R().SetHeaders(getRuleVerifyHeaders(token)).SetBody(&rule).Post(url)
 	if err != nil {
 		return nil, fmt.Errorf("error verifying rule in Insights: %v", err)
 
@@ -167,7 +167,7 @@ func runVerifyRule(org, token, hostName string, rule verifyRule, dryRun bool) (*
 	return &verify, nil
 }
 
-func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, insightsContext string, dryRun bool) error {
+func ValidateRule(client *req.Client, org, host, insightsToken, automationRuleFilePath, actionItemFilePath, expectedActionItemFilePath, insightsContext string, dryRun bool) error {
 	aiInput, err := os.Open(actionItemFilePath)
 	if err != nil {
 		return fmt.Errorf("error when trying to open action item file %s: %v", actionItemFilePath, err)
@@ -205,7 +205,7 @@ func ValidateRule(org, host, insightsToken, automationRuleFilePath, actionItemFi
 		ReportType: *ai.ReportType,
 		Script:     string(ruleBytes),
 	}
-	r, err := runVerifyRule(org, insightsToken, host, verifyRule, dryRun)
+	r, err := runVerifyRule(client, org, insightsToken, host, verifyRule, dryRun)
 	if err != nil {
 		return fmt.Errorf("unable to verify rule: %v", err)
 	}

@@ -41,12 +41,12 @@ type TeamInput struct {
 	AppGroups              []string `json:"appGroups" yaml:"appGroups"`
 }
 
-func PostTeams(teamInput []TeamInput, deleteNonProvidedTeams bool, org, token, hostName string) error {
+func PostTeams(client *req.Client, teamInput []TeamInput, deleteNonProvidedTeams bool, org, token, hostName string) error {
 	url := fmt.Sprintf(teamsPutURLFormat, hostName, org)
 	if deleteNonProvidedTeams {
 		url += "?deleteNonProvidedTeams=true"
 	}
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBody(&teamInput).Post(url)
+	resp, err := client.R().SetHeaders(getHeaders(token)).SetBody(&teamInput).Post(url)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func PostTeams(teamInput []TeamInput, deleteNonProvidedTeams bool, org, token, h
 	return nil
 }
 
-func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams, dryrun bool) error {
+func PushTeams(client *req.Client, pushDir, org, insightsToken, host string, deleteNonProvidedTeams, dryrun bool) error {
 	if pushDir == "" {
 		return errors.New("pushDir cannot be empty")
 	}
@@ -94,7 +94,7 @@ func PushTeams(pushDir, org, insightsToken, host string, deleteNonProvidedTeams,
 		}
 		return nil
 	}
-	err = PostTeams(teams, deleteNonProvidedTeams, org, insightsToken, host)
+	err = PostTeams(client, teams, deleteNonProvidedTeams, org, insightsToken, host)
 	if err != nil {
 		return err
 	}

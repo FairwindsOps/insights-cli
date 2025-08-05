@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/fairwindsops/insights-plugins/plugins/opa/pkg/opa"
+	"github.com/imroc/req/v3"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/xlab/treeprint"
@@ -41,9 +42,9 @@ type CompareResults struct {
 }
 
 // CompareChecks compares a folder vs the checks returned by the API.
-func CompareChecks(folder, org, token, hostName string, fileChecks []models.CustomCheckModel, deleteMissing bool) (CompareResults, error) {
+func CompareChecks(client *req.Client, folder, org, token, hostName string, fileChecks []models.CustomCheckModel, deleteMissing bool) (CompareResults, error) {
 	var results CompareResults
-	apiChecks, err := GetChecks(org, token, hostName)
+	apiChecks, err := GetChecks(client, org, token, hostName)
 	if err != nil {
 		logrus.Error("Error getting checks from Insights")
 		return results, err
@@ -61,7 +62,7 @@ func CompareChecks(folder, org, token, hostName string, fileChecks []models.Cust
 	var apiInstances []opa.CheckSetting
 	// TODO replace with org wide get.
 	for _, check := range apiChecks {
-		newInstances, err := GetInstances(org, check.Name, token, hostName)
+		newInstances, err := GetInstances(client, org, check.Name, token, hostName)
 		if err != nil {
 			logrus.Error("Error getting instances from Insights")
 			return results, err
@@ -216,8 +217,8 @@ func getChecksFromFiles(files map[string][]string) ([]models.CustomCheckModel, e
 }
 
 // AddOPAChecksBranch builds the tree for OPA checks
-func AddOPAChecksBranch(org, token, hostName string, tree treeprint.Tree) error {
-	checks, err := GetChecks(org, token, hostName)
+func AddOPAChecksBranch(client *req.Client, org, token, hostName string, tree treeprint.Tree) error {
+	checks, err := GetChecks(client, org, token, hostName)
 	if err != nil {
 		logrus.Errorf("Unable to get checks from insights: %v", err)
 		return err
@@ -225,7 +226,7 @@ func AddOPAChecksBranch(org, token, hostName string, tree treeprint.Tree) error 
 	opaBranch := tree.AddBranch("opa")
 	for _, check := range checks {
 		branch := opaBranch.AddBranch(fmt.Sprintf("%s (v%.0f)", check.Name, check.Version))
-		instances, err := GetInstances(org, check.Name, token, hostName)
+		instances, err := GetInstances(client, org, check.Name, token, hostName)
 		if err != nil {
 			logrus.Errorf("Unable to get instances from insights: %v", err)
 			return err

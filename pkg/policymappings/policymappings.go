@@ -8,6 +8,7 @@ import (
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
 	cliversion "github.com/fairwindsops/insights-cli/pkg/version"
+	"github.com/imroc/req/v3"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/xlab/treeprint"
@@ -36,14 +37,14 @@ func AddPolicyMappingsBranch(tree treeprint.Tree, policyMappings []PolicyMapping
 }
 
 // PushPolicyMappings pushes policy-mapping to insights
-func PushPolicyMappings(pushDir, org, insightsToken, host string, deleteMissing, dryRun bool) error {
+func PushPolicyMappings(client *req.Client, pushDir, org, insightsToken, host string, deleteMissing, dryRun bool) error {
 	logrus.Debugln("Pushing policy-mapping")
 	_, err := os.Stat(pushDir)
 	if err != nil {
 		return err
 	}
 
-	existingPolicyMappings, err := FetchPolicyMappings(org, insightsToken, host)
+	existingPolicyMappings, err := FetchPolicyMappings(client, org, insightsToken, host)
 	if err != nil {
 		return fmt.Errorf("error during API call: %w", err)
 	}
@@ -56,7 +57,7 @@ func PushPolicyMappings(pushDir, org, insightsToken, host string, deleteMissing,
 	for _, policyMapping := range upserts {
 		logrus.Infof("upsert policy-mapping: %s", policyMapping.Name)
 		if !dryRun {
-			err = upsertPolicyMapping(org, insightsToken, host, policyMapping)
+			err = upsertPolicyMapping(client, org, insightsToken, host, policyMapping)
 			if err != nil {
 				return fmt.Errorf("Error while upsert policy-mapping %s to Fairwinds Insights: %w", policyMapping.Name, err)
 			}
@@ -67,7 +68,7 @@ func PushPolicyMappings(pushDir, org, insightsToken, host string, deleteMissing,
 		for _, policyMappingForDelete := range deletes {
 			logrus.Infof("Deleting policy-mapping: %s", policyMappingForDelete.Name)
 			if !dryRun {
-				err = deletePolicyMapping(org, insightsToken, host, policyMappingForDelete)
+				err = deletePolicyMapping(client, org, insightsToken, host, policyMappingForDelete)
 				if err != nil {
 					return fmt.Errorf("Error while deleting policy-mapping %s from insights: %w", policyMappingForDelete.Name, err)
 				}

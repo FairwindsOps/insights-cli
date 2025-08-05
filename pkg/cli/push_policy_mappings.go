@@ -39,7 +39,7 @@ var pushPolicyMappingsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		err := policymappings.PushPolicyMappings(pushDir+"/"+pushPolicyMappingsSubDir, org, insightsToken, host, deleteMissingPolicyMappings, pushDryRun)
+		err := policymappings.PushPolicyMappings(client, pushDir+"/"+pushPolicyMappingsSubDir, org, insightsToken, host, deleteMissingPolicyMappings, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push policy-mappings: %v", err)
 		}

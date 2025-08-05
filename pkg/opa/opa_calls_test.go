@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/imroc/req/v3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -36,7 +37,7 @@ func TestGetExternalChecksFromFileWrongCreds(t *testing.T) {
 	header := "Authorization: Basic " + encodedAuth
 
 	content := fmt.Sprintf(fileContent, externalServer.URL, externalServer.URL)
-	c, err := getExternalChecksFromFile([]byte(content), []string{header})
+	c, err := getExternalChecksFromFile(req.C(), []byte(content), []string{header})
 	assert.EqualError(t, err, "error getting remote checks: invalid response code (401, expected 200)")
 	assert.Len(t, c, 0)
 }
@@ -49,7 +50,7 @@ func TestGetExternalChecksFromFile(t *testing.T) {
 	header := "Authorization: Basic " + encodedAuth
 
 	content := fmt.Sprintf(fileContent, externalServer.URL, externalServer.URL)
-	c, err := getExternalChecksFromFile([]byte(content), []string{header})
+	c, err := getExternalChecksFromFile(req.C(), []byte(content), []string{header})
 	assert.NoError(t, err)
 	assert.Len(t, c, 2)
 }

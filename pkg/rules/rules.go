@@ -22,12 +22,12 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/imroc/req/v3"
 	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"github.com/xlab/treeprint"
 
 	"github.com/fairwindsops/insights-cli/pkg/directory"
+	"github.com/imroc/req/v3"
 )
 
 const rulesURLFormat = "%s/v0/organizations/%s/rules"
@@ -54,10 +54,10 @@ type CompareResults struct {
 }
 
 // getRules queries Fairwinds Insights to retrieve all of the Rules for an organization
-func getRules(org, token, hostName string) ([]Rule, error) {
+func getRules(client *req.Client, org, token, hostName string) ([]Rule, error) {
 	url := fmt.Sprintf(rulesURLFormat, hostName, org)
 	logrus.Debugf("Rules URL: %s", url)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).Get(url)
+	resp, err := client.R().SetHeaders(getHeaders(token)).Get(url)
 	if err != nil {
 		logrus.Errorf("Unable to get rules from insights: %v", err)
 		return nil, err
@@ -76,9 +76,9 @@ func getRules(org, token, hostName string) ([]Rule, error) {
 }
 
 // insertRule adds a new rule
-func insertRule(org, token, hostName string, rule Rule) error {
+func insertRule(client *req.Client, org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatCreate, hostName, org)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBody(&rule).Post(url)
+	resp, err := client.R().SetHeaders(getHeaders(token)).SetBody(&rule).Post(url)
 	if err != nil {
 		logrus.Errorf("Unable to add rule %s to insights: %v", rule.Name, err)
 		return err
@@ -91,9 +91,9 @@ func insertRule(org, token, hostName string, rule Rule) error {
 }
 
 // updateRule updates an existing rule
-func updateRule(org, token, hostName string, rule Rule) error {
+func updateRule(client *req.Client, org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBody(&rule).Post(url)
+	resp, err := client.R().SetHeaders(getHeaders(token)).SetBody(&rule).Post(url)
 	if err != nil {
 		logrus.Errorf("Unable to update rule %s to insights: %v", rule.Name, err)
 		return err
@@ -106,9 +106,9 @@ func updateRule(org, token, hostName string, rule Rule) error {
 }
 
 // deleteRule deletes an existing rule
-func deleteRule(org, token, hostName string, rule Rule) error {
+func deleteRule(client *req.Client, org, token, hostName string, rule Rule) error {
 	url := fmt.Sprintf(rulesURLFormatUpdateDelete, hostName, org, rule.ID)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).Delete(url)
+	resp, err := client.R().SetHeaders(getHeaders(token)).Delete(url)
 	if err != nil {
 		logrus.Errorf("Unable to delete rule %s from insights: %v", rule.Name, err)
 		return err
@@ -121,8 +121,8 @@ func deleteRule(org, token, hostName string, rule Rule) error {
 }
 
 // AddRulesBranch builds a tree for rules
-func AddRulesBranch(org, token, hostName string, tree treeprint.Tree) error {
-	rules, err := getRules(org, token, hostName)
+func AddRulesBranch(client *req.Client, org, token, hostName string, tree treeprint.Tree) error {
+	rules, err := getRules(client, org, token, hostName)
 	if err != nil {
 		logrus.Errorf("Unable to get rules from insights: %v", err)
 		return err
@@ -223,7 +223,7 @@ func getRuleDifferences(fileRules, existingRules []Rule) CompareResults {
 }
 
 // compareRules compares a folder vs the rules returned by the API.
-func compareRules(folder, org, token, hostName string) (CompareResults, error) {
+func compareRules(client *req.Client, folder, org, token, hostName string) (CompareResults, error) {
 	var results CompareResults
 	files, err := directory.ScanFolder(folder)
 	if err != nil {
@@ -236,7 +236,7 @@ func compareRules(folder, org, token, hostName string) (CompareResults, error) {
 		logrus.Error("Error reading checks from files")
 		return results, err
 	}
-	existingRules, err := getRules(org, token, hostName)
+	existingRules, err := getRules(client, org, token, hostName)
 	if err != nil {
 		logrus.Error("Error during API call")
 		return results, err
@@ -247,13 +247,13 @@ func compareRules(folder, org, token, hostName string) (CompareResults, error) {
 }
 
 // PushRules pushes automation rules to insights
-func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun bool) error {
+func PushRules(client *req.Client, pushDir, org, insightsToken, host string, deleteMissing, dryrun bool) error {
 	logrus.Debugln("Pushing automation rules")
 	_, err := os.Stat(pushDir)
 	if err != nil {
 		return err
 	}
-	results, err := compareRules(pushDir, org, insightsToken, host)
+	results, err := compareRules(client, pushDir, org, insightsToken, host)
 	if err != nil {
 		logrus.Errorf("unable to compare and push rules to Insights: %v", err)
 		return err
@@ -262,7 +262,7 @@ func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun b
 	for _, ruleForInsert := range results.RuleInsert {
 		logrus.Infof("Adding automation rule: %s", ruleForInsert.Name)
 		if !dryrun {
-			err = insertRule(org, insightsToken, host, ruleForInsert)
+			err = insertRule(client, org, insightsToken, host, ruleForInsert)
 			if err != nil {
 				logrus.Errorf("Error while adding rule %s to insights: %v", ruleForInsert.Name, err)
 				return err
@@ -273,7 +273,7 @@ func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun b
 	for _, ruleForUpdate := range results.RuleUpdate {
 		logrus.Infof("Updating automation rule: %s", ruleForUpdate.Name)
 		if !dryrun {
-			err = updateRule(org, insightsToken, host, ruleForUpdate)
+			err = updateRule(client, org, insightsToken, host, ruleForUpdate)
 			if err != nil {
 				logrus.Errorf("Error while updating rule %s to insights: %v", ruleForUpdate.Name, err)
 				return err
@@ -285,7 +285,7 @@ func PushRules(pushDir, org, insightsToken, host string, deleteMissing, dryrun b
 		for _, ruleForDelete := range results.RuleDelete {
 			logrus.Infof("Deleting automation rule: %s", ruleForDelete.Name)
 			if !dryrun {
-				err = deleteRule(org, insightsToken, host, ruleForDelete)
+				err = deleteRule(client, org, insightsToken, host, ruleForDelete)
 				if err != nil {
 					logrus.Errorf("Error while deleting rule %s from insights: %v", ruleForDelete.Name, err)
 					return err

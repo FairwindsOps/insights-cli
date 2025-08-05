@@ -36,7 +36,7 @@ var listPolicyMappingsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		policyMappings, err := policymappings.FetchPolicyMappings(org, insightsToken, host)
+		policyMappings, err := policymappings.FetchPolicyMappings(client, org, insightsToken, host)
 		if err != nil {
 			logrus.Fatalf("unable to fetch policy-mappings from insights: %v", err)
 		}

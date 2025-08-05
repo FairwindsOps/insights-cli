@@ -32,7 +32,7 @@ var pushTeamsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		err := teams.PushTeams(pushDir, org, insightsToken, host, pushDeleteNonProvidedTeams, pushDryRun)
+		err := teams.PushTeams(client, pushDir, org, insightsToken, host, pushDelete, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push teams configuration: %v", err)
 		}

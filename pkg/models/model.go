@@ -48,3 +48,7 @@ type CustomCheckInstanceModel struct {
 	Parameters   map[string]interface{} `yaml:"parameters"`
 	Output       OutputModel            `yaml:"output"`
 }
+
+type PolicyModel struct {
+	Checks map[string]any `json:"Checks"`
+}

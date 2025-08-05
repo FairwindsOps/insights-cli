@@ -15,10 +15,10 @@ const (
 )
 
 // FetchAppGroups queries Fairwinds Insights to retrieve all of the app-groups for an organization
-func FetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
+func FetchAppGroups(client *req.Client, org, token, hostName string) ([]AppGroup, error) {
 	url := fmt.Sprintf(appGroupURLFormat, hostName, org)
 	logrus.Debugf("fetchAppGroups: appGroups URL: %s", url)
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Get(url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
@@ -34,10 +34,10 @@ func FetchAppGroups(org, token, hostName string) ([]AppGroup, error) {
 }
 
 // upsertAppGroup requests Fairwinds Insights to upsert an app-group for an organization
-func upsertAppGroup(org, token, hostName string, appGroup AppGroup) error {
+func upsertAppGroup(client *req.Client, org, token, hostName string, appGroup AppGroup) error {
 	url := fmt.Sprintf(appGroupURLFormat, hostName, org)
 	logrus.Debugf("upsertAppGroup: appGroups URL: %s", url)
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBody(&appGroup).Post(url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBody(&appGroup).Post(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}
@@ -54,10 +54,10 @@ func upsertAppGroup(org, token, hostName string, appGroup AppGroup) error {
 }
 
 // deleteAppGroup requests Fairwinds Insights to remove an app-group for an organization
-func deleteAppGroup(org, token, hostName string, appGroup AppGroup) error {
+func deleteAppGroup(client *req.Client, org, token, hostName string, appGroup AppGroup) error {
 	url := fmt.Sprintf(appGroupURLSingleFormat, hostName, org, appGroup.Name)
 	logrus.Debugf("deleteAppGroup: appGroups URL: %s", url)
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Delete(url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).Delete(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch app-groups from insights: %w", err)
 	}

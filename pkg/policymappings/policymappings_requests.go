@@ -14,10 +14,10 @@ const (
 )
 
 // FetchPolicyMappings queries Fairwinds Insights to retrieve all of the policy-mappings for an organization
-func FetchPolicyMappings(org, token, hostName string) ([]PolicyMapping, error) {
+func FetchPolicyMappings(client *req.Client, org, token, hostName string) ([]PolicyMapping, error) {
 	url := fmt.Sprintf(policyMappingURLFormat, hostName, org)
 	logrus.Debugf("fetchPolicyMappings: policyMappings URL: %s", url)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).Get(url)
+	resp, err := client.R().SetHeaders(getHeaders(token)).Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("unable to fetch policy-mappings from insights: %w", err)
 	}
@@ -33,10 +33,10 @@ func FetchPolicyMappings(org, token, hostName string) ([]PolicyMapping, error) {
 }
 
 // upsertPolicyMapping requests Fairwinds Insights to upsert an policy-mapping for an organization
-func upsertPolicyMapping(org, token, hostName string, policyMapping PolicyMapping) error {
+func upsertPolicyMapping(client *req.Client, org, token, hostName string, policyMapping PolicyMapping) error {
 	url := fmt.Sprintf(policyMappingURLFormat, hostName, org)
 	logrus.Debugf("upsertPolicyMapping: policyMappings URL: %s", url)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBody(&policyMapping).Post(url)
+	resp, err := client.R().SetHeaders(getHeaders(token)).SetBody(&policyMapping).Post(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mapping from insights: %w", err)
 	}
@@ -53,10 +53,10 @@ func upsertPolicyMapping(org, token, hostName string, policyMapping PolicyMappin
 }
 
 // deletePolicyMapping requests Fairwinds Insights to remove an policy-mapping for an organization
-func deletePolicyMapping(org, token, hostName string, policyMapping PolicyMapping) error {
+func deletePolicyMapping(client *req.Client, org, token, hostName string, policyMapping PolicyMapping) error {
 	url := fmt.Sprintf(policyMappingURLSingleFormat, hostName, org, policyMapping.Name)
 	logrus.Debugf("deletePolicyMapping: policyMappings URL: %s", url)
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).Delete(url)
+	resp, err := client.R().SetHeaders(getHeaders(token)).Delete(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mapping from insights: %w", err)
 	}

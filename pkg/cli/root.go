@@ -20,17 +20,21 @@ import (
 	"io"
 	"os"
 
+	"github.com/imroc/req/v3"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/xlab/treeprint"
 	"gopkg.in/yaml.v3"
 )
 
+var client = req.C()
+
 var logLevel string
 var insightsToken string
 var configFile string
 var organization string
 var noDecoration bool
+var debug bool
 
 var configurationObject configuration
 
@@ -82,12 +86,17 @@ func exitWithError(message string, err error) {
 }
 
 func init() {
-	logrus.SetFormatter(&logrus.TextFormatter{DisableTimestamp: true, DisableLevelTruncation: true})
-
+	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "", false, "Enable debug mode.")
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "log-level", "", logrus.InfoLevel.String(), "Logrus log level.")
 	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "./fairwinds-insights.yaml", "Configuration file")
 	rootCmd.PersistentFlags().StringVarP(&organization, "organization", "", "", "Fairwinds Insights Organization name")
 	rootCmd.PersistentFlags().BoolVarP(&noDecoration, "no-decoration", "", false, "Do not include decorative characters in output, such as tree visualization.")
+
+	if debug {
+		client.DevMode()
+	}
+
+	logrus.SetFormatter(&logrus.TextFormatter{DisableTimestamp: true, DisableLevelTruncation: true})
 }
 
 func validateAndLoadInsightsAPIConfigWrapper(cmd *cobra.Command, args []string) {

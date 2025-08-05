@@ -11,7 +11,7 @@ import (
 
 const organizationURLFormat = "%s/v0/organizations/%s"
 
-func ManageOrganizationPolicyMappings(org, token, hostName string, enable bool) error {
+func ManageOrganizationPolicyMappings(client *req.Client, org, token, hostName string, enable bool) error {
 	mode := "scan-all"
 	if enable {
 		mode = "app-groups"
@@ -19,7 +19,7 @@ func ManageOrganizationPolicyMappings(org, token, hostName string, enable bool) 
 	url := fmt.Sprintf(organizationURLFormat, hostName, org)
 	logrus.Debugf("enable/disable: policyMappings URL: %s, value: %v", url, enable)
 	body := map[string]string{"PolicyStrategy": mode}
-	resp, err := req.C().R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBody(&body).Patch(url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders(version.GetVersion(), token, "")).SetBody(&body).Patch(url)
 	if err != nil {
 		return fmt.Errorf("unable to fetch policy-mappings from insights: %w", err)
 	}

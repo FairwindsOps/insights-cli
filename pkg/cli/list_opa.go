@@ -37,7 +37,7 @@ var listOPACmd = &cobra.Command{
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
 		tree := treeprint.New()
-		err := opa.AddOPAChecksBranch(org, insightsToken, host, tree)
+		err := opa.AddOPAChecksBranch(client, org, insightsToken, host, tree)
 		if err != nil {
 			logrus.Fatalf("Unable to get OPA checks from insights: %v", err)
 		}

@@ -32,13 +32,13 @@ const policiesPutURLFormat = "%s/v0/organizations/%s/policies"
 
 // PutPolicies submits the io.Reader as an HTTP PUT request, content-type
 // text/yaml, to the Insights API policies endpoint.
-func PutPolicies(policies io.Reader, org, token, hostName string) error {
+func PutPolicies(client *req.Client, policies io.Reader, org, token, hostName string) error {
 	url := fmt.Sprintf(policiesPutURLFormat, hostName, org)
 	bodyBytes, err := io.ReadAll(policies)
 	if err != nil {
 		return err
 	}
-	resp, err := req.C().R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
+	resp, err := client.R().SetHeaders(getHeaders(token)).SetBodyBytes(bodyBytes).Post(url)
 	if err != nil {
 		return err
 	}
@@ -50,7 +50,7 @@ func PutPolicies(policies io.Reader, org, token, hostName string) error {
 
 // PushPolicies verifies the policies settings file is readable, then pushes
 // it to the Insights API.
-func PushPolicies(pushDir, org, insightsToken, host string, dryrun bool) error {
+func PushPolicies(client *req.Client, pushDir, org, insightsToken, host string, dryrun bool) error {
 	if pushDir == "" {
 		return errors.New("pushDir cannot be empty")
 	}
@@ -68,7 +68,7 @@ func PushPolicies(pushDir, org, insightsToken, host string, dryrun bool) error {
 	if err != nil {
 		return err
 	}
-	err = PutPolicies(policies, org, insightsToken, host)
+	err = PutPolicies(client, policies, org, insightsToken, host)
 	if err != nil {
 		return err
 	}

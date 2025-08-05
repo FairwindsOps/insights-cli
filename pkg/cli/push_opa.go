@@ -43,7 +43,7 @@ var pushOPACmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		err := opa.PushOPAChecks(pushDir+"/"+pushOPASubDir, org, insightsToken, host, deleteMissingOPA, pushDryRun, pushRegoVersion)
+		err := opa.PushOPAChecks(client, pushDir+"/"+pushOPASubDir, org, insightsToken, host, deleteMissingOPA, pushDryRun, pushRegoVersion)
 		if err != nil {
 			logrus.Fatalf("Unable to push OPA Checks: %v", err)
 		}

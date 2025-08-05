@@ -36,7 +36,7 @@ var listAppGroupsCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
 		host := configurationObject.Options.Hostname
-		appGroups, err := appgroups.FetchAppGroups(org, insightsToken, host)
+		appGroups, err := appgroups.FetchAppGroups(client, org, insightsToken, host)
 		if err != nil {
 			logrus.Fatalf("unable to fetch app-groups from insights: %v", err)
 		}
