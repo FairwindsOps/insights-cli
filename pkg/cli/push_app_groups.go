@@ -20,12 +20,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var deleteMissingAppGroups bool
 var pushAppGroupsSubDir string
 var defaultPushAppGroupsSubDir = "app-groups"
 
 func init() {
-	pushAppGroupsCmd.PersistentFlags().BoolVarP(&deleteMissingAppGroups, "delete", "D", false, "Delete any app groups from Fairwinds Insights that are not present in the local directory.")
 	// This flag sets a variable defined in the parent `push` command.
 	pushAppGroupsCmd.PersistentFlags().StringVarP(&pushAppGroupsSubDir, "push-app-groups-subdirectory", "", defaultPushAppGroupsSubDir, "Sub-directory within push-directory, to contain app-groups.")
 	pushCmd.AddCommand(pushAppGroupsCmd)
@@ -38,7 +36,7 @@ var pushAppGroupsCmd = &cobra.Command{
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		err := appgroups.PushAppGroups(client, pushDir+"/"+pushAppGroupsSubDir, org, deleteMissingAppGroups, pushDryRun)
+		err := appgroups.PushAppGroups(client, pushDir+"/"+pushAppGroupsSubDir, org, pushDelete, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to push app-groups: %v", err)
 		}
