@@ -13,7 +13,7 @@ stderr 'FAIRWINDS_TOKEN must be set'
 env FAIRWINDS_TOKEN=dummy_value
 ! exec insights-cli list all
 ! stdout .
-stderr 'Please add fairwinds-insights.yaml to the base of your repository'
+stderr 'please add fairwinds-insights.yaml to the base of your repository'
 # Create fairwinds-insights.yaml with no organization.
 exec echo options:
 cp stdout fairwinds-insights.yaml

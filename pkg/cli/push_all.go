@@ -121,7 +121,7 @@ var pushAllCmd = &cobra.Command{
 		}
 
 		if numFailures == 0 && numWarnings == 0 {
-			logrus.Infoln("Push succeeded")
+			logrus.Infoln("Push succeeded.")
 			return
 		}
 
