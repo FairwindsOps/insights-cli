@@ -98,8 +98,8 @@ github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+l
 github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=
 github.com/icholy/digest v1.1.0 h1:HfGg9Irj7i+IX1o1QAmPfIBNu/Q5A5Tu3n/MED9k9H4=
 github.com/icholy/digest v1.1.0/go.mod h1:QNrsSGQ5v7v9cReDI0+eyjsXGUoRSUZQHeQ5C4XLa0Y=
-github.com/imroc/req/v3 v3.54.0 h1:kwWJSpT7OvjJ/Q8ykp+69Ye5H486RKDcgEoepw1Ren4=
-github.com/imroc/req/v3 v3.54.0/go.mod h1:P8gCJjG/XNUFeP6WOi40VAXfYwT+uPM00xvoBWiwzUQ=
+github.com/imroc/req/v3 v3.54.2 h1:1eWvCPiz3mSwap7HWqdHN2biuoue+n+mpYWsYiXeMB0=
+github.com/imroc/req/v3 v3.54.2/go.mod h1:nR52xB4Ogdwst/UW3QLb2wUiR9ZCLYhiLX9iyksae0I=
 github.com/inconshreveable/mousetrap v1.1.0 h1:wN+x4NVGpMsO7ErUn/mUI3vEoE6Jt13X2s0bqwp9tc8=
 github.com/inconshreveable/mousetrap v1.1.0/go.mod h1:vpF70FUmC8bwa3OWnCshd2FqLfsEA9PFc4w1p2J65bw=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=

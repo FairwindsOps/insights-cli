@@ -9,7 +9,7 @@ require (
 	github.com/fatih/color v1.18.0
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/imroc/req/v3 v3.54.0
+	github.com/imroc/req/v3 v3.54.2
 	github.com/open-policy-agent/opa v1.7.1
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/samber/lo v1.51.0
