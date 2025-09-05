@@ -21,22 +21,26 @@ import (
 	"os"
 
 	"github.com/imroc/req/v3"
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )
 
 const teamsPutURLFormat = "/v0/organizations/%s/teams-bulk"
+const teamsGetURLFormat = "/v0/organizations/%s/teams"
 
 type TeamInput struct {
+	Name                   string   `json:"name" yaml:"name"`
 	Clusters               []string `json:"clusters" yaml:"clusters"`
+	Namespaces             []string `json:"namespaces" yaml:"namespaces"`
+	Repositories           []string `json:"repositories" yaml:"repositories"`
 	DisallowedClusters     []string `json:"disallowedClusters" yaml:"disallowedClusters"`
 	DisallowedNamespaces   []string `json:"disallowedNamespaces" yaml:"disallowedNamespaces"`
 	DisallowedRepositories []string `json:"disallowedRepositories" yaml:"disallowedRepositories"`
-	Name                   string   `json:"name" yaml:"name"`
-	Namespaces             []string `json:"namespaces" yaml:"namespaces"`
-	Repositories           []string `json:"repositories" yaml:"repositories"`
 	AppGroups              []string `json:"appGroups" yaml:"appGroups"`
 }
+
+type TeamOutput = TeamInput
 
 func PostTeams(client *req.Client, teamInput []TeamInput, deleteNonProvidedTeams bool, org string) error {
 	url := fmt.Sprintf(teamsPutURLFormat, org)
@@ -53,38 +57,60 @@ func PostTeams(client *req.Client, teamInput []TeamInput, deleteNonProvidedTeams
 	return nil
 }
 
+func ListTeams(client *req.Client, org string) ([]TeamOutput, error) {
+	url := fmt.Sprintf(teamsGetURLFormat, org)
+	resp, err := client.R().SetHeaders(getHeaders()).Get(url)
+	if err != nil {
+		return nil, err
+	}
+	if resp.IsErrorState() {
+		return nil, fmt.Errorf("invalid HTTP response %d %s", resp.StatusCode, string(resp.Bytes()))
+	}
+	teams := []TeamOutput{}
+	err = resp.Unmarshal(&teams)
+	if err != nil {
+		return nil, fmt.Errorf("unable to convert response to json for teams: %w", err)
+	}
+	return teams, nil
+}
+
 func PushTeams(client *req.Client, pushDir, org string, deleteNonProvidedTeams, dryRun bool) error {
 	if pushDir == "" {
 		return errors.New("pushDir cannot be empty")
 	}
+
 	teamsFileName := pushDir + "/teams.yaml"
 	logrus.Infof("Pushing teams configuration from %s", teamsFileName)
 	_, err := os.Stat(teamsFileName)
 	if err != nil {
 		return err
 	}
+
 	teamsFile, err := os.Open(teamsFileName)
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		if err := teamsFile.Close(); err != nil {
 			logrus.Errorf("error closing teams file: %v", err)
 		}
 	}()
 
-	teams := []TeamInput{}
+	localTeams := []TeamInput{}
 	b, err := os.ReadFile(teamsFileName)
 	if err != nil {
 		return err
 	}
-	err = yaml.Unmarshal(b, &teams)
+
+	err = yaml.Unmarshal(b, &localTeams)
 	if err != nil {
 		return err
 	}
+
 	if dryRun {
 		logrus.Infof("Dry run: Would have pushed the following teams configuration:")
-		for _, team := range teams {
+		for _, team := range localTeams {
 			logrus.Infof("Team: %s", team.Name)
 			logrus.Infof("  Clusters: %v", team.Clusters)
 			logrus.Infof("  Namespaces: %v", team.Namespaces)
@@ -94,12 +120,43 @@ func PushTeams(client *req.Client, pushDir, org string, deleteNonProvidedTeams, 
 			logrus.Infof("  DisallowedRepositories: %v", team.DisallowedRepositories)
 			logrus.Infof("  AppGroups: %v", team.AppGroups)
 		}
+
+		if deleteNonProvidedTeams {
+			logrus.Infof("--------------------------------")
+
+			remoteTeams, err := ListTeams(client, org)
+			if err != nil {
+				return fmt.Errorf("error listing teams: %w", err)
+			}
+			remoteTeamsByName := lo.KeyBy(remoteTeams, func(i TeamOutput) string { return i.Name })
+			localTeamsByName := lo.KeyBy(localTeams, func(i TeamInput) string { return i.Name })
+
+			teamsToBeDeleted := []string{}
+			for name := range remoteTeamsByName {
+				if _, ok := localTeamsByName[name]; !ok {
+					teamsToBeDeleted = append(teamsToBeDeleted, name)
+				}
+			}
+
+			if len(teamsToBeDeleted) == 0 {
+				logrus.Infof("Dry run: Would have deleted no teams")
+				return nil
+			}
+
+			logrus.Infof("Dry run: Would have deleted the following teams:")
+			for _, team := range teamsToBeDeleted {
+				logrus.Infof("Team: %s", team)
+			}
+		}
+
 		return nil
 	}
-	err = PostTeams(client, teams, deleteNonProvidedTeams, org)
+
+	err = PostTeams(client, localTeams, deleteNonProvidedTeams, org)
 	if err != nil {
 		return err
 	}
+
 	logrus.Debugln("Done pushing teams configuration")
 	return nil
 }
