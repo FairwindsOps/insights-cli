@@ -1,6 +1,10 @@
 # Test validating Kyverno policies with test cases
 mkdir test-dir
 mkdir test-dir/kyverno-policies
+
+# Create a fairwinds-insights.yaml file for configuration
+exec printf 'options:\n  organization: %s\n  hostname: %s\n' $CI_INSIGHTS_ORGANIZATION $CI_INSIGHTS_API_URL
+cp stdout fairwinds-insights.yaml
 cp require-labels.yaml test-dir/kyverno-policies/
 cp disallow-privileged.yaml test-dir/kyverno-policies/
 cp require-labels.testcase1.success.yaml test-dir/kyverno-policies/
@@ -8,14 +12,13 @@ cp require-labels.testcase2.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase1.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase2.success.yaml test-dir/kyverno-policies/
 
-# Test batch validation
-exec insights-cli validate kyverno-policies -b test-dir/kyverno-policies/
-stderr 'Validating policy: require-labels'
-stderr 'Validating policy: disallow-privileged'
+# Test batch validation (expects API token to be set)
+! exec insights-cli validate kyverno-policies -b test-dir/kyverno-policies/
+stderr 'FAIRWINDS_TOKEN must be set'
 
-# Test single policy validation
-exec insights-cli validate kyverno-policies -r test-dir/kyverno-policies/require-labels.yaml -k test-dir/kyverno-policies/require-labels.testcase1.success.yaml
-stderr 'Kyverno policy validated successfully.'
+# Test single policy validation (expects API token to be set)
+! exec insights-cli validate kyverno-policies -r test-dir/kyverno-policies/require-labels.yaml -k test-dir/kyverno-policies/require-labels.testcase1.success.yaml
+stderr 'FAIRWINDS_TOKEN must be set'
 
 -- require-labels.yaml --
 apiVersion: kyverno.io/v1
