@@ -1,0 +1,108 @@
+# Test validating Kyverno policies with test cases
+mkdir test-dir
+mkdir test-dir/kyverno-policies
+cp require-labels.yaml test-dir/kyverno-policies/
+cp disallow-privileged.yaml test-dir/kyverno-policies/
+cp require-labels.testcase1.success.yaml test-dir/kyverno-policies/
+cp require-labels.testcase2.failure.yaml test-dir/kyverno-policies/
+cp disallow-privileged.testcase1.failure.yaml test-dir/kyverno-policies/
+cp disallow-privileged.testcase2.success.yaml test-dir/kyverno-policies/
+
+# Test batch validation
+exec insights-cli validate kyverno-policies -b test-dir/kyverno-policies/
+stderr 'Validating policy: require-labels'
+stderr 'Validating policy: disallow-privileged'
+
+# Test single policy validation
+exec insights-cli validate kyverno-policies -r test-dir/kyverno-policies/require-labels.yaml -k test-dir/kyverno-policies/require-labels.testcase1.success.yaml
+stderr 'Kyverno policy validated successfully.'
+
+-- require-labels.yaml --
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-labels
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: check-labels
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Label 'app' is required"
+      pattern:
+        metadata:
+          labels:
+            app: "?*"
+
+-- disallow-privileged.yaml --
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: disallow-privileged
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: disallow-privileged
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Privileged containers are not allowed"
+      pattern:
+        spec:
+          =(securityContext):
+            =(privileged): "false"
+
+-- require-labels.testcase1.success.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+-- require-labels.testcase2.failure.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-no-labels
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+-- disallow-privileged.testcase1.failure.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-pod
+spec:
+  securityContext:
+    privileged: true
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+-- disallow-privileged.testcase2.success.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: non-privileged-pod
+spec:
+  securityContext:
+    privileged: false
+  containers:
+  - name: nginx
+    image: nginx:latest

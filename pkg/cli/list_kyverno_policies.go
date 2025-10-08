@@ -15,32 +15,31 @@
 package cli
 
 import (
-	"github.com/fairwindsops/insights-cli/pkg/appgroups"
+	"fmt"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"github.com/xlab/treeprint"
+
+	"github.com/fairwindsops/insights-cli/pkg/kyverno"
 )
 
-var pushAppGroupsSubDir string
-
-const defaultPushAppGroupsSubDir = "app-groups"
-
 func init() {
-	// This flag sets a variable defined in the parent `push` command.
-	pushAppGroupsCmd.PersistentFlags().StringVarP(&pushAppGroupsSubDir, "push-app-groups-subdirectory", "", defaultPushAppGroupsSubDir, "Sub-directory within push-directory, to contain app-groups.")
-	pushCmd.AddCommand(pushAppGroupsCmd)
+	listCmd.AddCommand(listKyvernoPoliciesCmd)
 }
 
-var pushAppGroupsCmd = &cobra.Command{
-	Use:    "app-groups",
-	Short:  "Push app-groups.",
-	Long:   "Push app-groups to Fairwinds Insights.",
+var listKyvernoPoliciesCmd = &cobra.Command{
+	Use:    "kyverno-policies",
+	Short:  "List Kyverno policies.",
+	Long:   "List Kyverno policies defined in Insights.",
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
-		err := appgroups.PushAppGroups(client, pushDir+"/"+pushAppGroupsSubDir, org, pushDelete, pushDryRun)
+		tree := treeprint.New()
+		err := kyverno.AddKyvernoPoliciesBranch(client, org, tree)
 		if err != nil {
-			logrus.Fatalf("Unable to push app-groups: %v", err)
+			logrus.Fatalf("Unable to get Kyverno policies from insights: %v", err)
 		}
-		logrus.Infoln("Push succeeded.")
+		fmt.Println(tree.String())
 	},
 }

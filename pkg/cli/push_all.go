@@ -22,6 +22,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/fairwindsops/insights-cli/pkg/appgroups"
+	"github.com/fairwindsops/insights-cli/pkg/kyverno"
 	"github.com/fairwindsops/insights-cli/pkg/opa"
 	"github.com/fairwindsops/insights-cli/pkg/policies"
 	"github.com/fairwindsops/insights-cli/pkg/policymappings"
@@ -35,6 +36,7 @@ func init() {
 	pushAllCmd.PersistentFlags().StringVarP(&pushRulesSubDir, "push-rules-subdirectory", "", defaultPushRulesSubDir, "Sub-directory within push-directory, to contain automation rules.")
 	pushAllCmd.PersistentFlags().StringVarP(&pushAppGroupsSubDir, "push-app-groups-subdirectory", "", defaultPushAppGroupsSubDir, "Sub-directory within push-directory, to contain App Groups.")
 	pushAllCmd.PersistentFlags().StringVarP(&pushPolicyMappingsSubDir, "push-policy-mappings-subdirectory", "", defaultPushPolicyMappingsSubDir, "Sub-directory within push-directory, to contain Policy Mappings.")
+	pushAllCmd.PersistentFlags().StringVarP(&pushKyvernoPoliciesSubDir, "push-kyverno-policies-subdirectory", "", defaultPushKyvernoPoliciesSubDir, "Sub-directory within push-directory, to contain Kyverno policies.")
 	pushAllCmd.PersistentFlags().BoolVarP(&warningsAreFatal, "warnings-are-fatal", "", false, "Treat warnings as a failure and exit with a non-zero status. For example, if pushing OPA policies and automation rules succeeds, but pushing policies configuration fails because the settings.yaml file is not present.")
 	pushCmd.AddCommand(pushAllCmd)
 }
@@ -51,7 +53,7 @@ var pushAllCmd = &cobra.Command{
 		}
 
 		org := configurationObject.Options.Organization
-		const resourcesTypeToPush = 5
+		const resourcesTypeToPush = 6
 
 		var numWarnings, numFailures int
 		logrus.Infoln("Pushing OPA policies, automation rules, and policies configuration to Insights.")
@@ -117,6 +119,25 @@ var pushAllCmd = &cobra.Command{
 			if err != nil {
 				logrus.Errorf("Unable to push policy-mappings: %v", err)
 				numFailures++
+			}
+		}
+
+		absPushKyvernoPoliciesDir := filepath.Join(pushDir, pushKyvernoPoliciesSubDir)
+		_, err = os.Stat(absPushKyvernoPoliciesDir)
+		if err != nil {
+			logrus.Warnf("Unable to push Kyverno policies (%s): %v", absPushKyvernoPoliciesDir, err)
+			numWarnings++
+		} else {
+			policies, err := kyverno.GetPolicyFilesForPush(absPushKyvernoPoliciesDir)
+			if err != nil {
+				logrus.Errorf("Unable to read Kyverno policy files: %v", err)
+				numFailures++
+			} else {
+				err = kyverno.PushKyvernoPolicies(client, policies, org, pushDelete, pushDryRun)
+				if err != nil {
+					logrus.Errorf("Unable to push Kyverno policies: %v", err)
+					numFailures++
+				}
 			}
 		}
 
