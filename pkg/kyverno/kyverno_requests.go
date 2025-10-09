@@ -126,8 +126,8 @@ func BulkUpsertKyvernoPolicies(client *req.Client, org string, policies []Kyvern
 	}
 
 	requestBody := map[string]interface{}{
-		"policies":       policyInputs,
-		"deleteMissing":  deleteMissing,
+		"policies":      policyInputs,
+		"deleteMissing": deleteMissing,
 	}
 
 	resp, err := client.R().SetHeaders(utils.GetHeaders("")).SetBody(&requestBody).Put(url)
