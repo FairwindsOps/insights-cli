@@ -119,9 +119,15 @@ func ValidateKyvernoPolicyWithExpectedOutcomes(client *req.Client, org string, p
 func BulkUpsertKyvernoPolicies(client *req.Client, org string, policies []KyvernoPolicy, deleteMissing bool) (*BulkUpsertResponse, error) {
 	url := fmt.Sprintf(kyvernoPolicyBulkURLFormat, org)
 
+	// Convert policies to the format expected by the API
+	policyInputs := make([]KyvernoPolicyInput, len(policies))
+	for i, policy := range policies {
+		policyInputs[i] = policy.ToKyvernoPolicyInput()
+	}
+
 	requestBody := map[string]interface{}{
-		"policies":       policies,
-		"delete_missing": deleteMissing,
+		"policies":       policyInputs,
+		"deleteMissing":  deleteMissing,
 	}
 
 	resp, err := client.R().SetHeaders(utils.GetHeaders("")).SetBody(&requestBody).Put(url)

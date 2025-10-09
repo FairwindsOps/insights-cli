@@ -83,3 +83,49 @@ type BulkUpsertResponse struct {
 	Deleted int      `json:"deleted"`
 	Errors  []string `json:"errors"`
 }
+
+// KyvernoPolicyInput represents the input format expected by the API
+type KyvernoPolicyInput struct {
+	Name        string                 `json:"name"`
+	Kind        string                 `json:"kind"`
+	APIVersion  string                 `json:"apiVersion"`
+	Labels      map[string]string      `json:"labels,omitempty"`
+	Annotations map[string]string      `json:"annotations,omitempty"`
+	Spec        map[string]interface{} `json:"spec"`
+	Status      *map[string]interface{} `json:"status,omitempty"`
+}
+
+// ToKyvernoPolicyInput converts a KyvernoPolicy to KyvernoPolicyInput format
+func (k KyvernoPolicy) ToKyvernoPolicyInput() KyvernoPolicyInput {
+	// Convert labels from map[string]interface{} to map[string]string
+	labels := make(map[string]string)
+	for key, value := range k.Labels {
+		if str, ok := value.(string); ok {
+			labels[key] = str
+		}
+	}
+
+	// Convert annotations from map[string]interface{} to map[string]string
+	annotations := make(map[string]string)
+	for key, value := range k.Annotations {
+		if str, ok := value.(string); ok {
+			annotations[key] = str
+		}
+	}
+
+	// Convert status to pointer if it exists
+	var status *map[string]interface{}
+	if k.Status != nil {
+		status = &k.Status
+	}
+
+	return KyvernoPolicyInput{
+		Name:        k.Name,
+		Kind:        k.Kind,
+		APIVersion:  k.APIVersion,
+		Labels:      labels,
+		Annotations: annotations,
+		Spec:        k.Spec,
+		Status:      status,
+	}
+}
