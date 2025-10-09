@@ -86,12 +86,12 @@ type BulkUpsertResponse struct {
 
 // KyvernoPolicyInput represents the input format expected by the API
 type KyvernoPolicyInput struct {
-	Name        string                 `json:"name"`
-	Kind        string                 `json:"kind"`
-	APIVersion  string                 `json:"apiVersion"`
-	Labels      map[string]string      `json:"labels,omitempty"`
-	Annotations map[string]string      `json:"annotations,omitempty"`
-	Spec        map[string]interface{} `json:"spec"`
+	Name        string                  `json:"name"`
+	Kind        string                  `json:"kind"`
+	APIVersion  string                  `json:"apiVersion"`
+	Labels      map[string]string       `json:"labels,omitempty"`
+	Annotations map[string]string       `json:"annotations,omitempty"`
+	Spec        map[string]interface{}  `json:"spec"`
 	Status      *map[string]interface{} `json:"status,omitempty"`
 }
 
