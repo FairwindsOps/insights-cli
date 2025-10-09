@@ -41,17 +41,17 @@ func FetchKyvernoPolicies(client *req.Client, org string) ([]KyvernoPolicy, erro
 		logrus.Errorf("Unable to get Kyverno policies from insights: %v", err)
 		return nil, err
 	}
-	var policies []KyvernoPolicy
+	var policyList KyvernoPolicyList
 	if !utils.IsSuccessful(resp.StatusCode) {
 		logrus.Errorf("FetchKyvernoPolicies: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return nil, errors.New("FetchKyvernoPolicies: invalid response code")
 	}
-	err = resp.Unmarshal(&policies)
+	err = resp.Unmarshal(&policyList)
 	if err != nil {
 		logrus.Errorf("Unable to convert response to json for Kyverno policies: %v", err)
 		return nil, err
 	}
-	return policies, nil
+	return policyList.Policies, nil
 }
 
 // UpsertKyvernoPolicy creates or updates a Kyverno policy

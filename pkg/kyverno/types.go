@@ -84,6 +84,12 @@ type BulkUpsertResponse struct {
 	Errors  []string `json:"errors"`
 }
 
+// KyvernoPolicyList represents the response from the list endpoint
+type KyvernoPolicyList struct {
+	Policies []KyvernoPolicy `json:"policies"`
+	Total    int             `json:"total"`
+}
+
 // KyvernoPolicyInput represents the input format expected by the API
 type KyvernoPolicyInput struct {
 	Name        string                  `json:"name"`
