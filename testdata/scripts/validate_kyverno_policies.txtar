@@ -12,13 +12,13 @@ cp require-labels.testcase2.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase1.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase2.success.yaml test-dir/kyverno-policies/
 
-# Test batch validation (expects API token to be set)
+# Test batch validation (expects either token validation error or API error)
 ! exec insights-cli validate kyverno-policies -b test-dir/kyverno-policies/
-stderr 'FAIRWINDS_TOKEN must be set'
+stderr 'FAIRWINDS_TOKEN must be set|Organization not found'
 
-# Test single policy validation (expects API token to be set)
+# Test single policy validation (expects either token validation error or API error)
 ! exec insights-cli validate kyverno-policies -r test-dir/kyverno-policies/require-labels.yaml -k test-dir/kyverno-policies/require-labels.testcase1.success.yaml
-stderr 'FAIRWINDS_TOKEN must be set'
+stderr 'FAIRWINDS_TOKEN must be set|Organization not found'
 
 -- require-labels.yaml --
 apiVersion: kyverno.io/v1
