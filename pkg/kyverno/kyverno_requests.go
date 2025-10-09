@@ -124,7 +124,7 @@ func BulkUpsertKyvernoPolicies(client *req.Client, org string, policies []Kyvern
 		"delete_missing": deleteMissing,
 	}
 
-	resp, err := client.R().SetHeaders(utils.GetHeaders("")).SetBody(&requestBody).Post(url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("")).SetBody(&requestBody).Put(url)
 	if err != nil {
 		logrus.Errorf("Unable to bulk upsert Kyverno policies: %v", err)
 		return nil, err
