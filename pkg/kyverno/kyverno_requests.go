@@ -88,10 +88,15 @@ func DeleteKyvernoPolicy(client *req.Client, org string, policyName string) erro
 func ValidateKyvernoPolicyWithExpectedOutcomes(client *req.Client, org string, policy KyvernoPolicy, testResources []TestResource, expectOutcomes bool) (*ValidationResultWithExpectedOutcomes, error) {
 	url := fmt.Sprintf(kyvernoPolicyValidateURLFormat, org)
 
-	requestBody := map[string]interface{}{
-		"policy_yaml":     policyToYAML(policy),
-		"test_resources":  testResources,
-		"expect_outcomes": expectOutcomes,
+	// Convert test resources to string array for the API
+	var resources []string
+	for _, testResource := range testResources {
+		resources = append(resources, testResource.Content)
+	}
+
+	requestBody := ValidationRequest{
+		Policy:    policyToYAML(policy),
+		Resources: resources,
 	}
 
 	resp, err := client.R().SetHeaders(utils.GetHeaders("")).SetBody(&requestBody).Post(url)

@@ -101,6 +101,12 @@ type KyvernoPolicyInput struct {
 	Status      *map[string]interface{} `json:"status,omitempty"`
 }
 
+// ValidationRequest represents the request format for policy validation
+type ValidationRequest struct {
+	Policy    string   `json:"policy"`
+	Resources []string `json:"resources,omitempty"`
+}
+
 // ToKyvernoPolicyInput converts a KyvernoPolicy to KyvernoPolicyInput format
 func (k KyvernoPolicy) ToKyvernoPolicyInput() KyvernoPolicyInput {
 	// Convert labels from map[string]interface{} to map[string]string
