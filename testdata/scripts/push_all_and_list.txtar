@@ -144,4 +144,5 @@ spec:
        nova-all (Never block on these policies) (disabled)
        polaris-all (Always block on these policies) (disabled)
        trivy-all (Block based on policy settings) (enabled)
+   kyverno-policies
 
