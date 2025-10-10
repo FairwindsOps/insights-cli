@@ -381,11 +381,14 @@ func DisplayClusterValidationResults(result *ClusterValidationResponse) {
 	if len(result.PolicyResults) > 0 {
 		fmt.Println("📋 Policy Results:")
 		for _, policyResult := range result.PolicyResults {
-			statusIcon := "✅"
-			if policyResult.Status == "invalid" {
+			var statusIcon string
+			switch policyResult.Status {
+			case "invalid":
 				statusIcon = "❌"
-			} else if policyResult.Status == "error" {
+			case "error":
 				statusIcon = "🚫"
+			default:
+				statusIcon = "✅"
 			}
 
 			fmt.Printf("  %s %s (%s)\n", statusIcon, policyResult.PolicyName, policyResult.Status)

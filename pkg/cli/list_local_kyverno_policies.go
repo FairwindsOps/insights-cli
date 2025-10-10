@@ -97,10 +97,9 @@ func addLocalKyvernoPoliciesBranch(dir string, tree treeprint.Tree) error {
 			expectedOutcome := determineExpectedOutcome(filename)
 
 			// Find or create the policy node
-			var policyNode treeprint.Tree
 			// For simplicity, always create a new policy node for test cases
 			// In a more sophisticated implementation, we'd track existing nodes
-			policyNode = policiesBranch.AddBranch(policyName)
+			policyNode := policiesBranch.AddBranch(policyName)
 
 			testNode := policyNode.AddBranch("test-cases")
 			testCaseNode := testNode.AddBranch(testCaseName)
