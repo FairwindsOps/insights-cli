@@ -16,7 +16,8 @@ cp disallow-privileged.testcase2.success.yaml test-dir/kyverno-policies/
 
 # Test listing local policies
 exec insights-cli kyverno-policies list-local -d test-dir/kyverno-policies
-stdout 'kyverno-policies (local)'
+stdout 'kyverno-policies'
+stdout 'local'
 stdout 'require-labels'
 stdout 'disallow-privileged'
 
