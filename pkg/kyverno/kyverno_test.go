@@ -135,3 +135,49 @@ func TestDetermineExpectedOutcome(t *testing.T) {
 		})
 	}
 }
+
+func TestDisplayClusterValidationResults(t *testing.T) {
+	// Test successful validation
+	result := &ClusterValidationResponse{
+		Cluster:         "test-cluster",
+		TotalPolicies:   3,
+		ValidPolicies:   2,
+		InvalidPolicies: 1,
+		PolicyResults: []ClusterPolicyValidationResult{
+			{
+				PolicyName:       "policy1",
+				Status:           "valid",
+				AppGroupsApplied: []string{"app-group-1"},
+				ValidationResult: ValidationResponse{
+					Valid: true,
+				},
+			},
+			{
+				PolicyName:       "policy2",
+				Status:           "valid",
+				AppGroupsApplied: []string{"app-group-2"},
+				ValidationResult: ValidationResponse{
+					Valid: true,
+				},
+			},
+			{
+				PolicyName:       "policy3",
+				Status:           "invalid",
+				AppGroupsApplied: []string{"app-group-3"},
+				ValidationResult: ValidationResponse{
+					Valid:  false,
+					Errors: []string{"Policy validation failed"},
+				},
+			},
+		},
+		ValidationSummary: ClusterPolicyValidationSummary{
+			OverallStatus: "partial_success",
+			TotalErrors:   1,
+			TotalWarnings: 0,
+		},
+	}
+
+	// This test just ensures the function doesn't panic
+	// In a real test environment, we'd capture stdout and verify the output
+	DisplayClusterValidationResults(result)
+}

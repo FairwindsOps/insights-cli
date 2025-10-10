@@ -141,3 +141,38 @@ func (k KyvernoPolicy) ToKyvernoPolicyInput() KyvernoPolicyInput {
 		Status:      status,
 	}
 }
+
+// ClusterValidationResponse represents the response from cluster policy validation
+type ClusterValidationResponse struct {
+	Cluster           string                          `json:"cluster"`
+	TotalPolicies     int                             `json:"totalPolicies"`
+	ValidPolicies     int                             `json:"validPolicies"`
+	InvalidPolicies   int                             `json:"invalidPolicies"`
+	PolicyResults     []ClusterPolicyValidationResult `json:"policyResults"`
+	ValidationSummary ClusterPolicyValidationSummary  `json:"validationSummary"`
+}
+
+// ClusterPolicyValidationResult represents the validation result for a single policy in a cluster
+type ClusterPolicyValidationResult struct {
+	PolicyName       string             `json:"policyName"`
+	Status           string             `json:"status"`
+	AppGroupsApplied []string           `json:"appGroupsApplied"`
+	ValidationResult ValidationResponse `json:"validationResult"`
+}
+
+// ClusterPolicyValidationSummary represents the overall validation summary for a cluster
+type ClusterPolicyValidationSummary struct {
+	OverallStatus string `json:"overallStatus"`
+	TotalErrors   int    `json:"totalErrors"`
+	TotalWarnings int    `json:"totalWarnings"`
+}
+
+// ValidationResponse represents the basic validation response structure
+type ValidationResponse struct {
+	Valid           bool     `json:"valid"`
+	Errors          []string `json:"errors,omitempty"`
+	Warnings        []string `json:"warnings,omitempty"`
+	ValidationType  string   `json:"validationType,omitempty"`
+	ResourcesTested int      `json:"resourcesTested,omitempty"`
+	RulesApplied    int      `json:"rulesApplied,omitempty"`
+}

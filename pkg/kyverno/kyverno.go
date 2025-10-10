@@ -49,6 +49,50 @@ func AddKyvernoPoliciesBranch(client *req.Client, org string, tree treeprint.Tre
 	return nil
 }
 
+// AddClusterKyvernoPoliciesBranch builds a tree for cluster-specific Kyverno policies
+func AddClusterKyvernoPoliciesBranch(client *req.Client, org, cluster string, tree treeprint.Tree) error {
+	policies, err := FetchClusterKyvernoPolicies(client, org, cluster)
+	if err != nil {
+		logrus.Errorf("Unable to get cluster Kyverno policies from insights: %v", err)
+		return err
+	}
+	policiesBranch := tree.AddBranch(fmt.Sprintf("kyverno-policies (cluster: %s)", cluster))
+	for _, policy := range policies {
+		policyNode := policiesBranch.AddBranch(policy.Name)
+		if policy.Kind != "" {
+			value := fmt.Sprintf("Kind: %s", policy.Kind)
+			policyNode.AddNode(value)
+		}
+		if policy.APIVersion != "" {
+			value := fmt.Sprintf("API Version: %s", policy.APIVersion)
+			policyNode.AddNode(value)
+		}
+	}
+	return nil
+}
+
+// AddClusterKyvernoPoliciesWithAppGroupsBranch builds a tree for cluster-specific Kyverno policies with app groups applied
+func AddClusterKyvernoPoliciesWithAppGroupsBranch(client *req.Client, org, cluster string, tree treeprint.Tree) error {
+	policies, err := FetchClusterKyvernoPoliciesWithAppGroups(client, org, cluster)
+	if err != nil {
+		logrus.Errorf("Unable to get cluster Kyverno policies with app groups from insights: %v", err)
+		return err
+	}
+	policiesBranch := tree.AddBranch(fmt.Sprintf("kyverno-policies (cluster: %s, with app groups)", cluster))
+	for _, policy := range policies {
+		policyNode := policiesBranch.AddBranch(policy.Name)
+		if policy.Kind != "" {
+			value := fmt.Sprintf("Kind: %s", policy.Kind)
+			policyNode.AddNode(value)
+		}
+		if policy.APIVersion != "" {
+			value := fmt.Sprintf("API Version: %s", policy.APIVersion)
+			policyNode.AddNode(value)
+		}
+	}
+	return nil
+}
+
 // PushKyvernoPolicies pushes Kyverno policies to insights using bulk API
 func PushKyvernoPolicies(client *req.Client, policies []KyvernoPolicy, org string, deleteMissing, dryRun bool) error {
 	logrus.Debugln("Pushing Kyverno policies")
@@ -310,4 +354,65 @@ func ReadTestResourceFromFile(filePath string) (TestResource, error) {
 		TestCaseName:    extractTestCaseName(filename),
 		ExpectedOutcome: determineExpectedOutcome(filename),
 	}, nil
+}
+
+// DisplayClusterValidationResults displays cluster validation results in a user-friendly format
+func DisplayClusterValidationResults(result *ClusterValidationResponse) {
+	fmt.Printf("🔍 Cluster Validation Results for: %s\n", result.Cluster)
+	fmt.Printf("📊 Summary: %d total policies, %d valid, %d invalid\n",
+		result.TotalPolicies, result.ValidPolicies, result.InvalidPolicies)
+
+	// Display overall status
+	switch result.ValidationSummary.OverallStatus {
+	case "success":
+		fmt.Printf("✅ Overall Status: SUCCESS\n")
+	case "partial_success":
+		fmt.Printf("⚠️  Overall Status: PARTIAL SUCCESS\n")
+	case "failure":
+		fmt.Printf("❌ Overall Status: FAILURE\n")
+	default:
+		fmt.Printf("❓ Overall Status: %s\n", result.ValidationSummary.OverallStatus)
+	}
+
+	fmt.Printf("📈 Errors: %d, Warnings: %d\n\n",
+		result.ValidationSummary.TotalErrors, result.ValidationSummary.TotalWarnings)
+
+	// Display individual policy results
+	if len(result.PolicyResults) > 0 {
+		fmt.Println("📋 Policy Results:")
+		for _, policyResult := range result.PolicyResults {
+			statusIcon := "✅"
+			if policyResult.Status == "invalid" {
+				statusIcon = "❌"
+			} else if policyResult.Status == "error" {
+				statusIcon = "🚫"
+			}
+
+			fmt.Printf("  %s %s (%s)\n", statusIcon, policyResult.PolicyName, policyResult.Status)
+
+			// Show app groups applied if any
+			if len(policyResult.AppGroupsApplied) > 0 {
+				fmt.Printf("    📦 App Groups: %s\n", strings.Join(policyResult.AppGroupsApplied, ", "))
+			}
+
+			// Show validation details
+			if !policyResult.ValidationResult.Valid {
+				if len(policyResult.ValidationResult.Errors) > 0 {
+					fmt.Printf("    ❌ Errors:\n")
+					for _, err := range policyResult.ValidationResult.Errors {
+						fmt.Printf("      - %s\n", err)
+					}
+				}
+			}
+
+			if len(policyResult.ValidationResult.Warnings) > 0 {
+				fmt.Printf("    ⚠️  Warnings:\n")
+				for _, warning := range policyResult.ValidationResult.Warnings {
+					fmt.Printf("      - %s\n", warning)
+				}
+			}
+
+			fmt.Println()
+		}
+	}
 }

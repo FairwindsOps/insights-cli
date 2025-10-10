@@ -1,0 +1,127 @@
+# Test cluster-specific Kyverno policy commands
+mkdir test-dir
+mkdir test-dir/kyverno-policies
+
+# Create a fairwinds-insights.yaml file for configuration
+exec printf 'options:\n  organization: %s\n  hostname: %s\n' $CI_INSIGHTS_ORGANIZATION $CI_INSIGHTS_API_URL
+cp stdout fairwinds-insights.yaml
+
+# Create some test policy files
+cp require-labels.yaml test-dir/kyverno-policies/
+cp disallow-privileged.yaml test-dir/kyverno-policies/
+cp require-labels.testcase1.success.yaml test-dir/kyverno-policies/
+cp require-labels.testcase2.failure.yaml test-dir/kyverno-policies/
+cp disallow-privileged.testcase1.failure.yaml test-dir/kyverno-policies/
+cp disallow-privileged.testcase2.success.yaml test-dir/kyverno-policies/
+
+# Test listing local policies
+exec insights-cli kyverno-policies list-local -d test-dir/kyverno-policies
+stdout 'kyverno-policies (local)'
+stdout 'require-labels'
+stdout 'disallow-privileged'
+
+# Test cluster list command (expects success with valid credentials)
+exec insights-cli kyverno-policies cluster list test-cluster
+stdout 'kyverno-policies (cluster: test-cluster)'
+
+# Test cluster list with app groups command (expects success with valid credentials)
+exec insights-cli kyverno-policies cluster list-with-app-groups test-cluster
+stdout 'kyverno-policies (cluster: test-cluster, with app groups)'
+
+# Test cluster export yaml command (expects success with valid credentials)
+exec insights-cli kyverno-policies cluster export-yaml test-cluster
+stdout 'apiVersion:'
+
+# Test cluster validate command (expects success with valid credentials)
+exec insights-cli kyverno-policies cluster validate test-cluster
+stdout 'Cluster Validation Results for: test-cluster'
+
+-- require-labels.yaml --
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-labels
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: check-labels
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Label 'app' is required"
+      pattern:
+        metadata:
+          labels:
+            app: "?*"
+
+-- disallow-privileged.yaml --
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: disallow-privileged
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: disallow-privileged
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Privileged containers are not allowed"
+      pattern:
+        spec:
+          =(securityContext):
+            =(privileged): "false"
+
+-- require-labels.testcase1.success.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+-- require-labels.testcase2.failure.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-no-labels
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+-- disallow-privileged.testcase1.failure.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-pod
+spec:
+  securityContext:
+    privileged: true
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+-- disallow-privileged.testcase2.success.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: non-privileged-pod
+spec:
+  securityContext:
+    privileged: false
+  containers:
+  - name: nginx
+    image: nginx:latest

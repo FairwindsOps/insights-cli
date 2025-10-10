@@ -26,10 +26,14 @@ import (
 )
 
 const (
-	kyvernoPoliciesURLFormat       = "/v0/organizations/%s/kyverno-policies"
-	kyvernoPolicyURLFormat         = "/v0/organizations/%s/kyverno-policies/%s"
-	kyvernoPolicyValidateURLFormat = "/v0/organizations/%s/kyverno-policies/validate"
-	kyvernoPolicyBulkURLFormat     = "/v0/organizations/%s/kyverno-policies/bulk"
+	kyvernoPoliciesURLFormat                     = "/v0/organizations/%s/kyverno-policies"
+	kyvernoPolicyURLFormat                       = "/v0/organizations/%s/kyverno-policies/%s"
+	kyvernoPolicyValidateURLFormat               = "/v0/organizations/%s/kyverno-policies/validate"
+	kyvernoPolicyBulkURLFormat                   = "/v0/organizations/%s/kyverno-policies/bulk"
+	clusterKyvernoPoliciesURLFormat              = "/v0/organizations/%s/clusters/%s/kyverno-policies"
+	clusterKyvernoPoliciesWithAppGroupsURLFormat = "/v0/organizations/%s/clusters/%s/kyverno-policies/with-app-groups-applied"
+	clusterKyvernoPoliciesYamlURLFormat          = "/v0/organizations/%s/clusters/%s/kyverno-policies/with-app-groups-applied/yaml"
+	clusterKyvernoPoliciesValidateURLFormat      = "/v0/organizations/%s/clusters/%s/kyverno-policies/with-app-groups-applied/validate"
 )
 
 // FetchKyvernoPolicies queries Fairwinds Insights to retrieve all Kyverno policies for an organization
@@ -199,4 +203,86 @@ func policyToYAML(policy KyvernoPolicy) string {
 	}
 
 	return string(yamlBytes)
+}
+
+// FetchClusterKyvernoPolicies queries Fairwinds Insights to retrieve Kyverno policies for a specific cluster
+func FetchClusterKyvernoPolicies(client *req.Client, org, cluster string) ([]KyvernoPolicy, error) {
+	url := fmt.Sprintf(clusterKyvernoPoliciesURLFormat, org, cluster)
+	logrus.Debugf("Cluster Kyverno policies URL: %s", url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Get(url)
+	if err != nil {
+		logrus.Errorf("Unable to get cluster Kyverno policies from insights: %v", err)
+		return nil, err
+	}
+	var policyList KyvernoPolicyList
+	if !utils.IsSuccessful(resp.StatusCode) {
+		logrus.Errorf("FetchClusterKyvernoPolicies: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
+		return nil, errors.New("FetchClusterKyvernoPolicies: invalid response code")
+	}
+	err = resp.Unmarshal(&policyList)
+	if err != nil {
+		logrus.Errorf("Unable to convert response to json for cluster Kyverno policies: %v", err)
+		return nil, err
+	}
+	return policyList.Policies, nil
+}
+
+// FetchClusterKyvernoPoliciesWithAppGroups queries Fairwinds Insights to retrieve Kyverno policies for a specific cluster with app groups applied
+func FetchClusterKyvernoPoliciesWithAppGroups(client *req.Client, org, cluster string) ([]KyvernoPolicy, error) {
+	url := fmt.Sprintf(clusterKyvernoPoliciesWithAppGroupsURLFormat, org, cluster)
+	logrus.Debugf("Cluster Kyverno policies with app groups URL: %s", url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Get(url)
+	if err != nil {
+		logrus.Errorf("Unable to get cluster Kyverno policies with app groups from insights: %v", err)
+		return nil, err
+	}
+	var policyList KyvernoPolicyList
+	if !utils.IsSuccessful(resp.StatusCode) {
+		logrus.Errorf("FetchClusterKyvernoPoliciesWithAppGroups: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
+		return nil, errors.New("FetchClusterKyvernoPoliciesWithAppGroups: invalid response code")
+	}
+	err = resp.Unmarshal(&policyList)
+	if err != nil {
+		logrus.Errorf("Unable to convert response to json for cluster Kyverno policies with app groups: %v", err)
+		return nil, err
+	}
+	return policyList.Policies, nil
+}
+
+// ExportClusterKyvernoPoliciesYaml exports Kyverno policies for a specific cluster as YAML
+func ExportClusterKyvernoPoliciesYaml(client *req.Client, org, cluster string) (string, error) {
+	url := fmt.Sprintf(clusterKyvernoPoliciesYamlURLFormat, org, cluster)
+	logrus.Debugf("Cluster Kyverno policies YAML export URL: %s", url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Get(url)
+	if err != nil {
+		logrus.Errorf("Unable to export cluster Kyverno policies YAML from insights: %v", err)
+		return "", err
+	}
+	if !utils.IsSuccessful(resp.StatusCode) {
+		logrus.Errorf("ExportClusterKyvernoPoliciesYaml: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
+		return "", errors.New("ExportClusterKyvernoPoliciesYaml: invalid response code")
+	}
+	return string(resp.Bytes()), nil
+}
+
+// ValidateClusterKyvernoPolicies validates all Kyverno policies for a specific cluster
+func ValidateClusterKyvernoPolicies(client *req.Client, org, cluster string) (*ClusterValidationResponse, error) {
+	url := fmt.Sprintf(clusterKyvernoPoliciesValidateURLFormat, org, cluster)
+	logrus.Debugf("Cluster Kyverno policies validation URL: %s", url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Post(url)
+	if err != nil {
+		logrus.Errorf("Unable to validate cluster Kyverno policies: %v", err)
+		return nil, err
+	}
+	var result ClusterValidationResponse
+	if !utils.IsSuccessful(resp.StatusCode) {
+		logrus.Errorf("ValidateClusterKyvernoPolicies: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
+		return nil, errors.New("ValidateClusterKyvernoPolicies: invalid response code")
+	}
+	err = resp.Unmarshal(&result)
+	if err != nil {
+		logrus.Errorf("Unable to convert validation response to json: %v", err)
+		return nil, err
+	}
+	return &result, nil
 }
