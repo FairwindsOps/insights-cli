@@ -70,13 +70,13 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 				logrus.Fatalf("Unable to read test resource file: %v", err)
 			}
 
-			result, err := kyverno.ValidateKyvernoPolicyWithExpectedOutcomes(
+			result, err := kyverno.ValidateKyvernoPolicy(
 				client, org, policy, []kyverno.TestResource{testResource}, true)
 			if err != nil {
 				logrus.Fatalf("Unable to validate policy: %v", err)
 			}
 
-			displayValidationResultsWithExpectedOutcomes(result)
+			displayValidationResults(result)
 			if !result.Valid {
 				os.Exit(1)
 			}
@@ -117,7 +117,7 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 			for _, policyWithTestCases := range policiesToValidate {
 				logrus.Infof("Validating policy: %s", policyWithTestCases.Policy.Name)
 
-				result, err := kyverno.ValidateKyvernoPolicyWithExpectedOutcomes(
+				result, err := kyverno.ValidateKyvernoPolicy(
 					client, org, policyWithTestCases.Policy, policyWithTestCases.TestCases, true)
 				if err != nil {
 					logrus.Errorf("Unable to validate policy %s: %v", policyWithTestCases.Policy.Name, err)
@@ -125,7 +125,7 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 					continue
 				}
 
-				displayValidationResultsWithExpectedOutcomes(result)
+				displayValidationResults(result)
 				if !result.Valid {
 					allValid = false
 				}
@@ -163,12 +163,28 @@ func checkValidateKyvernoPoliciesFlags() bool {
 	return true
 }
 
-// displayValidationResultsWithExpectedOutcomes displays validation results with visual indicators
-func displayValidationResultsWithExpectedOutcomes(result *kyverno.ValidationResultWithExpectedOutcomes) {
+// displayValidationResults displays validation results with visual indicators
+func displayValidationResults(result *kyverno.ValidationResult) {
 	if result.Valid {
 		fmt.Printf("✅ Policy validation: PASSED\n")
 	} else {
 		fmt.Printf("❌ Policy validation: FAILED\n")
+	}
+
+	// Display errors if any
+	if len(result.Errors) > 0 {
+		fmt.Printf("❌ Errors:\n")
+		for _, err := range result.Errors {
+			fmt.Printf("  - %s\n", err)
+		}
+	}
+
+	// Display warnings if any
+	if len(result.Warnings) > 0 {
+		fmt.Printf("⚠️  Warnings:\n")
+		for _, warning := range result.Warnings {
+			fmt.Printf("  - %s\n", warning)
+		}
 	}
 
 	// Display test case results

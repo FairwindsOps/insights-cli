@@ -88,8 +88,8 @@ func DeleteKyvernoPolicy(client *req.Client, org string, policyName string) erro
 	return nil
 }
 
-// ValidateKyvernoPolicyWithExpectedOutcomes validates a Kyverno policy with test resources
-func ValidateKyvernoPolicyWithExpectedOutcomes(client *req.Client, org string, policy KyvernoPolicy, testResources []TestResource, expectOutcomes bool) (*ValidationResultWithExpectedOutcomes, error) {
+// ValidateKyvernoPolicy validates a Kyverno policy with test resources
+func ValidateKyvernoPolicy(client *req.Client, org string, policy KyvernoPolicy, testResources []TestResource, expectOutcomes bool) (*ValidationResult, error) {
 	url := fmt.Sprintf(kyvernoPolicyValidateURLFormat, org)
 
 	// Convert test resources to string array for the API
@@ -109,10 +109,10 @@ func ValidateKyvernoPolicyWithExpectedOutcomes(client *req.Client, org string, p
 		return nil, err
 	}
 
-	var result ValidationResultWithExpectedOutcomes
+	var result ValidationResult
 	if !utils.IsSuccessful(resp.StatusCode) {
-		logrus.Errorf("ValidateKyvernoPolicyWithExpectedOutcomes: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
-		return nil, errors.New("ValidateKyvernoPolicyWithExpectedOutcomes: invalid response code")
+		logrus.Errorf("ValidateKyvernoPolicy: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
+		return nil, errors.New("ValidateKyvernoPolicy: invalid response code")
 	}
 
 	err = resp.Unmarshal(&result)

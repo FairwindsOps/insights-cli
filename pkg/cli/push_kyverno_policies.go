@@ -124,7 +124,7 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 				}
 
 				// Validate the policy
-				result, err := kyverno.ValidateKyvernoPolicyWithExpectedOutcomes(
+				result, err := kyverno.ValidateKyvernoPolicy(
 					client, org, policyToPush, testCases, true)
 				if err != nil {
 					logrus.Errorf("❌ Unable to validate policy %s: %v", policyToPush.Name, err)
@@ -133,7 +133,7 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 				}
 
 				// Display validation results
-				displayValidationResultsWithExpectedOutcomes(result)
+				displayValidationResults(result)
 				if !result.Valid {
 					logrus.Errorf("❌ Policy %s failed validation", policyToPush.Name)
 					validationFailed = true

@@ -40,9 +40,12 @@ func (k KyvernoPolicy) GetName() string {
 
 // ValidationResult represents the result of policy validation
 type ValidationResult struct {
-	Valid          bool   `json:"valid"`
-	Message        string `json:"message"`
-	ValidationType string `json:"validation_type"`
+	Valid          bool         `json:"valid"`
+	Message        string       `json:"message"`
+	ValidationType string       `json:"validation_type"`
+	Errors         []string     `json:"errors,omitempty"`
+	Warnings       []string     `json:"warnings,omitempty"`
+	TestResults    []TestResult `json:"test_results,omitempty"`
 }
 
 // TestResource represents a test resource for validation
@@ -52,13 +55,6 @@ type TestResource struct {
 	PolicyName      string `json:"policyName"`
 	TestCaseName    string `json:"testCaseName"`
 	ExpectedOutcome string `json:"expectedOutcome"`
-}
-
-// ValidationResultWithExpectedOutcomes represents validation results with test case outcomes
-type ValidationResultWithExpectedOutcomes struct {
-	Valid       bool         `json:"valid"`
-	Message     string       `json:"message"`
-	TestResults []TestResult `json:"test_results"`
 }
 
 // TestResult represents the result of a single test case
