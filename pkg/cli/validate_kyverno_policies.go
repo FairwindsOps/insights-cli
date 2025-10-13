@@ -187,7 +187,7 @@ func checkValidateKyvernoPoliciesFlags() bool {
 func displayValidationResults(result *kyverno.ValidationResult) {
 	// Determine if validation actually passed based on test case results
 	actualValid := determineActualValidationResult(result)
-	
+
 	if actualValid {
 		fmt.Printf("✅ Policy validation: PASSED\n")
 	} else {
@@ -238,12 +238,12 @@ func determineActualValidationResult(result *kyverno.ValidationResult) bool {
 		// 2. Expected "failure" and actual "failure" (policy rejects bad resource)
 		expectedSuccess := testResult.ExpectedOutcome == "success"
 		actualSuccess := testResult.ActualOutcome == "success"
-		
+
 		// Test case passes if expected outcome matches actual outcome
 		if expectedSuccess != actualSuccess {
 			return false
 		}
 	}
-	
+
 	return true
 }

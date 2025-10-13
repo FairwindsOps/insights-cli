@@ -182,4 +182,3 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 		}
 	},
 }
-
