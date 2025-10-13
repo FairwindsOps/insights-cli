@@ -269,7 +269,7 @@ func ExportClusterKyvernoPoliciesYaml(client *req.Client, org, cluster string) (
 func ValidateClusterKyvernoPolicies(client *req.Client, org, cluster string) (*ClusterValidationResponse, error) {
 	url := fmt.Sprintf(clusterKyvernoPoliciesValidateURLFormat, org, cluster)
 	logrus.Debugf("Cluster Kyverno policies validation URL: %s", url)
-	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Post(url)
+	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Get(url)
 	if err != nil {
 		logrus.Errorf("Unable to validate cluster Kyverno policies: %v", err)
 		return nil, err
