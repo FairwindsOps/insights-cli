@@ -1,4 +1,8 @@
 # Test cluster-specific Kyverno policy commands
+echo "=== DEBUG: Starting Kyverno cluster tests ==="
+echo "DEBUG: Current directory: $(pwd)"
+echo "DEBUG: Backend status check..."
+curl -s http://localhost:3000/health && echo "DEBUG: Backend is running" || echo "DEBUG: Backend not running"
 mkdir test-dir
 mkdir test-dir/kyverno-policies
 
@@ -22,24 +26,31 @@ stdout 'require-labels'
 stdout 'disallow-privileged'
 
 # Test cluster list command (expects connection error since backend is not running)
+echo "DEBUG: Testing cluster list command..."
 ! exec insights-cli kyverno-policies cluster list test-cluster
 ! stdout .
 stderr 'connection refused'
+echo "DEBUG: Cluster list command completed - checking if stderr contains 'connection refused'"
 
 # Test cluster list with app groups command (expects connection error since backend is not running)
+echo "DEBUG: Testing cluster list with app groups command..."
 ! exec insights-cli kyverno-policies cluster list-with-app-groups test-cluster
 ! stdout 'kyverno-policies (cluster: test-cluster, with app groups)'
 stderr 'connection refused'
 
 # Test cluster export yaml command (expects connection error since backend is not running)
+echo "DEBUG: Testing cluster export yaml command..."
 ! exec insights-cli kyverno-policies cluster export-yaml test-cluster
 ! stdout .
 stderr 'connection refused'
 
-# Test cluster validate command (expects 404 since cluster doesn't exist)
+# Test cluster validate command (expects connection error since backend is not running)
+echo "DEBUG: Testing cluster validate command..."
 ! exec insights-cli kyverno-policies cluster validate test-cluster
 ! stdout .
 stderr 'connection refused'
+echo "DEBUG: All cluster tests completed"
+echo "DEBUG: If any test failed, the actual stderr content should be shown above"
 
 -- require-labels.yaml --
 apiVersion: kyverno.io/v1

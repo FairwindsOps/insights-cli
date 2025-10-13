@@ -1,4 +1,8 @@
 # Test validating Kyverno policies with test cases
+echo "=== DEBUG: Starting Kyverno validation tests ==="
+echo "DEBUG: Current directory: $(pwd)"
+echo "DEBUG: Backend status check..."
+curl -s http://localhost:3000/health && echo "DEBUG: Backend is running" || echo "DEBUG: Backend not running"
 mkdir test-dir
 mkdir test-dir/kyverno-policies
 
@@ -13,14 +17,18 @@ cp disallow-privileged.testcase1.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase2.success.yaml test-dir/kyverno-policies/
 
 # Test batch validation (expects connection error since backend is not running)
+echo "DEBUG: Testing batch validation..."
 ! exec insights-cli validate kyverno-policies -b test-dir/kyverno-policies/
 ! stdout 'All Kyverno policies validated successfully!'
 stderr 'connection refused'
 
 # Test single policy validation (expects connection error since backend is not running)
+echo "DEBUG: Testing single policy validation..."
 ! exec insights-cli validate kyverno-policies -r test-dir/kyverno-policies/require-labels.yaml -k test-dir/kyverno-policies/require-labels.testcase1.success.yaml
 ! stdout 'Kyverno policy validated successfully.'
 stderr 'connection refused'
+echo "DEBUG: All validation tests completed"
+echo "DEBUG: If any test failed, the actual stderr content should be shown above"
 
 -- require-labels.yaml --
 apiVersion: kyverno.io/v1
