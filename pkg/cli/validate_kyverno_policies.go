@@ -273,10 +273,13 @@ func determineActualValidationResult(result *kyverno.ValidationResult, testCases
 	successTestCases := 0
 	failureTestCases := 0
 	for _, testCase := range testCases {
-		if testCase.ExpectedOutcome == "success" {
+		switch testCase.ExpectedOutcome {
+		case "success":
 			successTestCases++
-		} else if testCase.ExpectedOutcome == "failure" {
+		case "failure":
 			failureTestCases++
+		default:
+			// Do nothing
 		}
 	}
 
