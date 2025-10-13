@@ -36,7 +36,7 @@ stderr 'connection refused'
 ! stdout .
 stderr 'connection refused'
 
-# Test cluster validate command (expects connection error since backend is not running)
+# Test cluster validate command (expects 404 since cluster doesn't exist)
 ! exec insights-cli kyverno-policies cluster validate test-cluster
 ! stdout .
 stderr 'connection refused'
