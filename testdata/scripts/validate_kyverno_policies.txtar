@@ -12,7 +12,7 @@ cp require-labels.testcase2.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase1.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase2.success.yaml test-dir/kyverno-policies/
 
-# Test batch validation (expects connection error since backend is not running)
+# Test batch validation (expects failure - either connection error or validation failures)
 ! exec insights-cli validate kyverno-policies -b test-dir/kyverno-policies/
 ! stdout 'All Kyverno policies validated successfully!'
 stderr 'connection refused'
