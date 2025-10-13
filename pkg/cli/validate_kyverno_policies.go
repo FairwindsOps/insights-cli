@@ -27,12 +27,14 @@ var kyvernoPolicyDir string
 var validateSpecificPolicies []string
 var kyvernoPolicyFileName string
 var kyvernoTestResourceFileName string
+var validateClusterName string
 
 func init() {
 	validateKyvernoPoliciesCmd.Flags().StringVarP(&kyvernoPolicyDir, "batch-directory", "b", "", "A directory containing Kyverno policy .yaml files and corresponding test case .yaml files to validate. This option validates multiple Kyverno policies at once, and is mutually exclusive with the policy-file option.")
 	validateKyvernoPoliciesCmd.Flags().StringVarP(&kyvernoPolicyFileName, "policy-file", "r", "", "A Kyverno policy file to validate. The --test-resource-file option is also required. This option validates a single policy, and is mutually exclusive with the batch-directory option.")
 	validateKyvernoPoliciesCmd.Flags().StringVarP(&kyvernoTestResourceFileName, "test-resource-file", "k", "", "A Kubernetes manifest to provide as input when validating a single Kyverno policy. This option is mutually exclusive with the batch-directory option. A manifest file ending in a .success.yaml extension is expected to pass validation. A manifest file ending in a .failure.yaml extension is expected to fail validation.")
 	validateKyvernoPoliciesCmd.Flags().StringSliceVarP(&validateSpecificPolicies, "policies", "p", []string{}, "Specific policy names to validate (e.g., require-labels,disallow-privileged). If not specified, all policies will be validated.")
+	validateKyvernoPoliciesCmd.Flags().StringVar(&validateClusterName, "cluster", "", "Validate policies for specific cluster from Insights")
 	validateCmd.AddCommand(validateKyvernoPoliciesCmd)
 }
 
@@ -45,7 +47,9 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 
 	To validate a directory of policies and test resources: insights-cli validate kyverno-policies -b ./kyverno-policies
 
-	To validate specific policies: insights-cli validate kyverno-policies -b ./kyverno-policies -p require-labels,disallow-privileged`,
+	To validate specific policies: insights-cli validate kyverno-policies -b ./kyverno-policies -p require-labels,disallow-privileged
+
+	To validate policies for a specific cluster: insights-cli validate kyverno-policies --cluster production`,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		if !checkValidateKyvernoPoliciesFlags() {
@@ -57,6 +61,22 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 		}
 
 		org := configurationObject.Options.Organization
+
+		// Handle cluster validation
+		if validateClusterName != "" {
+			result, err := kyverno.ValidateClusterKyvernoPolicies(client, org, validateClusterName)
+			if err != nil {
+				logrus.Fatalf("Unable to validate cluster Kyverno policies: %v", err)
+			}
+
+			// Display validation results
+			kyverno.DisplayClusterValidationResults(result)
+
+			if result.ValidationSummary.OverallStatus != "success" {
+				os.Exit(1)
+			}
+			return
+		}
 
 		if kyvernoPolicyFileName != "" {
 			// Single policy validation
