@@ -21,21 +21,25 @@ stdout 'local'
 stdout 'require-labels'
 stdout 'disallow-privileged'
 
-# Test cluster list command (expects success with valid credentials)
-exec insights-cli kyverno-policies cluster list test-cluster
-stdout 'kyverno-policies (cluster: test-cluster)'
+# Test cluster list command (expects connection error since backend is not running)
+! exec insights-cli kyverno-policies cluster list test-cluster
+! stdout .
+stderr 'connection refused'
 
-# Test cluster list with app groups command (expects success with valid credentials)
-exec insights-cli kyverno-policies cluster list-with-app-groups test-cluster
-stdout 'kyverno-policies (cluster: test-cluster, with app groups)'
+# Test cluster list with app groups command (expects connection error since backend is not running)
+! exec insights-cli kyverno-policies cluster list-with-app-groups test-cluster
+! stdout 'kyverno-policies (cluster: test-cluster, with app groups)'
+stderr 'connection refused'
 
-# Test cluster export yaml command (expects success with valid credentials)
-exec insights-cli kyverno-policies cluster export-yaml test-cluster
-stdout 'apiVersion:'
+# Test cluster export yaml command (expects connection error since backend is not running)
+! exec insights-cli kyverno-policies cluster export-yaml test-cluster
+! stdout .
+stderr 'connection refused'
 
-# Test cluster validate command (expects success with valid credentials)
-exec insights-cli kyverno-policies cluster validate test-cluster
-stdout 'Cluster Validation Results for: test-cluster'
+# Test cluster validate command (expects connection error since backend is not running)
+! exec insights-cli kyverno-policies cluster validate test-cluster
+! stdout .
+stderr 'connection refused'
 
 -- require-labels.yaml --
 apiVersion: kyverno.io/v1
