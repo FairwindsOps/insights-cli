@@ -132,7 +132,6 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 					continue
 				}
 
-
 				// Display validation results
 				displayValidationResults(result, testCases)
 				if !determineActualValidationResult(result, testCases) {
