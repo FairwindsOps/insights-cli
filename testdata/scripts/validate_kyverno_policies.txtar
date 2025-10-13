@@ -16,17 +16,17 @@ cp require-labels.testcase2.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase1.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase2.success.yaml test-dir/kyverno-policies/
 
-# Test batch validation (expects connection error since backend is not running)
+# Test batch validation (expects failure since test cases have validation errors)
 exec echo "DEBUG: Testing batch validation..."
 ! exec insights-cli validate kyverno-policies -b test-dir/kyverno-policies/
 ! stdout 'All Kyverno policies validated successfully!'
-stderr 'connection refused'
+stdout 'Policy validation: FAILED'
 
-# Test single policy validation (expects connection error since backend is not running)
+# Test single policy validation (expects success with valid test case)
 exec echo "DEBUG: Testing single policy validation..."
-! exec insights-cli validate kyverno-policies -r test-dir/kyverno-policies/require-labels.yaml -k test-dir/kyverno-policies/require-labels.testcase1.success.yaml
-! stdout 'Kyverno policy validated successfully.'
-stderr 'connection refused'
+exec insights-cli validate kyverno-policies -r test-dir/kyverno-policies/require-labels.yaml -k test-dir/kyverno-policies/require-labels.testcase1.success.yaml
+stdout 'Kyverno policy validated successfully.'
+! stderr .
 exec echo "DEBUG: All validation tests completed"
 exec echo "DEBUG: If any test failed, the actual stderr content should be shown above"
 
