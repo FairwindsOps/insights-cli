@@ -97,7 +97,7 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 			}
 
 			displayValidationResults(result)
-			if !result.Valid {
+			if !determineActualValidationResult(result) {
 				os.Exit(1)
 			}
 			fmt.Println("Kyverno policy validated successfully.")
@@ -146,7 +146,7 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 				}
 
 				displayValidationResults(result)
-				if !result.Valid {
+				if !determineActualValidationResult(result) {
 					allValid = false
 				}
 			}
@@ -185,7 +185,10 @@ func checkValidateKyvernoPoliciesFlags() bool {
 
 // displayValidationResults displays validation results with visual indicators
 func displayValidationResults(result *kyverno.ValidationResult) {
-	if result.Valid {
+	// Determine if validation actually passed based on test case results
+	actualValid := determineActualValidationResult(result)
+	
+	if actualValid {
 		fmt.Printf("✅ Policy validation: PASSED\n")
 	} else {
 		fmt.Printf("❌ Policy validation: FAILED\n")
@@ -219,4 +222,28 @@ func displayValidationResults(result *kyverno.ValidationResult) {
 				testResult.ExpectedOutcome, testResult.ActualOutcome)
 		}
 	}
+}
+
+// determineActualValidationResult determines if validation actually passed based on test case results
+func determineActualValidationResult(result *kyverno.ValidationResult) bool {
+	// If there are no test results, fall back to the backend's determination
+	if len(result.TestResults) == 0 {
+		return result.Valid
+	}
+
+	// Check each test case to see if it behaved as expected
+	for _, testResult := range result.TestResults {
+		// A test case passes if:
+		// 1. Expected "success" and actual "success" (policy allows good resource)
+		// 2. Expected "failure" and actual "failure" (policy rejects bad resource)
+		expectedSuccess := testResult.ExpectedOutcome == "success"
+		actualSuccess := testResult.ActualOutcome == "success"
+		
+		// Test case passes if expected outcome matches actual outcome
+		if expectedSuccess != actualSuccess {
+			return false
+		}
+	}
+	
+	return true
 }

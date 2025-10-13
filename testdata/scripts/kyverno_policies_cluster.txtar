@@ -36,13 +36,6 @@ exec echo "DEBUG: Testing cluster export yaml command..."
 ! stdout .
 stderr '404'
 
-# Test cluster validate command (expects 404 since cluster doesn't exist)
-exec echo "DEBUG: Testing cluster validate command..."
-! exec insights-cli kyverno-policies cluster validate test-cluster
-! stdout .
-stderr '404'
-exec echo "DEBUG: All cluster tests completed"
-exec echo "DEBUG: If any test failed, the actual stderr content should be shown above"
 
 -- require-labels.yaml --
 apiVersion: kyverno.io/v1

@@ -134,7 +134,7 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 
 				// Display validation results
 				displayValidationResults(result)
-				if !result.Valid {
+				if !determineActualValidationResult(result) {
 					logrus.Errorf("❌ Policy %s failed validation", policyToPush.Name)
 					validationFailed = true
 				} else {
@@ -181,4 +181,28 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 			logrus.Infoln("🎉 Successfully synchronized kyverno-policies with Insights.")
 		}
 	},
+}
+
+// determineActualValidationResult determines if validation actually passed based on test case results
+func determineActualValidationResult(result *kyverno.ValidationResult) bool {
+	// If there are no test results, fall back to the backend's determination
+	if len(result.TestResults) == 0 {
+		return result.Valid
+	}
+
+	// Check each test case to see if it behaved as expected
+	for _, testResult := range result.TestResults {
+		// A test case passes if:
+		// 1. Expected "success" and actual "success" (policy allows good resource)
+		// 2. Expected "failure" and actual "failure" (policy rejects bad resource)
+		expectedSuccess := testResult.ExpectedOutcome == "success"
+		actualSuccess := testResult.ActualOutcome == "success"
+		
+		// Test case passes if expected outcome matches actual outcome
+		if expectedSuccess != actualSuccess {
+			return false
+		}
+	}
+	
+	return true
 }
