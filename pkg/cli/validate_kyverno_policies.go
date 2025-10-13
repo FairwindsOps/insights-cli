@@ -96,8 +96,8 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 				logrus.Fatalf("Unable to validate policy: %v", err)
 			}
 
-			displayValidationResults(result)
-			if !determineActualValidationResult(result) {
+			displayValidationResults(result, []kyverno.TestResource{testResource})
+			if !determineActualValidationResult(result, []kyverno.TestResource{testResource}) {
 				os.Exit(1)
 			}
 			fmt.Println("Kyverno policy validated successfully.")
@@ -145,8 +145,8 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 					continue
 				}
 
-				displayValidationResults(result)
-				if !determineActualValidationResult(result) {
+				displayValidationResults(result, policyWithTestCases.TestCases)
+				if !determineActualValidationResult(result, policyWithTestCases.TestCases) {
 					allValid = false
 				}
 			}
@@ -184,9 +184,9 @@ func checkValidateKyvernoPoliciesFlags() bool {
 }
 
 // displayValidationResults displays validation results with visual indicators
-func displayValidationResults(result *kyverno.ValidationResult) {
+func displayValidationResults(result *kyverno.ValidationResult, testCases []kyverno.TestResource) {
 	// Determine if validation actually passed based on test case results
-	actualValid := determineActualValidationResult(result)
+	actualValid := determineActualValidationResult(result, testCases)
 
 	if actualValid {
 		fmt.Printf("✅ Policy validation: PASSED\n")
@@ -225,25 +225,91 @@ func displayValidationResults(result *kyverno.ValidationResult) {
 }
 
 // determineActualValidationResult determines if validation actually passed based on test case results
-func determineActualValidationResult(result *kyverno.ValidationResult) bool {
-	// If there are no test results, fall back to the backend's determination
-	if len(result.TestResults) == 0 {
-		return result.Valid
+func determineActualValidationResult(result *kyverno.ValidationResult, testCases []kyverno.TestResource) bool {
+	// If there are test results from backend, use them
+	if len(result.TestResults) > 0 {
+		// Create a map of test case names to expected outcomes for quick lookup
+		expectedOutcomes := make(map[string]string)
+		for _, testCase := range testCases {
+			expectedOutcomes[testCase.TestCaseName] = testCase.ExpectedOutcome
+		}
+
+		// fmt.Printf("DEBUG: Expected outcomes map: %v\n", expectedOutcomes)
+		// fmt.Printf("DEBUG: Test results from backend: %v\n", result.TestResults)
+
+		// Check each test result to see if it behaved as expected
+		for _, testResult := range result.TestResults {
+			expectedOutcome, exists := expectedOutcomes[testResult.TestCaseName]
+			if !exists {
+				// If we can't find the expected outcome, fall back to the test result's expected outcome
+				expectedOutcome = testResult.ExpectedOutcome
+			}
+
+			// A test case passes if:
+			// 1. Expected "success" and actual "success" (policy allows good resource)
+			// 2. Expected "failure" and actual "failure" (policy rejects bad resource)
+			expectedSuccess := expectedOutcome == "success"
+			actualSuccess := testResult.ActualOutcome == "success"
+
+			// fmt.Printf("DEBUG: Test case %s - Expected: %s (%t), Actual: %s (%t)\n",
+			//	testResult.TestCaseName, expectedOutcome, expectedSuccess, testResult.ActualOutcome, actualSuccess)
+
+			// Test case passes if expected outcome matches actual outcome
+			if expectedSuccess != actualSuccess {
+				fmt.Printf("DEBUG: Test case %s FAILED - expected %s but got %s\n",
+					testResult.TestCaseName, expectedOutcome, testResult.ActualOutcome)
+				return false
+			}
+		}
+
+		// fmt.Printf("DEBUG: All test cases passed validation\n")
+		return true
 	}
 
-	// Check each test case to see if it behaved as expected
-	for _, testResult := range result.TestResults {
-		// A test case passes if:
-		// 1. Expected "success" and actual "success" (policy allows good resource)
-		// 2. Expected "failure" and actual "failure" (policy rejects bad resource)
-		expectedSuccess := testResult.ExpectedOutcome == "success"
-		actualSuccess := testResult.ActualOutcome == "success"
+	// If no test results from backend, analyze based on test case types and validation results
+	fmt.Printf("DEBUG: No test results from backend, analyzing based on test case types\n")
 
-		// Test case passes if expected outcome matches actual outcome
-		if expectedSuccess != actualSuccess {
-			return false
+	// Count test case types
+	successTestCases := 0
+	failureTestCases := 0
+	for _, testCase := range testCases {
+		if testCase.ExpectedOutcome == "success" {
+			successTestCases++
+		} else if testCase.ExpectedOutcome == "failure" {
+			failureTestCases++
 		}
 	}
 
-	return true
+	// fmt.Printf("DEBUG: Success test cases: %d, Failure test cases: %d\n", successTestCases, failureTestCases)
+	// fmt.Printf("DEBUG: Validation errors: %d\n", len(result.Errors))
+
+	// Simple logic:
+	// - If we have SUCCESS test cases and NO errors → PASS (policy allows good resources)
+	// - If we have FAILURE test cases and HAVE errors → PASS (policy rejects bad resources)
+	// - If we have SUCCESS test cases and HAVE errors → FAIL (policy incorrectly rejects good resources)
+	// - If we have FAILURE test cases and NO errors → FAIL (policy incorrectly allows bad resources)
+
+	if successTestCases > 0 && len(result.Errors) == 0 {
+		// fmt.Printf("DEBUG: SUCCESS test cases with no errors - PASS\n")
+		return true
+	}
+
+	if failureTestCases > 0 && len(result.Errors) > 0 {
+		// fmt.Printf("DEBUG: FAILURE test cases with errors - PASS (correctly rejected)\n")
+		return true
+	}
+
+	if successTestCases > 0 && len(result.Errors) > 0 {
+		// fmt.Printf("DEBUG: SUCCESS test cases with errors - FAIL (incorrectly rejected)\n")
+		return false
+	}
+
+	if failureTestCases > 0 && len(result.Errors) == 0 {
+		// fmt.Printf("DEBUG: FAILURE test cases with no errors - FAIL (incorrectly allowed)\n")
+		return false
+	}
+
+	// Fall back to backend's determination
+	// fmt.Printf("DEBUG: Falling back to backend's determination: %v\n", result.Valid)
+	return result.Valid
 }

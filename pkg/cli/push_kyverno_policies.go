@@ -132,9 +132,10 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 					continue
 				}
 
+
 				// Display validation results
-				displayValidationResults(result)
-				if !determineActualValidationResult(result) {
+				displayValidationResults(result, testCases)
+				if !determineActualValidationResult(result, testCases) {
 					logrus.Errorf("❌ Policy %s failed validation", policyToPush.Name)
 					validationFailed = true
 				} else {
