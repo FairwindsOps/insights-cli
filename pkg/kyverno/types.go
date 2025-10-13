@@ -20,17 +20,18 @@ import (
 
 // KyvernoPolicy represents a Kyverno policy
 type KyvernoPolicy struct {
-	ID             int                    `json:"id,omitempty"`
-	OrganizationID int64                  `json:"organization_id,omitempty"`
-	Name           string                 `json:"name"`
-	Kind           string                 `json:"kind"`
-	APIVersion     string                 `json:"api_version"`
-	Labels         map[string]interface{} `json:"labels,omitempty"`
-	Annotations    map[string]interface{} `json:"annotations,omitempty"`
-	Spec           map[string]interface{} `json:"spec"`
-	Status         map[string]interface{} `json:"status,omitempty"`
-	CreatedAt      *time.Time             `json:"created_at,omitempty"`
-	UpdatedAt      *time.Time             `json:"updated_at,omitempty"`
+	ID                int                    `json:"id,omitempty"`
+	OrganizationID    int64                  `json:"organization_id,omitempty"`
+	Name              string                 `json:"name" yaml:"metadata.name"`
+	Kind              string                 `json:"kind" yaml:"kind"`
+	APIVersion        string                 `json:"api_version" yaml:"apiVersion"`
+	Labels            map[string]interface{} `json:"labels,omitempty" yaml:"metadata.labels"`
+	Annotations       map[string]interface{} `json:"annotations,omitempty" yaml:"metadata.annotations"`
+	Spec              map[string]interface{} `json:"spec" yaml:"spec"`
+	Status            map[string]interface{} `json:"status,omitempty"`
+	ManagedByInsights *bool                  `json:"managed_by_insights,omitempty" yaml:"managedByInsights,omitempty"`
+	CreatedAt         *time.Time             `json:"created_at,omitempty"`
+	UpdatedAt         *time.Time             `json:"updated_at,omitempty"`
 }
 
 // GetName implements the nameable interface for download functionality
@@ -88,13 +89,14 @@ type KyvernoPolicyList struct {
 
 // KyvernoPolicyInput represents the input format expected by the API
 type KyvernoPolicyInput struct {
-	Name        string                  `json:"name"`
-	Kind        string                  `json:"kind"`
-	APIVersion  string                  `json:"apiVersion"`
-	Labels      map[string]string       `json:"labels,omitempty"`
-	Annotations map[string]string       `json:"annotations,omitempty"`
-	Spec        map[string]interface{}  `json:"spec"`
-	Status      *map[string]interface{} `json:"status,omitempty"`
+	Name              string                  `json:"name"`
+	Kind              string                  `json:"kind"`
+	APIVersion        string                  `json:"apiVersion"`
+	Labels            map[string]string       `json:"labels,omitempty"`
+	Annotations       map[string]string       `json:"annotations,omitempty"`
+	Spec              map[string]interface{}  `json:"spec"`
+	Status            *map[string]interface{} `json:"status,omitempty"`
+	ManagedByInsights *bool                   `json:"managedByInsights,omitempty"`
 }
 
 // ValidationRequest represents the request format for policy validation
@@ -128,13 +130,14 @@ func (k KyvernoPolicy) ToKyvernoPolicyInput() KyvernoPolicyInput {
 	}
 
 	return KyvernoPolicyInput{
-		Name:        k.Name,
-		Kind:        k.Kind,
-		APIVersion:  k.APIVersion,
-		Labels:      labels,
-		Annotations: annotations,
-		Spec:        k.Spec,
-		Status:      status,
+		Name:              k.Name,
+		Kind:              k.Kind,
+		APIVersion:        k.APIVersion,
+		Labels:            labels,
+		Annotations:       annotations,
+		Spec:              k.Spec,
+		Status:            status,
+		ManagedByInsights: k.ManagedByInsights,
 	}
 }
 
