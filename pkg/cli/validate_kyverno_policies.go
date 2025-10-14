@@ -290,11 +290,9 @@ func determineActualValidationResult(result *kyverno.ValidationResult, testCases
 	}
 
 	if failureTestCases > 0 && len(result.Errors) == 0 {
-		// fmt.Printf("DEBUG: FAILURE test cases with no errors - FAIL (incorrectly allowed)\n")
 		return false
 	}
 
 	// Fall back to backend's determination
-	// fmt.Printf("DEBUG: Falling back to backend's determination: %v\n", result.Valid)
 	return result.Valid
 }
