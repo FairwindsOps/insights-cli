@@ -51,19 +51,13 @@ func AddKyvernoPoliciesBranch(client *req.Client, org string, tree treeprint.Tre
 
 // AddClusterKyvernoPoliciesWithAppGroupsBranch builds a tree for cluster-specific Kyverno policies with app groups applied
 func AddClusterKyvernoPoliciesWithAppGroupsBranch(client *req.Client, org, cluster string, tree treeprint.Tree) error {
-	logrus.Debugf("DEBUG: AddClusterKyvernoPoliciesWithAppGroupsBranch called for org=%s, cluster=%s", org, cluster)
-	
 	policies, err := FetchClusterKyvernoPoliciesWithAppGroups(client, org, cluster)
 	if err != nil {
 		logrus.Errorf("Unable to get cluster Kyverno policies with app groups from insights: %v", err)
 		return err
 	}
-	
-	logrus.Debugf("DEBUG: Retrieved %d policies for cluster %s", len(policies), cluster)
-	
 	policiesBranch := tree.AddBranch(fmt.Sprintf("kyverno-policies (cluster: %s, with app groups)", cluster))
 	for _, policy := range policies {
-		logrus.Debugf("DEBUG: Adding policy to tree: %s", policy.Name)
 		policyNode := policiesBranch.AddBranch(policy.Name)
 		if policy.Kind != "" {
 			value := fmt.Sprintf("Kind: %s", policy.Kind)
@@ -74,8 +68,6 @@ func AddClusterKyvernoPoliciesWithAppGroupsBranch(client *req.Client, org, clust
 			policyNode.AddNode(value)
 		}
 	}
-	
-	logrus.Debugf("DEBUG: Tree building completed for cluster %s", cluster)
 	return nil
 }
 
