@@ -45,7 +45,7 @@ func FetchKyvernoPolicies(client *req.Client, org string) ([]KyvernoPolicy, erro
 		return nil, err
 	}
 	var policyList KyvernoPolicyList
-	if !utils.IsSuccessful(resp.StatusCode) {
+	if resp.IsErrorState() {
 		logrus.Errorf("FetchKyvernoPolicies: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return nil, errors.New("FetchKyvernoPolicies: invalid response code")
 	}
@@ -65,7 +65,7 @@ func UpsertKyvernoPolicy(client *req.Client, org string, policy KyvernoPolicy) e
 		logrus.Errorf("Unable to upsert Kyverno policy %s to insights: %v", policy.Name, err)
 		return err
 	}
-	if !utils.IsSuccessful(resp.StatusCode) {
+	if resp.IsErrorState() {
 		logrus.Errorf("UpsertKyvernoPolicy: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return errors.New("UpsertKyvernoPolicy: invalid response code")
 	}
@@ -94,7 +94,7 @@ func ValidateKyvernoPolicy(client *req.Client, org string, policy KyvernoPolicy,
 	}
 
 	var result ValidationResult
-	if !utils.IsSuccessful(resp.StatusCode) {
+	if resp.IsErrorState() {
 		logrus.Errorf("ValidateKyvernoPolicy: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return nil, errors.New("ValidateKyvernoPolicy: invalid response code")
 	}
@@ -130,7 +130,7 @@ func BulkUpsertKyvernoPolicies(client *req.Client, org string, policies []Kyvern
 	}
 
 	var result BulkUpsertResponse
-	if !utils.IsSuccessful(resp.StatusCode) {
+	if resp.IsErrorState() {
 		logrus.Errorf("BulkUpsertKyvernoPolicies: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return nil, errors.New("BulkUpsertKyvernoPolicies: invalid response code")
 	}
@@ -199,7 +199,7 @@ func FetchClusterKyvernoPoliciesWithAppGroups(client *req.Client, org, cluster s
 		return nil, err
 	}
 	var policyList KyvernoPolicyList
-	if !utils.IsSuccessful(resp.StatusCode) {
+	if resp.IsErrorState() {
 		logrus.Errorf("FetchClusterKyvernoPoliciesWithAppGroups: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return nil, errors.New("FetchClusterKyvernoPoliciesWithAppGroups: invalid response code")
 	}
@@ -220,7 +220,7 @@ func ExportClusterKyvernoPoliciesYaml(client *req.Client, org, cluster string) (
 		logrus.Errorf("Unable to export cluster Kyverno policies YAML from insights: %v", err)
 		return "", err
 	}
-	if !utils.IsSuccessful(resp.StatusCode) {
+	if resp.IsErrorState() {
 		logrus.Errorf("ExportClusterKyvernoPoliciesYaml: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return "", errors.New("ExportClusterKyvernoPoliciesYaml: invalid response code")
 	}
@@ -237,7 +237,7 @@ func ValidateClusterKyvernoPolicies(client *req.Client, org, cluster string) (*C
 		return nil, err
 	}
 	var result ClusterValidationResponse
-	if !utils.IsSuccessful(resp.StatusCode) {
+	if resp.IsErrorState() {
 		logrus.Errorf("ValidateClusterKyvernoPolicies: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
 		return nil, errors.New("ValidateClusterKyvernoPolicies: invalid response code")
 	}
