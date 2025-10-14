@@ -127,7 +127,7 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 				result, err := kyverno.ValidateKyvernoPolicy(
 					client, org, policyToPush, testCases, true)
 				if err != nil {
-					logrus.Errorf("❌ Unable to validate policy %s: %v", policyToPush.Name, err)
+					logrus.Errorf("Unable to validate policy %s: %v", policyToPush.Name, err)
 					validationFailed = true
 					continue
 				}
@@ -135,23 +135,23 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 				// Display validation results
 				displayValidationResults(result, testCases)
 				if !determineActualValidationResult(result, testCases) {
-					logrus.Errorf("❌ Policy %s failed validation", policyToPush.Name)
+					logrus.Errorf("Policy %s failed validation", policyToPush.Name)
 					validationFailed = true
 				} else {
-					logrus.Infof("✅ Policy %s passed validation", policyToPush.Name)
+					logrus.Infof("Policy %s passed validation", policyToPush.Name)
 				}
 			}
 
 			// If ANY validation failed, check if force push is enabled
 			if validationFailed {
 				if pushForce {
-					logrus.Warnf("⚠️  Validation failed but --force flag is set. Proceeding with push anyway...")
-					logrus.Warnf("⚠️  WARNING: You are pushing policies that failed validation!")
+					logrus.Warnf("Validation failed but --force flag is set. Proceeding with push anyway...")
+					logrus.Warnf("WARNING: You are pushing policies that failed validation!")
 				} else {
-					logrus.Fatalf("🚫 Push aborted: One or more policies failed validation. Please fix the issues before pushing to Insights, or use --force to override.")
+					logrus.Fatalf("Push aborted: One or more policies failed validation. Please fix the issues before pushing to Insights, or use --force to override.")
 				}
 			} else {
-				logrus.Info("✅ All policies validated successfully!")
+				logrus.Info("All policies validated successfully!")
 			}
 		}
 
@@ -164,7 +164,7 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 				logrus.Info("Dry run: Would delete policies that exist in Insights but not locally")
 			}
 			if pushForce {
-				logrus.Warnf("⚠️  Dry run: Force push is enabled - validation failures would be ignored")
+				logrus.Warnf("Dry run: Force push is enabled - validation failures would be ignored")
 			}
 			return
 		}
@@ -176,9 +176,9 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 		}
 
 		if pushForce {
-			logrus.Warnf("🎉 Force push completed. Policies have been pushed to Insights despite validation failures.")
+			logrus.Warnf("Force push completed. Policies have been pushed to Insights despite validation failures.")
 		} else {
-			logrus.Infoln("🎉 Successfully synchronized kyverno-policies with Insights.")
+			logrus.Infoln("Successfully synchronized kyverno-policies with Insights.")
 		}
 	},
 }
