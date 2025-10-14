@@ -15,7 +15,6 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/fairwindsops/insights-cli/pkg/kyverno"
@@ -71,7 +70,7 @@ var downloadKyvernoPoliciesCmd = &cobra.Command{
 			logrus.Fatalf("error saving kyverno-policies locally: %v", err)
 		}
 
-		fmt.Printf("Downloaded %d kyverno-policies from Insights to %s\n", c, saveDir)
-		fmt.Printf("You can now add test cases and push changes back to Insights\n")
+		logrus.Infof("Downloaded %d kyverno-policies from Insights to %s\n", c, saveDir)
+		logrus.Infof("You can now add test cases and push changes back to Insights\n")
 	},
 }

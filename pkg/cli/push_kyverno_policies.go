@@ -65,7 +65,7 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 		// Check if the policy directory exists
 		_, err := os.Stat(policyDir)
 		if err != nil {
-			logrus.Fatalf("Policy directory %s does not exist. Run 'insights-cli download kyverno-policies -d %s' first to create it.", policyDir, filepath.Dir(policyDir))
+			logrus.Fatalf("Kyverno policy directory %s does not exist. Run 'insights-cli download kyverno-policies -d %s' first to create it.", policyDir, filepath.Dir(policyDir))
 		}
 
 		// Get all policy files (excluding test cases)

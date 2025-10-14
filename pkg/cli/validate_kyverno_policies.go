@@ -15,7 +15,6 @@
 package cli
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/fairwindsops/insights-cli/pkg/kyverno"
@@ -100,7 +99,7 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 			if !determineActualValidationResult(result, []kyverno.TestResource{testResource}) {
 				os.Exit(1)
 			}
-			fmt.Println("Kyverno policy validated successfully.")
+			logrus.Info("Kyverno policy validated successfully.")
 		}
 
 		if kyvernoPolicyDir != "" {
@@ -155,7 +154,7 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			fmt.Println("All Kyverno policies validated successfully!")
+			logrus.Info("All Kyverno policies validated successfully!")
 		}
 	},
 }
@@ -189,35 +188,35 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 	actualValid := determineActualValidationResult(result, testCases)
 
 	if actualValid {
-		fmt.Printf("✅ Policy validation: PASSED\n")
+		logrus.Infof("✅ Policy validation: PASSED\n")
 	} else {
-		fmt.Printf("❌ Policy validation: FAILED\n")
+		logrus.Infof("❌ Policy validation: FAILED\n")
 	}
 
 	// Display errors if any
 	if len(result.Errors) > 0 {
-		fmt.Printf("❌ Errors:\n")
+		logrus.Infof("❌ Errors:\n")
 		for _, err := range result.Errors {
-			fmt.Printf("  - %s\n", err)
+			logrus.Infof("  - %s\n", err)
 		}
 	}
 
 	// Display warnings if any
 	if len(result.Warnings) > 0 {
-		fmt.Printf("⚠️  Warnings:\n")
+		logrus.Infof("⚠️  Warnings:\n")
 		for _, warning := range result.Warnings {
-			fmt.Printf("  - %s\n", warning)
+			logrus.Infof("  - %s\n", warning)
 		}
 	}
 
 	// Display test case results
 	for _, testResult := range result.TestResults {
 		if testResult.Passed {
-			fmt.Printf("✓ Test case %s (%s): PASSED - Expected %s, got %s\n",
+			logrus.Infof("✓ Test case %s (%s): PASSED - Expected %s, got %s\n",
 				testResult.TestCaseName, testResult.FileName,
 				testResult.ExpectedOutcome, testResult.ActualOutcome)
 		} else {
-			fmt.Printf("❌ Test case %s (%s): FAILED - Expected %s, got %s\n",
+			logrus.Infof("❌ Test case %s (%s): FAILED - Expected %s, got %s\n",
 				testResult.TestCaseName, testResult.FileName,
 				testResult.ExpectedOutcome, testResult.ActualOutcome)
 		}
@@ -234,9 +233,6 @@ func determineActualValidationResult(result *kyverno.ValidationResult, testCases
 			expectedOutcomes[testCase.TestCaseName] = testCase.ExpectedOutcome
 		}
 
-		// fmt.Printf("DEBUG: Expected outcomes map: %v\n", expectedOutcomes)
-		// fmt.Printf("DEBUG: Test results from backend: %v\n", result.TestResults)
-
 		// Check each test result to see if it behaved as expected
 		for _, testResult := range result.TestResults {
 			expectedOutcome, exists := expectedOutcomes[testResult.TestCaseName]
@@ -251,23 +247,14 @@ func determineActualValidationResult(result *kyverno.ValidationResult, testCases
 			expectedSuccess := expectedOutcome == "success"
 			actualSuccess := testResult.ActualOutcome == "success"
 
-			// fmt.Printf("DEBUG: Test case %s - Expected: %s (%t), Actual: %s (%t)\n",
-			//	testResult.TestCaseName, expectedOutcome, expectedSuccess, testResult.ActualOutcome, actualSuccess)
-
 			// Test case passes if expected outcome matches actual outcome
 			if expectedSuccess != actualSuccess {
-				fmt.Printf("DEBUG: Test case %s FAILED - expected %s but got %s\n",
-					testResult.TestCaseName, expectedOutcome, testResult.ActualOutcome)
 				return false
 			}
 		}
 
-		// fmt.Printf("DEBUG: All test cases passed validation\n")
 		return true
 	}
-
-	// If no test results from backend, analyze based on test case types and validation results
-	fmt.Printf("DEBUG: No test results from backend, analyzing based on test case types\n")
 
 	// Count test case types
 	successTestCases := 0
@@ -283,9 +270,6 @@ func determineActualValidationResult(result *kyverno.ValidationResult, testCases
 		}
 	}
 
-	// fmt.Printf("DEBUG: Success test cases: %d, Failure test cases: %d\n", successTestCases, failureTestCases)
-	// fmt.Printf("DEBUG: Validation errors: %d\n", len(result.Errors))
-
 	// Simple logic:
 	// - If we have SUCCESS test cases and NO errors → PASS (policy allows good resources)
 	// - If we have FAILURE test cases and HAVE errors → PASS (policy rejects bad resources)
@@ -293,26 +277,21 @@ func determineActualValidationResult(result *kyverno.ValidationResult, testCases
 	// - If we have FAILURE test cases and NO errors → FAIL (policy incorrectly allows bad resources)
 
 	if successTestCases > 0 && len(result.Errors) == 0 {
-		// fmt.Printf("DEBUG: SUCCESS test cases with no errors - PASS\n")
 		return true
 	}
 
 	if failureTestCases > 0 && len(result.Errors) > 0 {
-		// fmt.Printf("DEBUG: FAILURE test cases with errors - PASS (correctly rejected)\n")
 		return true
 	}
 
 	if successTestCases > 0 && len(result.Errors) > 0 {
-		// fmt.Printf("DEBUG: SUCCESS test cases with errors - FAIL (incorrectly rejected)\n")
 		return false
 	}
 
 	if failureTestCases > 0 && len(result.Errors) == 0 {
-		// fmt.Printf("DEBUG: FAILURE test cases with no errors - FAIL (incorrectly allowed)\n")
 		return false
 	}
 
 	// Fall back to backend's determination
-	// fmt.Printf("DEBUG: Falling back to backend's determination: %v\n", result.Valid)
 	return result.Valid
 }
