@@ -200,7 +200,7 @@ func FetchClusterKyvernoPoliciesWithAppGroups(client *req.Client, org, cluster s
 	}
 
 	// DEBUG: Log response details for troubleshooting
-	logrus.Debugf("DEBUG: Response status code: %d", resp.StatusCode)
+	logrus.Infof("DEBUG: Response status code: %d", resp.StatusCode)
 	logrus.Debugf("DEBUG: Response body: %s", string(resp.Bytes()))
 	logrus.Debugf("DEBUG: IsErrorState(): %v", resp.IsErrorState())
 
@@ -232,7 +232,7 @@ func ExportClusterKyvernoPoliciesYaml(client *req.Client, org, cluster string) (
 	}
 
 	// DEBUG: Log response details for troubleshooting
-	logrus.Debugf("DEBUG: YAML Export - Response status code: %d", resp.StatusCode)
+	logrus.Infof("DEBUG: YAML Export - Response status code: %d", resp.StatusCode)
 	logrus.Debugf("DEBUG: YAML Export - Response body: %s", string(resp.Bytes()))
 	logrus.Debugf("DEBUG: YAML Export - IsErrorState(): %v", resp.IsErrorState())
 
