@@ -199,11 +199,6 @@ func FetchClusterKyvernoPoliciesWithAppGroups(client *req.Client, org, cluster s
 		return nil, err
 	}
 
-	// DEBUG: Log response details for troubleshooting
-	logrus.Infof("DEBUG: Response status code: %d", resp.StatusCode)
-	logrus.Debugf("DEBUG: Response body: %s", string(resp.Bytes()))
-	logrus.Debugf("DEBUG: IsErrorState(): %v", resp.IsErrorState())
-
 	var policyList KyvernoPolicyList
 	if resp.IsErrorState() {
 		logrus.Errorf("FetchClusterKyvernoPoliciesWithAppGroups: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
@@ -214,10 +209,6 @@ func FetchClusterKyvernoPoliciesWithAppGroups(client *req.Client, org, cluster s
 		logrus.Errorf("Unable to convert response to json for cluster Kyverno policies with app groups: %v", err)
 		return nil, err
 	}
-
-	// DEBUG: Log parsed policy list
-	logrus.Debugf("DEBUG: Parsed policy list - Total: %d, Policies count: %d", policyList.Total, len(policyList.Policies))
-
 	return policyList.Policies, nil
 }
 
@@ -230,11 +221,6 @@ func ExportClusterKyvernoPoliciesYaml(client *req.Client, org, cluster string) (
 		logrus.Errorf("Unable to export cluster Kyverno policies YAML from insights: %v", err)
 		return "", err
 	}
-
-	// DEBUG: Log response details for troubleshooting
-	logrus.Infof("DEBUG: YAML Export - Response status code: %d", resp.StatusCode)
-	logrus.Debugf("DEBUG: YAML Export - Response body: %s", string(resp.Bytes()))
-	logrus.Debugf("DEBUG: YAML Export - IsErrorState(): %v", resp.IsErrorState())
 
 	if resp.IsErrorState() {
 		logrus.Errorf("ExportClusterKyvernoPoliciesYaml: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
