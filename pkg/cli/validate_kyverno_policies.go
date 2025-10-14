@@ -15,6 +15,7 @@
 package cli
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/fairwindsops/insights-cli/pkg/kyverno"
@@ -54,7 +55,7 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 		if !checkValidateKyvernoPoliciesFlags() {
 			err := cmd.Help()
 			if err != nil {
-				logrus.Error(err)
+				fmt.Println(err)
 			}
 			os.Exit(1)
 		}
@@ -65,7 +66,7 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 		if validateClusterName != "" {
 			result, err := kyverno.ValidateClusterKyvernoPolicies(client, org, validateClusterName)
 			if err != nil {
-				logrus.Fatalf("Unable to validate cluster Kyverno policies: %v", err)
+				fmt.Printf("Unable to validate cluster Kyverno policies: %v", err)
 			}
 
 			// Display validation results
@@ -81,25 +82,25 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 			// Single policy validation
 			policy, err := kyverno.ReadPolicyFromFile(kyvernoPolicyFileName)
 			if err != nil {
-				logrus.Fatalf("Unable to read policy file: %v", err)
+				fmt.Printf("Unable to read policy file: %v", err)
 			}
 
 			testResource, err := kyverno.ReadTestResourceFromFile(kyvernoTestResourceFileName)
 			if err != nil {
-				logrus.Fatalf("Unable to read test resource file: %v", err)
+				fmt.Printf("Unable to read test resource file: %v", err)
 			}
 
 			result, err := kyverno.ValidateKyvernoPolicy(
 				client, org, policy, []kyverno.TestResource{testResource}, true)
 			if err != nil {
-				logrus.Fatalf("Unable to validate policy: %v", err)
+				fmt.Printf("Unable to validate policy: %v", err)
 			}
 
 			displayValidationResults(result, []kyverno.TestResource{testResource})
 			if !determineActualValidationResult(result, []kyverno.TestResource{testResource}) {
 				os.Exit(1)
 			}
-			logrus.Info("Kyverno policy validated successfully.")
+			fmt.Println("Kyverno policy validated successfully.")
 		}
 
 		if kyvernoPolicyDir != "" {
@@ -127,19 +128,19 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 			}
 
 			if len(policiesToValidate) == 0 {
-				logrus.Info("No policies to validate")
+				fmt.Println("No policies to validate")
 				return
 			}
 
 			// Validate each policy
 			allValid := true
 			for _, policyWithTestCases := range policiesToValidate {
-				logrus.Infof("Validating policy: %s", policyWithTestCases.Policy.Name)
+				fmt.Printf("Validating policy: %s", policyWithTestCases.Policy.Name)
 
 				result, err := kyverno.ValidateKyvernoPolicy(
 					client, org, policyWithTestCases.Policy, policyWithTestCases.TestCases, true)
 				if err != nil {
-					logrus.Errorf("Unable to validate policy %s: %v", policyWithTestCases.Policy.Name, err)
+					fmt.Printf("Unable to validate policy %s: %v", policyWithTestCases.Policy.Name, err)
 					allValid = false
 					continue
 				}
@@ -154,7 +155,7 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			logrus.Info("All Kyverno policies validated successfully!")
+			fmt.Println("All Kyverno policies validated successfully!")
 		}
 	},
 }
@@ -162,21 +163,21 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 // checkValidateKyvernoPoliciesFlags verifies supplied flags for `validate kyverno-policies` are valid.
 func checkValidateKyvernoPoliciesFlags() bool {
 	if kyvernoPolicyDir == "" && kyvernoPolicyFileName == "" {
-		logrus.Errorln("Please specify one of the --policy-file or --batch-directory options to validate one or more Kyverno policies.")
+		fmt.Println("Please specify one of the --policy-file or --batch-directory options to validate one or more Kyverno policies.")
 		return false
 	}
 	if kyvernoPolicyDir != "" {
 		if kyvernoPolicyFileName != "" {
-			logrus.Errorln("Please specify only one of the --batch-directory or --policy-file option.")
+			fmt.Println("Please specify only one of the --batch-directory or --policy-file option.")
 			return false
 		}
 		if kyvernoTestResourceFileName != "" {
-			logrus.Errorln("The --test-resource-file option is only used with the --policy-file option, to validate a single Kyverno policy.")
+			fmt.Println("The --test-resource-file option is only used with the --policy-file option, to validate a single Kyverno policy.")
 			return false
 		}
 	}
 	if kyvernoPolicyFileName != "" && kyvernoTestResourceFileName == "" {
-		logrus.Errorln("Please also specify a test resource file when validating a single Kyverno policy, using the --test-resource-file option.")
+		fmt.Println("Please also specify a test resource file when validating a single Kyverno policy, using the --test-resource-file option.")
 		return false
 	}
 	return true
@@ -188,35 +189,35 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 	actualValid := determineActualValidationResult(result, testCases)
 
 	if actualValid {
-		logrus.Infof("✅ Policy validation: PASSED\n")
+		fmt.Printf("✅ Policy validation: PASSED\n")
 	} else {
-		logrus.Infof("❌ Policy validation: FAILED\n")
+		fmt.Printf("❌ Policy validation: FAILED\n")
 	}
 
 	// Display errors if any
 	if len(result.Errors) > 0 {
-		logrus.Infof("❌ Errors:\n")
+		fmt.Printf("❌ Errors:\n")
 		for _, err := range result.Errors {
-			logrus.Infof("  - %s\n", err)
+			fmt.Printf("  - %s\n", err)
 		}
 	}
 
 	// Display warnings if any
 	if len(result.Warnings) > 0 {
-		logrus.Infof("⚠️  Warnings:\n")
+		fmt.Printf("⚠️  Warnings:\n")
 		for _, warning := range result.Warnings {
-			logrus.Infof("  - %s\n", warning)
+			fmt.Printf("  - %s\n", warning)
 		}
 	}
 
 	// Display test case results
 	for _, testResult := range result.TestResults {
 		if testResult.Passed {
-			logrus.Infof("✓ Test case %s (%s): PASSED - Expected %s, got %s\n",
+			fmt.Printf("✓ Test case %s (%s): PASSED - Expected %s, got %s\n",
 				testResult.TestCaseName, testResult.FileName,
 				testResult.ExpectedOutcome, testResult.ActualOutcome)
 		} else {
-			logrus.Infof("❌ Test case %s (%s): FAILED - Expected %s, got %s\n",
+			fmt.Printf("❌ Test case %s (%s): FAILED - Expected %s, got %s\n",
 				testResult.TestCaseName, testResult.FileName,
 				testResult.ExpectedOutcome, testResult.ActualOutcome)
 		}
@@ -289,9 +290,11 @@ func determineActualValidationResult(result *kyverno.ValidationResult, testCases
 	}
 
 	if failureTestCases > 0 && len(result.Errors) == 0 {
+		// fmt.Printf("DEBUG: FAILURE test cases with no errors - FAIL (incorrectly allowed)\n")
 		return false
 	}
 
 	// Fall back to backend's determination
+	// fmt.Printf("DEBUG: Falling back to backend's determination: %v\n", result.Valid)
 	return result.Valid
 }

@@ -223,8 +223,6 @@ func DiscoverPoliciesAndTestCases(policyDir string) ([]PolicyWithTestCases, erro
 	return policies, nil
 }
 
-// Helper functions
-
 // validatePath checks for path traversal attacks
 func validatePath(path string) error {
 	if strings.Contains(path, "..") {
