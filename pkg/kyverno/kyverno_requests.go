@@ -72,21 +72,6 @@ func UpsertKyvernoPolicy(client *req.Client, org string, policy KyvernoPolicy) e
 	return nil
 }
 
-// DeleteKyvernoPolicy deletes a Kyverno policy
-func DeleteKyvernoPolicy(client *req.Client, org string, policyName string) error {
-	url := fmt.Sprintf(kyvernoPolicyURLFormat, org, policyName)
-	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Delete(url)
-	if err != nil {
-		logrus.Errorf("Unable to delete Kyverno policy %s from insights: %v", policyName, err)
-		return err
-	}
-	if !utils.IsSuccessful(resp.StatusCode) {
-		logrus.Errorf("DeleteKyvernoPolicy: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
-		return errors.New("DeleteKyvernoPolicy: invalid response code")
-	}
-	return nil
-}
-
 // ValidateKyvernoPolicy validates a Kyverno policy with test resources
 func ValidateKyvernoPolicy(client *req.Client, org string, policy KyvernoPolicy, testResources []TestResource, expectOutcomes bool) (*ValidationResult, error) {
 	url := fmt.Sprintf(kyvernoPolicyValidateURLFormat, org)
