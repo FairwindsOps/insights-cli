@@ -17,23 +17,23 @@ cp require-labels.testcase2.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase1.failure.yaml test-dir/kyverno-policies/
 cp disallow-privileged.testcase2.success.yaml test-dir/kyverno-policies/
 
-# Test cluster list command (expects 404 since cluster doesn't exist)
-! exec insights-cli list kyverno-policies --cluster test-cluster
-! stdout .
-stderr '404'
-exec echo "DEBUG: Cluster list command completed - checking if stderr contains '404'"
+# Test cluster list command (expects empty list since cluster doesn't exist)
+exec insights-cli list kyverno-policies --cluster test-cluster
+stdout 'kyverno-policies (cluster: test-cluster, with app groups)'
+! stderr .
+exec echo "DEBUG: Cluster list command completed - checking for empty tree structure"
 
-# Test cluster list with app groups command (expects 404 since cluster doesn't exist)
+# Test cluster list with app groups command (expects empty list since cluster doesn't exist)
 exec echo "DEBUG: Testing cluster list with app groups command..."
-! exec insights-cli list kyverno-policies --cluster test-cluster
-! stdout 'kyverno-policies (cluster: test-cluster, with app groups)'
-stderr '404'
+exec insights-cli list kyverno-policies --cluster test-cluster
+stdout 'kyverno-policies (cluster: test-cluster, with app groups)'
+! stderr .
 
-# Test cluster export yaml command (expects 404 since cluster doesn't exist)
+# Test cluster export yaml command (expects empty yaml since cluster doesn't exist)
 exec echo "DEBUG: Testing cluster export yaml command..."
-! exec insights-cli list kyverno-policies --cluster test-cluster --format yaml
-! stdout .
-stderr '404'
+exec insights-cli list kyverno-policies --cluster test-cluster --format yaml
+stdout 'policies:'
+! stderr .
 
 
 -- require-labels.yaml --
