@@ -22,6 +22,7 @@ import (
 	"github.com/xlab/treeprint"
 
 	"github.com/fairwindsops/insights-cli/pkg/appgroups"
+	"github.com/fairwindsops/insights-cli/pkg/kyverno"
 	"github.com/fairwindsops/insights-cli/pkg/opa"
 	"github.com/fairwindsops/insights-cli/pkg/policymappings"
 	"github.com/fairwindsops/insights-cli/pkg/rules"
@@ -63,6 +64,11 @@ var listAllCmd = &cobra.Command{
 		err = policymappings.AddPolicyMappingsBranch(tree, policyMappings)
 		if err != nil {
 			logrus.Fatalf("error building policy-mappings tree: %v", err)
+		}
+
+		err = kyverno.AddKyvernoPoliciesBranch(client, org, tree)
+		if err != nil {
+			logrus.Fatalf("Unable to get Kyverno policies from insights: %v", err)
 		}
 
 		fmt.Println(tree.String())

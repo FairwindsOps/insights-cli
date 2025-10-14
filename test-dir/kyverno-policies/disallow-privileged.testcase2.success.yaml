@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: non-privileged-pod
+spec:
+  securityContext:
+    privileged: false
+  containers:
+  - name: nginx
+    image: nginx:latest

@@ -21,7 +21,8 @@ import (
 )
 
 var pushAppGroupsSubDir string
-var defaultPushAppGroupsSubDir = "app-groups"
+
+const defaultPushAppGroupsSubDir = "app-groups"
 
 func init() {
 	// This flag sets a variable defined in the parent `push` command.
