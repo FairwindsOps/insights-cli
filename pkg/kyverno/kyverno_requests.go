@@ -30,7 +30,6 @@ const (
 	kyvernoPolicyURLFormat                       = "/v0/organizations/%s/kyverno-policies/%s"
 	kyvernoPolicyValidateURLFormat               = "/v0/organizations/%s/kyverno-policies/validate"
 	kyvernoPolicyBulkURLFormat                   = "/v0/organizations/%s/kyverno-policies/bulk"
-	clusterKyvernoPoliciesURLFormat              = "/v0/organizations/%s/clusters/%s/kyverno-policies"
 	clusterKyvernoPoliciesWithAppGroupsURLFormat = "/v0/organizations/%s/clusters/%s/kyverno-policies/with-app-groups-applied"
 	clusterKyvernoPoliciesYamlURLFormat          = "/v0/organizations/%s/clusters/%s/kyverno-policies/with-app-groups-applied/yaml"
 	clusterKyvernoPoliciesValidateURLFormat      = "/v0/organizations/%s/clusters/%s/kyverno-policies/with-app-groups-applied/validate"
@@ -203,28 +202,6 @@ func policyToYAML(policy KyvernoPolicy) string {
 	}
 
 	return string(yamlBytes)
-}
-
-// FetchClusterKyvernoPolicies queries Fairwinds Insights to retrieve Kyverno policies for a specific cluster
-func FetchClusterKyvernoPolicies(client *req.Client, org, cluster string) ([]KyvernoPolicy, error) {
-	url := fmt.Sprintf(clusterKyvernoPoliciesURLFormat, org, cluster)
-	logrus.Debugf("Cluster Kyverno policies URL: %s", url)
-	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Get(url)
-	if err != nil {
-		logrus.Errorf("Unable to get cluster Kyverno policies from insights: %v", err)
-		return nil, err
-	}
-	var policyList KyvernoPolicyList
-	if !utils.IsSuccessful(resp.StatusCode) {
-		logrus.Errorf("FetchClusterKyvernoPolicies: invalid response code: %s %v", string(resp.Bytes()), resp.StatusCode)
-		return nil, errors.New("FetchClusterKyvernoPolicies: invalid response code")
-	}
-	err = resp.Unmarshal(&policyList)
-	if err != nil {
-		logrus.Errorf("Unable to convert response to json for cluster Kyverno policies: %v", err)
-		return nil, err
-	}
-	return policyList.Policies, nil
 }
 
 // FetchClusterKyvernoPoliciesWithAppGroups queries Fairwinds Insights to retrieve Kyverno policies for a specific cluster with app groups applied
