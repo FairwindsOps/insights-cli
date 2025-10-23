@@ -25,8 +25,6 @@ import (
 
 // KyvernoPolicy represents a Kyverno policy
 type KyvernoPolicy struct {
-	ID                int                    `json:"id,omitempty"`
-	OrganizationID    int64                  `json:"organization_id,omitempty"`
 	Name              string                 `json:"name" yaml:"metadata.name"`
 	Kind              string                 `json:"kind" yaml:"kind"`
 	APIVersion        string                 `json:"api_version" yaml:"apiVersion"`
@@ -49,20 +47,10 @@ func (k KyvernoPolicy) GetYamlBytes() ([]byte, error) {
 
 // Helper function to convert a KyvernoPolicy spec to YAML string
 func convertPolicySpecToYAML(policy KyvernoPolicy) (string, error) {
-	// Parse the spec JSON
-
-	apiVersion := "kyverno.io/v1"
-	kind := "ClusterPolicy"
-	if policy.Kind != "" {
-		kind = policy.Kind
-	}
-	if policy.APIVersion != "" {
-		apiVersion = policy.APIVersion
-	}
 	// Create the full policy structure
 	policyMap := map[string]any{
-		"apiVersion": apiVersion,
-		"kind":       kind,
+		"apiVersion": policy.APIVersion,
+		"kind":       policy.Kind,
 		"metadata": map[string]any{
 			"name": policy.Name,
 		},
