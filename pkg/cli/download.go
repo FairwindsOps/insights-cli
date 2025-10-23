@@ -22,7 +22,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 var downloadDir string
@@ -50,6 +49,7 @@ var downloadCmd = &cobra.Command{
 
 type nameable interface {
 	GetName() string
+	GetYamlBytes() ([]byte, error)
 }
 
 var filenameRegex = regexp.MustCompile("[^A-Za-z0-9]+")
@@ -78,9 +78,9 @@ func saveEntitiesLocally[T nameable](saveDir string, entities []T, overrideLocal
 		filename := formatFilename(e.GetName())
 		filePath := saveDir + "/" + filename
 
-		b, err := yaml.Marshal(e)
+		b, err := e.GetYamlBytes()
 		if err != nil {
-			return saved, fmt.Errorf("error marshalling policy-mapping %s: %w", e.GetName(), err)
+			return saved, fmt.Errorf("error getting yaml bytes for entity %s: %w", e.GetName(), err)
 		}
 		err = os.WriteFile(filePath, b, 0644)
 		if err != nil {

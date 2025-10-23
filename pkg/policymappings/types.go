@@ -1,5 +1,9 @@
 package policymappings
 
+import (
+	"github.com/fairwindsops/insights-cli/pkg/utils"
+)
+
 // copied from FW Insights openAPI codegen
 
 type PolicyMapping struct {
@@ -18,4 +22,8 @@ type PolicyMappingSpec struct {
 
 func (pm PolicyMapping) GetName() string {
 	return pm.Name
+}
+
+func (pm PolicyMapping) GetYamlBytes() ([]byte, error) {
+	return utils.GetYamlBytes(pm)
 }
