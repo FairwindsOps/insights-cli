@@ -16,7 +16,6 @@ package cli
 
 import (
 	"os"
-	"path/filepath"
 
 	"github.com/fairwindsops/insights-cli/pkg/kyverno"
 	"github.com/sirupsen/logrus"
@@ -31,7 +30,7 @@ var pushForce bool
 const defaultPushKyvernoPoliciesSubDir = "kyverno-policies"
 
 func init() {
-	pushKyvernoPoliciesCmd.PersistentFlags().StringVarP(&pushKyvernoPoliciesSubDir, "push-kyverno-policies-subdirectory", "", defaultPushKyvernoPoliciesSubDir, "Sub-directory within push-directory, to contain Kyverno policies.")
+	pushKyvernoPoliciesCmd.PersistentFlags().StringVarP(&pushKyvernoPoliciesSubDir, "push-kyverno-policies-subdirectory", "k", defaultPushKyvernoPoliciesSubDir, "Sub-directory within push-directory, to contain Kyverno policies.")
 	pushKyvernoPoliciesCmd.PersistentFlags().StringSliceVarP(&pushSpecificPolicies, "policies", "p", []string{}, "Specific policy names to push (e.g., require-labels,disallow-privileged). If not specified, all policies will be pushed.")
 	pushKyvernoPoliciesCmd.PersistentFlags().BoolVar(&pushSkipValidation, "skip-validation", false, "Skip validation before pushing (not recommended).")
 	pushKyvernoPoliciesCmd.PersistentFlags().BoolVar(&pushForce, "force", false, "Force push even if validation fails (use with extreme caution).")
@@ -43,29 +42,39 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 	Short: "Push Kyverno policies from local files to Insights.",
 	Long:  "Push Kyverno policies from local files to Insights. This command automatically validates all policies before pushing. If ANY validation fails, the push operation is aborted unless --force is used.",
 	Example: `
-	# Push all local policies to Insights (with validation)
-	insights-cli push kyverno-policies -d .
+	# Push all policies from the default subdirectory
+	insights-cli push kyverno-policies
 
-	# Push specific policies (with validation)
-	insights-cli push kyverno-policies -d . -p require-labels,disallow-privileged
+	# Push specific policies from a custom subdirectory
+	insights-cli push kyverno-policies -p policy1,policy2 -k custom-policies
+
+	# Push all policies from a custom subdirectory
+	insights-cli push kyverno-policies -k custom-policies	
 
 	# Push with dry run to see what would be changed
-	insights-cli push kyverno-policies -d . --dry-run
+	insights-cli push kyverno-policies --dry-run
 
 	# Skip validation (not recommended)
-	insights-cli push kyverno-policies -d . --skip-validation
+	insights-cli push kyverno-policies --skip-validation
 
 	# Force push even if validation fails (use with extreme caution)
-	insights-cli push kyverno-policies -d . --force`,
+	insights-cli push kyverno-policies --force`,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
+
+		// Check if the push directory exists
+		_, err := os.Stat(pushDir)
+		if err != nil {
+			logrus.Fatalf("Push directory %s does not exist. You need to create it.", pushDir)
+		}
+
 		policyDir := pushDir + "/" + pushKyvernoPoliciesSubDir
 
-		// Check if the policy directory exists
-		_, err := os.Stat(policyDir)
+		// Check if the policy directory to push exists
+		_, err = os.Stat(policyDir)
 		if err != nil {
-			logrus.Fatalf("Kyverno policy directory %s does not exist. Run 'insights-cli download kyverno-policies -d %s' first to create it.", policyDir, filepath.Dir(policyDir))
+			logrus.Fatalf("Kyverno push-kyverno-policies-subdirectory %s does not exist. You need to create it.", pushKyvernoPoliciesSubDir)
 		}
 
 		// Get all policy files (excluding test cases)

@@ -30,7 +30,7 @@ var kyvernoTestResourceFileName string
 var validateClusterName string
 
 func init() {
-	validateKyvernoPoliciesCmd.Flags().StringVarP(&kyvernoPolicyDir, "batch-directory", "b", "", "A directory containing Kyverno policy .yaml files and corresponding test case .yaml files to validate. This option validates multiple Kyverno policies at once, and is mutually exclusive with the policy-file option.")
+	validateKyvernoPoliciesCmd.Flags().StringVarP(&kyvernoPolicyDir, "batch-directory", "b", "kyverno-policies", "A directory containing Kyverno policy .yaml files and corresponding test case .yaml files to validate. This option validates multiple Kyverno policies at once, and is mutually exclusive with the policy-file option.")
 	validateKyvernoPoliciesCmd.Flags().StringVarP(&kyvernoPolicyFileName, "policy-file", "r", "", "A Kyverno policy file to validate. The --test-resource-file option is also required. This option validates a single policy, and is mutually exclusive with the batch-directory option.")
 	validateKyvernoPoliciesCmd.Flags().StringVarP(&kyvernoTestResourceFileName, "test-resource-file", "k", "", "A Kubernetes manifest to provide as input when validating a single Kyverno policy. This option is mutually exclusive with the batch-directory option. A manifest file ending in a .success.yaml extension is expected to pass validation. A manifest file ending in a .failure.yaml extension is expected to fail validation.")
 	validateKyvernoPoliciesCmd.Flags().StringSliceVarP(&validateSpecificPolicies, "policies", "p", []string{}, "Specific policy names to validate (e.g., require-labels,disallow-privileged). If not specified, all policies will be validated.")
