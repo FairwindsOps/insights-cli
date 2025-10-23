@@ -30,7 +30,7 @@ var pushForce bool
 const defaultPushKyvernoPoliciesSubDir = "kyverno-policies"
 
 func init() {
-	pushKyvernoPoliciesCmd.PersistentFlags().StringVarP(&pushKyvernoPoliciesSubDir, "push-kyverno-policies-subdirectory", "k", defaultPushKyvernoPoliciesSubDir, "Sub-directory within push-directory, to contain Kyverno policies.")
+	pushKyvernoPoliciesCmd.PersistentFlags().StringVarP(&pushKyvernoPoliciesSubDir, "push-kyverno-policies-subdirectory", "w", defaultPushKyvernoPoliciesSubDir, "Sub-directory within push-directory, to contain Kyverno policies.")
 	pushKyvernoPoliciesCmd.PersistentFlags().StringSliceVarP(&pushSpecificPolicies, "policies", "p", []string{}, "Specific policy names to push (e.g., require-labels,disallow-privileged). If not specified, all policies will be pushed.")
 	pushKyvernoPoliciesCmd.PersistentFlags().BoolVar(&pushSkipValidation, "skip-validation", false, "Skip validation before pushing (not recommended).")
 	pushKyvernoPoliciesCmd.PersistentFlags().BoolVar(&pushForce, "force", false, "Force push even if validation fails (use with extreme caution).")
@@ -46,10 +46,10 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 	insights-cli push kyverno-policies
 
 	# Push specific policies from a custom subdirectory
-	insights-cli push kyverno-policies -p policy1,policy2 -k custom-policies
+	insights-cli push kyverno-policies -p policy1,policy2 -w custom-policies
 
 	# Push all policies from a custom subdirectory
-	insights-cli push kyverno-policies -k custom-policies	
+	insights-cli push kyverno-policies -w custom-policies	
 
 	# Push with dry run to see what would be changed
 	insights-cli push kyverno-policies --dry-run
