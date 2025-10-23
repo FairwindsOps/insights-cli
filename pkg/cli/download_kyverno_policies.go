@@ -15,15 +15,11 @@
 package cli
 
 import (
-	"bytes"
-	"fmt"
 	"os"
-	"strings"
 
 	"github.com/fairwindsops/insights-cli/pkg/kyverno"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 var downloadKyvernoPoliciesSubDir string
@@ -77,90 +73,4 @@ var downloadKyvernoPoliciesCmd = &cobra.Command{
 		logrus.Infof("Downloaded %d kyverno-policies from Insights to %s\n", c, saveDir)
 		logrus.Infof("You can now add test cases and push changes back to Insights\n")
 	},
-}
-
-// Helper function to convert a KyvernoPolicy spec to YAML string
-func convertPolicySpecToYAML(policy kyverno.KyvernoPolicy) (string, error) {
-	// Create the full policy structure
-	policyMap := map[string]any{
-		"apiVersion": policy.APIVersion,
-		"kind":       policy.Kind,
-		"metadata": map[string]any{
-			"name": policy.Name,
-		},
-		"spec": policy.Spec,
-	}
-
-	// Add labels and annotations if they exist and are not empty
-	if len(policy.Labels) > 0 {
-		policyMap["metadata"].(map[string]any)["labels"] = policy.Labels
-	}
-
-	// Initialize annotations map
-	annotations := make(map[string]any)
-
-	// Add existing annotations if they exist
-	if len(policy.Annotations) > 0 {
-		policyMap["metadata"].(map[string]any)["annotations"] = policy.Annotations
-	}
-
-	// Only add annotations if there are any
-	if len(annotations) > 0 {
-		policyMap["metadata"].(map[string]any)["annotations"] = annotations
-	}
-
-	// Add status only if it exists and is not null
-	if len(policy.Status) > 0 {
-		policyMap["status"] = policy.Status
-	}
-	// Clean up any null values before marshaling
-	cleanPolicyMap := cleanNullValues(policyMap)
-
-	// Convert to YAML
-	// yaml converter should use only 2 spaces for indentation
-	var buf bytes.Buffer
-	encoder := yaml.NewEncoder(&buf)
-	encoder.SetIndent(2)
-	err := encoder.Encode(cleanPolicyMap)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal policy to YAML: %w", err)
-	}
-	yamlContent := buf.String()
-	yamlContent = strings.TrimSpace(yamlContent)
-	return yamlContent, nil
-}
-
-// cleanNullValues recursively removes null values from a map
-func cleanNullValues(data any) any {
-	switch v := data.(type) {
-	case map[string]any:
-		cleaned := make(map[string]any)
-		for key, value := range v {
-			if value != nil {
-				cleanedValue := cleanNullValues(value)
-				if cleanedValue != nil {
-					cleaned[key] = cleanedValue
-				}
-			}
-		}
-		return cleaned
-	case []any:
-		var cleaned []any
-		for _, item := range v {
-			if item != nil {
-				cleanedItem := cleanNullValues(item)
-				if cleanedItem != nil {
-					cleaned = append(cleaned, cleanedItem)
-				}
-			}
-		}
-		return cleaned
-	case nil:
-		return nil
-	case string:
-		// Don't process strings, return as-is
-		return v
-	default:
-		return v
-	}
 }

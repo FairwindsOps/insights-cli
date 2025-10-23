@@ -51,10 +51,18 @@ func (k KyvernoPolicy) GetYamlBytes() ([]byte, error) {
 func convertPolicySpecToYAML(policy KyvernoPolicy) (string, error) {
 	// Parse the spec JSON
 
+	apiVersion := "kyverno.io/v1"
+	kind := "ClusterPolicy"
+	if policy.Kind != "" {
+		kind = policy.Kind
+	}
+	if policy.APIVersion != "" {
+		apiVersion = policy.APIVersion
+	}
 	// Create the full policy structure
 	policyMap := map[string]any{
-		"apiVersion": policy.APIVersion,
-		"kind":       policy.Kind,
+		"apiVersion": apiVersion,
+		"kind":       kind,
 		"metadata": map[string]any{
 			"name": policy.Name,
 		},
