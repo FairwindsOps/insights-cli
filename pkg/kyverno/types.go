@@ -15,7 +15,12 @@
 package kyverno
 
 import (
+	"bytes"
+	"fmt"
+	"strings"
 	"time"
+
+	"go.yaml.in/yaml/v3"
 )
 
 // KyvernoPolicy represents a Kyverno policy
@@ -32,6 +37,102 @@ type KyvernoPolicy struct {
 	ManagedByInsights *bool                  `json:"managed_by_insights,omitempty" yaml:"managedByInsights,omitempty"`
 	CreatedAt         *time.Time             `json:"created_at,omitempty"`
 	UpdatedAt         *time.Time             `json:"updated_at,omitempty"`
+}
+
+func (k KyvernoPolicy) GetYamlBytes() ([]byte, error) {
+	yamlBytes, err := convertPolicySpecToYAML(k)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert policy spec to YAML: %w", err)
+	}
+	return []byte(yamlBytes), nil
+}
+
+// Helper function to convert a KyvernoPolicy spec to YAML string
+func convertPolicySpecToYAML(policy KyvernoPolicy) (string, error) {
+	// Parse the spec JSON
+
+	apiVersion := "kyverno.io/v1"
+	kind := "ClusterPolicy"
+	if policy.Kind != "" {
+		kind = policy.Kind
+	}
+	if policy.APIVersion != "" {
+		apiVersion = policy.APIVersion
+	}
+	// Create the full policy structure
+	policyMap := map[string]any{
+		"apiVersion": apiVersion,
+		"kind":       kind,
+		"metadata": map[string]any{
+			"name": policy.Name,
+		},
+		"spec": policy.Spec,
+	}
+
+	// Add labels and annotations if they exist and are not empty
+	if len(policy.Labels) > 0 {
+		policyMap["metadata"].(map[string]any)["labels"] = policy.Labels
+	}
+
+	// Add existing annotations if they exist
+	if len(policy.Annotations) > 0 {
+		policyMap["metadata"].(map[string]any)["annotations"] = policy.Annotations
+	}
+
+	// Add status only if it exists and is not null
+	if len(policy.Status) > 0 {
+		policyMap["status"] = policy.Status
+	}
+	// Clean up any null values before marshaling
+	cleanPolicyMap := cleanNullValues(policyMap)
+
+	// Convert to YAML
+	// yaml converter should use only 2 spaces for indentation
+	var buf bytes.Buffer
+	encoder := yaml.NewEncoder(&buf)
+	encoder.SetIndent(2)
+	err := encoder.Encode(cleanPolicyMap)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal policy to YAML: %w", err)
+	}
+	yamlContent := buf.String()
+	yamlContent = strings.TrimSpace(yamlContent)
+	return yamlContent, nil
+}
+
+// cleanNullValues recursively removes null values from a map
+func cleanNullValues(data any) any {
+	switch v := data.(type) {
+	case map[string]any:
+		cleaned := make(map[string]any)
+		for key, value := range v {
+			if value != nil {
+				cleanedValue := cleanNullValues(value)
+				if cleanedValue != nil {
+					cleaned[key] = cleanedValue
+				}
+			}
+		}
+		return cleaned
+	case []any:
+		var cleaned []any
+		for _, item := range v {
+			if item != nil {
+				cleanedItem := cleanNullValues(item)
+				if cleanedItem != nil {
+					cleaned = append(cleaned, cleanedItem)
+				}
+			}
+		}
+		return cleaned
+	case nil:
+		return nil
+	case string:
+		// Don't process strings, return as-is
+		return v
+	default:
+		return v
+	}
 }
 
 // GetName implements the nameable interface for download functionality

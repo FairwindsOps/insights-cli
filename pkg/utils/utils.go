@@ -1,5 +1,9 @@
 package utils
 
+import (
+	"go.yaml.in/yaml/v2"
+)
+
 func GetHeaders(inputContentType string) map[string]string {
 	contentType := "application/json"
 	if inputContentType != "" {
@@ -19,4 +23,8 @@ func InvertBoolPointer(b *bool) *bool {
 	}
 	r := !*b
 	return &r
+}
+
+func GetYamlBytes[T any](e T) ([]byte, error) {
+	return yaml.Marshal(e)
 }

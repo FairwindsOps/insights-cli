@@ -1,11 +1,17 @@
 package appgroups
 
+import "github.com/fairwindsops/insights-cli/pkg/utils"
+
 // copied from FW Insights openAPI codegen
 
 type AppGroup struct {
 	Name string       `json:"name,omitempty" yaml:"name,omitempty"`
 	Spec AppGroupSpec `json:"spec" yaml:"spec"`
 	Type string       `json:"type,omitempty" yaml:"type,omitempty"`
+}
+
+func (a AppGroup) GetYamlBytes() ([]byte, error) {
+	return utils.GetYamlBytes(a)
 }
 
 // AppGroupSpec defines model for AppGroupSpec.
