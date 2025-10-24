@@ -181,3 +181,20 @@ func TestDisplayClusterValidationResults(t *testing.T) {
 	// In a real test environment, we'd capture stdout and verify the output
 	DisplayClusterValidationResults(result)
 }
+
+func TestConvertPolicySpecToYAML(t *testing.T) {
+	policy := KyvernoPolicy{
+		Name:       "test-policy",
+		Kind:       "ClusterPolicy",
+		APIVersion: "kyverno.io/v1",
+		Spec: map[string]interface{}{
+			"metadata": map[string]interface{}{
+				"name": "test-policy",
+			},
+		},
+	}
+
+	yaml, err := convertPolicySpecToYAML(policy)
+	assert.NoError(t, err)
+	assert.Equal(t, "apiVersion: kyverno.io/v1\nkind: ClusterPolicy\nmetadata:\n  name: test-policy\nspec:\n  metadata:\n    name: test-policy", yaml)
+}
