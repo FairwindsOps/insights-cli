@@ -24,23 +24,19 @@ import (
 
 var pushKyvernoPoliciesSubDir string
 var pushSpecificPolicies []string
-var pushSkipValidation bool
-var pushForce bool
 
 const defaultPushKyvernoPoliciesSubDir = "kyverno-policies"
 
 func init() {
 	pushKyvernoPoliciesCmd.PersistentFlags().StringVarP(&pushKyvernoPoliciesSubDir, "push-kyverno-policies-subdirectory", "s", defaultPushKyvernoPoliciesSubDir, "Sub-directory within push-directory, to contain Kyverno policies.")
 	pushKyvernoPoliciesCmd.PersistentFlags().StringSliceVarP(&pushSpecificPolicies, "policies", "p", []string{}, "Specific policy names to push (e.g., require-labels,disallow-privileged). If not specified, all policies will be pushed.")
-	pushKyvernoPoliciesCmd.PersistentFlags().BoolVar(&pushSkipValidation, "skip-validation", false, "Skip validation before pushing (not recommended).")
-	pushKyvernoPoliciesCmd.PersistentFlags().BoolVar(&pushForce, "force", false, "Force push even if validation fails (use with extreme caution).")
 	pushCmd.AddCommand(pushKyvernoPoliciesCmd)
 }
 
 var pushKyvernoPoliciesCmd = &cobra.Command{
 	Use:   "kyverno-policies [-p policy1,policy2]",
 	Short: "Push Kyverno policies from local files to Insights.",
-	Long:  "Push Kyverno policies from local files to Insights. This command automatically validates all policies before pushing. If ANY validation fails, the push operation is aborted unless --force is used.",
+	Long:  "Push Kyverno policies from local files to Insights. We recommend validating policies before pushing. For validating you need to provide samples in the form of .success.yaml and .failure.yaml files.",
 	Example: `
 	# Push all policies from the default subdirectory
 	insights-cli push kyverno-policies
@@ -108,62 +104,6 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 			return
 		}
 
-		// Validate policies before pushing (unless skipped or forced)
-		if !pushSkipValidation {
-			logrus.Info("Validating policies before push...")
-
-			// Discover all policies and test cases for validation
-			policiesWithTestCases, err := kyverno.DiscoverPoliciesAndTestCases(policyDir)
-			if err != nil {
-				logrus.Fatalf("Unable to discover policies for validation: %v", err)
-			}
-
-			// Validate each policy that will be pushed
-			validationFailed := false
-			for _, policyToPush := range policiesToPush {
-				logrus.Infof("Validating policy: %s", policyToPush.Name)
-
-				// Find test cases for this policy
-				var testCases []kyverno.TestResource
-				for _, policyWithTestCases := range policiesWithTestCases {
-					if policyWithTestCases.Policy.Name == policyToPush.Name {
-						testCases = policyWithTestCases.TestCases
-						break
-					}
-				}
-
-				// Validate the policy
-				result, err := kyverno.ValidateKyvernoPolicy(
-					client, org, policyToPush, testCases, true)
-				if err != nil {
-					logrus.Errorf("Unable to validate policy %s: %v", policyToPush.Name, err)
-					validationFailed = true
-					continue
-				}
-
-				// Display validation results
-				displayValidationResults(result, testCases)
-				if !determineActualValidationResult(result, testCases) {
-					logrus.Errorf("Policy %s failed validation", policyToPush.Name)
-					validationFailed = true
-				} else {
-					logrus.Infof("Policy %s passed validation", policyToPush.Name)
-				}
-			}
-
-			// If ANY validation failed, check if force push is enabled
-			if validationFailed {
-				if pushForce {
-					logrus.Warnf("Validation failed but --force flag is set. Proceeding with push anyway...")
-					logrus.Warnf("WARNING: You are pushing policies that failed validation!")
-				} else {
-					logrus.Fatalf("Push aborted: One or more policies failed validation. Please fix the issues before pushing to Insights, or use --force to override.")
-				}
-			} else {
-				logrus.Info("All policies validated successfully!")
-			}
-		}
-
 		if pushDryRun {
 			logrus.Infof("Dry run: Would synchronize %d Kyverno policies with Insights:", len(policiesToPush))
 			for _, policy := range policiesToPush {
@@ -171,9 +111,6 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 			}
 			if pushDelete {
 				logrus.Info("Dry run: Would delete policies that exist in Insights but not locally")
-			}
-			if pushForce {
-				logrus.Warnf("Dry run: Force push is enabled - validation failures would be ignored")
 			}
 			return
 		}
@@ -184,10 +121,6 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 			logrus.Fatalf("Unable to synchronize kyverno-policies with Insights: %v", err)
 		}
 
-		if pushForce {
-			logrus.Warnf("Force push completed. Policies have been pushed to Insights despite validation failures.")
-		} else {
-			logrus.Infoln("Successfully synchronized kyverno-policies with Insights.")
-		}
+		logrus.Infoln("Successfully synchronized kyverno-policies with Insights.")
 	},
 }

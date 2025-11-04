@@ -25,16 +25,16 @@ import (
 
 // KyvernoPolicy represents a Kyverno policy
 type KyvernoPolicy struct {
-	Name              string                 `json:"name" yaml:"metadata.name"`
-	Kind              string                 `json:"kind" yaml:"kind"`
-	APIVersion        string                 `json:"api_version" yaml:"apiVersion"`
-	Labels            map[string]interface{} `json:"labels,omitempty" yaml:"metadata.labels"`
-	Annotations       map[string]interface{} `json:"annotations,omitempty" yaml:"metadata.annotations"`
-	Spec              map[string]interface{} `json:"spec" yaml:"spec"`
-	Status            map[string]interface{} `json:"status,omitempty"`
-	ManagedByInsights *bool                  `json:"managed_by_insights,omitempty" yaml:"managedByInsights,omitempty"`
-	CreatedAt         *time.Time             `json:"created_at,omitempty"`
-	UpdatedAt         *time.Time             `json:"updated_at,omitempty"`
+	Name              string         `json:"name" yaml:"metadata.name"`
+	Kind              string         `json:"kind" yaml:"kind"`
+	APIVersion        string         `json:"apiVersion" yaml:"apiVersion"`
+	Labels            map[string]any `json:"labels,omitempty" yaml:"metadata.labels"`
+	Annotations       map[string]any `json:"annotations,omitempty" yaml:"metadata.annotations"`
+	Spec              map[string]any `json:"spec" yaml:"spec"`
+	Status            map[string]any `json:"status,omitempty"`
+	ManagedByInsights *bool          `json:"managedByInsights,omitempty" yaml:"managedByInsights,omitempty"`
+	CreatedAt         *time.Time     `json:"createdAt,omitempty" yaml:"createdAt,omitempty"`
+	UpdatedAt         *time.Time     `json:"updatedAt,omitempty" yaml:"updatedAt,omitempty"`
 }
 
 func (k KyvernoPolicy) GetYamlBytes() ([]byte, error) {
@@ -178,14 +178,14 @@ type KyvernoPolicyList struct {
 
 // KyvernoPolicyInput represents the input format expected by the API
 type KyvernoPolicyInput struct {
-	Name              string                  `json:"name"`
-	Kind              string                  `json:"kind"`
-	APIVersion        string                  `json:"apiVersion"`
-	Labels            map[string]string       `json:"labels,omitempty"`
-	Annotations       map[string]string       `json:"annotations,omitempty"`
-	Spec              map[string]interface{}  `json:"spec"`
-	Status            *map[string]interface{} `json:"status,omitempty"`
-	ManagedByInsights *bool                   `json:"managedByInsights,omitempty"`
+	Name              string            `json:"name"`
+	Kind              string            `json:"kind"`
+	APIVersion        string            `json:"apiVersion"`
+	Labels            map[string]string `json:"labels,omitempty"`
+	Annotations       map[string]string `json:"annotations,omitempty"`
+	Spec              map[string]any    `json:"spec"`
+	Status            *map[string]any   `json:"status,omitempty"`
+	ManagedByInsights *bool             `json:"managedByInsights,omitempty"`
 }
 
 // ValidationRequest represents the request format for policy validation
@@ -196,7 +196,7 @@ type ValidationRequest struct {
 
 // ToKyvernoPolicyInput converts a KyvernoPolicy to KyvernoPolicyInput format
 func (k KyvernoPolicy) ToKyvernoPolicyInput() KyvernoPolicyInput {
-	// Convert labels from map[string]interface{} to map[string]string
+	// Convert labels from map[string]any to map[string]string
 	labels := make(map[string]string)
 	for key, value := range k.Labels {
 		if str, ok := value.(string); ok {
@@ -204,7 +204,7 @@ func (k KyvernoPolicy) ToKyvernoPolicyInput() KyvernoPolicyInput {
 		}
 	}
 
-	// Convert annotations from map[string]interface{} to map[string]string
+	// Convert annotations from map[string]any to map[string]string
 	annotations := make(map[string]string)
 	for key, value := range k.Annotations {
 		if str, ok := value.(string); ok {
@@ -213,7 +213,7 @@ func (k KyvernoPolicy) ToKyvernoPolicyInput() KyvernoPolicyInput {
 	}
 
 	// Convert status to pointer if it exists
-	var status *map[string]interface{}
+	var status *map[string]any
 	if k.Status != nil {
 		status = &k.Status
 	}
