@@ -137,8 +137,8 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 			// Validate each policy
 			allValid := true
 			for _, policyWithTestCases := range policiesToValidate {
+				fmt.Println("\n--------------------------------")
 				fmt.Printf("🔍 Validating policy: %s\n", policyWithTestCases.Policy.Name)
-
 				result, err := kyverno.ValidateKyvernoPolicy(
 					client, org, policyWithTestCases.Policy, policyWithTestCases.TestCases, true)
 				if err != nil {
@@ -150,13 +150,11 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 				displayValidationResults(result, policyWithTestCases.TestCases)
 				if !determineActualValidationResult(result, policyWithTestCases.TestCases) {
 					allValid = false
-					fmt.Printf("❌ Policy %s validation failed.\n", policyWithTestCases.Policy.Name)
-				} else {
-					fmt.Printf("✅ Policy %s validated successfully.\n", policyWithTestCases.Policy.Name)
 				}
 			}
 
 			if !allValid {
+				fmt.Println("\n--------------------------------")
 				fmt.Println("❌ Some Kyverno policies validation failed. Please check the output for details.")
 				os.Exit(1)
 			}
@@ -194,38 +192,78 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 	// Determine if validation actually passed based on test case results
 	actualValid := determineActualValidationResult(result, testCases)
 
-	if actualValid {
-		fmt.Printf("✅ Policy validation: PASSED\n")
-	} else {
-		fmt.Printf("❌ Policy validation: FAILED\n")
+	// Display test case results with clear messaging
+	if len(result.TestResults) > 0 {
+		fmt.Printf("\n📋 Test case results:\n")
+		for _, testResult := range result.TestResults {
+			passed := testResult.Passed
+
+			// Display the result with test case name prominently
+			if passed {
+				fmt.Printf("  ✅ %s (%s)\n", testResult.TestCaseName, testResult.FileName)
+			} else {
+				fmt.Printf("  ❌ %s (%s)\n", testResult.TestCaseName, testResult.FileName)
+			}
+		}
 	}
 
-	// Display errors if any
+	// If TestResults are empty but we have test cases, show them with fallback info
+	if len(result.TestResults) == 0 && len(testCases) > 0 {
+		fmt.Printf("\n📋 Test cases:\n")
+		for _, testCase := range testCases {
+
+			// Determine if this test case likely passed based on expected outcome and errors
+			// This is a fallback when TestResults are not available
+			var passed bool
+			if testCase.ExpectedOutcome == "success" {
+				// Success test case should have no errors
+				passed = len(result.Errors) == 0
+			} else if testCase.ExpectedOutcome == "failure" {
+				// Failure test case should have errors
+				passed = len(result.Errors) > 0
+			} else {
+				// Unknown expected outcome - use overall validation result
+				passed = actualValid
+			}
+
+			// For mixed test cases, we can't reliably determine per-case results
+			// So we use the overall validation result
+			successCount := 0
+			failureCount := 0
+			for _, tc := range testCases {
+				if tc.ExpectedOutcome == "success" {
+					successCount++
+				} else if tc.ExpectedOutcome == "failure" {
+					failureCount++
+				}
+			}
+			if successCount > 0 && failureCount > 0 {
+				// Mixed test cases - use overall validation result
+				passed = actualValid
+			}
+
+			// Display with pass/fail indicator
+			if passed {
+				fmt.Printf("  ✅ %s (%s)\n", testCase.TestCaseName, testCase.FileName)
+			} else {
+				fmt.Printf("  ❌ %s (%s)\n", testCase.TestCaseName, testCase.FileName)
+			}
+		}
+	}
+
+	// Display errors if any (after test cases)
 	if len(result.Errors) > 0 {
-		fmt.Printf("❌ Errors:\n")
+		fmt.Printf("\nOutput:\n")
 		for _, err := range result.Errors {
 			fmt.Printf("  - %s\n", err)
 		}
 	}
 
-	// Display warnings if any
+	// Display warnings if any (after errors)
 	if len(result.Warnings) > 0 {
-		fmt.Printf("⚠️  Warnings:\n")
+		fmt.Printf("\n⚠️  Warnings:\n")
 		for _, warning := range result.Warnings {
 			fmt.Printf("  - %s\n", warning)
-		}
-	}
-
-	// Display test case results
-	for _, testResult := range result.TestResults {
-		if testResult.Passed {
-			fmt.Printf("✓ Test case %s (%s): PASSED - Expected %s, got %s\n",
-				testResult.TestCaseName, testResult.FileName,
-				testResult.ExpectedOutcome, testResult.ActualOutcome)
-		} else {
-			fmt.Printf("❌ Test case %s (%s): FAILED - Expected %s, got %s\n",
-				testResult.TestCaseName, testResult.FileName,
-				testResult.ExpectedOutcome, testResult.ActualOutcome)
 		}
 	}
 }
