@@ -210,13 +210,12 @@ func validatePath(path string) error {
 }
 
 func isPolicyFile(filename string) bool {
-	// Policy file: ends with .yaml/.yml but doesn't contain .testcase
 	return (strings.HasSuffix(filename, ".yaml") || strings.HasSuffix(filename, ".yml")) &&
-		!strings.Contains(filename, ".testcase")
+		!strings.Contains(filename, ".success.") && !strings.Contains(filename, ".failure.")
 }
 
 func isTestCaseFile(filename string) bool {
-	return strings.Contains(filename, ".testcase")
+	return strings.Contains(filename, ".success.") || strings.Contains(filename, ".failure.")
 }
 
 func extractPolicyNameFromFile(filename string) string {
@@ -240,7 +239,7 @@ func extractTestCaseName(filename string) string {
 	// e.g., "require-labels.testcase1.success.yaml" -> "testcase1"
 	parts := strings.Split(filename, ".")
 	for _, part := range parts {
-		if strings.HasPrefix(part, "testcase") {
+		if strings.HasPrefix(part, "success") || strings.HasPrefix(part, "failure") {
 			return part
 		}
 	}
