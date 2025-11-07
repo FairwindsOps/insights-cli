@@ -210,39 +210,41 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 	// If TestResults are empty but we have test cases, show them with fallback info
 	if len(result.TestResults) == 0 && len(testCases) > 0 {
 		fmt.Printf("\n📋 Test cases:\n")
-		for _, testCase := range testCases {
 
+		// Check if we have mixed test cases (both success and failure)
+		successCount := 0
+		failureCount := 0
+		for _, tc := range testCases {
+			if tc.ExpectedOutcome == "success" {
+				successCount++
+			} else if tc.ExpectedOutcome == "failure" {
+				failureCount++
+			}
+		}
+		hasMixedCases := successCount > 0 && failureCount > 0
+
+		for _, testCase := range testCases {
 			// Determine if this test case likely passed based on expected outcome and errors
 			// This is a fallback when TestResults are not available
 			var passed bool
-			if testCase.ExpectedOutcome == "success" {
-				// Success test case should have no errors
-				passed = len(result.Errors) == 0
-			} else if testCase.ExpectedOutcome == "failure" {
-				// Failure test case should have errors
-				passed = len(result.Errors) > 0
-			} else {
-				// Unknown expected outcome - use overall validation result
+			if hasMixedCases {
+				// For mixed test cases, we can't reliably determine which errors belong to which test case
+				// Use the overall validation result for all test cases
 				passed = actualValid
-			}
-
-			// For mixed test cases, we can't reliably determine per-case results
-			// So we use the overall validation result
-			successCount := 0
-			failureCount := 0
-			for _, tc := range testCases {
-				if tc.ExpectedOutcome == "success" {
-					successCount++
-				} else if tc.ExpectedOutcome == "failure" {
-					failureCount++
+			} else {
+				// For single-type test cases, we can determine based on errors
+				switch testCase.ExpectedOutcome {
+				case "success":
+					// Success test case should have no errors
+					passed = len(result.Errors) == 0
+				case "failure":
+					// Failure test case should have errors
+					passed = len(result.Errors) > 0
+				default:
+					passed = actualValid
 				}
 			}
-			if successCount > 0 && failureCount > 0 {
-				// Mixed test cases - use overall validation result
-				passed = actualValid
-			}
 
-			// Display with pass/fail indicator
 			if passed {
 				fmt.Printf("  ✅ %s (%s)\n", testCase.TestCaseName, testCase.FileName)
 			} else {
@@ -253,7 +255,7 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 
 	// Display errors if any (after test cases)
 	if len(result.Errors) > 0 {
-		fmt.Printf("\nOutput:\n")
+		fmt.Printf("\n⚠️ Output:\n")
 		for _, err := range result.Errors {
 			fmt.Printf("  - %s\n", err)
 		}
@@ -261,7 +263,7 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 
 	// Display warnings if any (after errors)
 	if len(result.Warnings) > 0 {
-		fmt.Printf("\n⚠️  Warnings:\n")
+		fmt.Printf("\n⚠️ Output:\n")
 		for _, warning := range result.Warnings {
 			fmt.Printf("  - %s\n", warning)
 		}
