@@ -230,32 +230,33 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 	}
 }
 
-// matchTestResultsToTestCases matches TestResults to TestCases using PolicyName, FileName, and TestCaseName
+// matchTestResultsToTestCases matches TestResults to TestCases using FileName and TestCaseName
 // Returns a map of test case index to its TestResult (if found)
-// Uses PolicyName:FileName:TestCaseName as the unique identifier to ensure correct matching
+// Uses FileName:TestCaseName as the unique identifier to ensure correct matching
+// Handles both patterns:
+//   - "policy.testcase1.success.yaml" -> TestCaseName: "testcase1.success", FileName: "policy.testcase1.success.yaml"
+//   - "policy.success.yaml" -> TestCaseName: "success", FileName: "policy.success.yaml"
 func matchTestResultsToTestCases(result *kyverno.ValidationResult, testCases []kyverno.TestResource) map[int]*kyverno.TestResult {
 	resultMap := make(map[int]*kyverno.TestResult)
 
-	// Create a map of test cases by PolicyName, FileName, and TestCaseName for quick lookup
-	// Key format: "PolicyName:FileName:TestCaseName" to ensure unique identification
+	// Create a map of test cases by FileName and TestCaseName for quick lookup
+	// Key format: "FileName:TestCaseName" to ensure unique identification
 	testCaseMap := make(map[string]int)
 	for i, testCase := range testCases {
-		key := fmt.Sprintf("%s:%s:%s", testCase.PolicyName, testCase.FileName, testCase.TestCaseName)
+		// Use FileName and TestCaseName as the unique identifier
+		// This handles both patterns:
+		// - "policy.testcase1.success.yaml" with TestCaseName "testcase1.success"
+		// - "policy.success.yaml" with TestCaseName "success"
+		key := fmt.Sprintf("%s:%s", testCase.FileName, testCase.TestCaseName)
 		testCaseMap[key] = i
 	}
 
-	// Match TestResults to test cases
-	// Note: TestResult may not have PolicyName, so we try both with and without it
+	// Match TestResults to test cases using FileName and TestCaseName
 	for _, testResult := range result.TestResults {
-		// First try with PolicyName if available (more specific)
 		if testResult.FileName != "" && testResult.TestCaseName != "" {
-			// Try exact match with PolicyName if we can find it
-			for i, testCase := range testCases {
-				if testCase.FileName == testResult.FileName && testCase.TestCaseName == testResult.TestCaseName {
-					// Match found - use it
-					resultMap[i] = &testResult
-					break
-				}
+			key := fmt.Sprintf("%s:%s", testResult.FileName, testResult.TestCaseName)
+			if idx, exists := testCaseMap[key]; exists {
+				resultMap[idx] = &testResult
 			}
 		}
 	}

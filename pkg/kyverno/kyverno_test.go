@@ -103,9 +103,12 @@ func TestExtractTestCaseName(t *testing.T) {
 		filename string
 		expected string
 	}{
-		{"require-labels.testcase1.success.yaml", "testcase1"},
-		{"disallow-privileged.testcase2.failure.yaml", "testcase2"},
-		{"policy.testcase3.success.yml", "testcase3"},
+		{"require-labels.testcase1.success.yaml", "testcase1.success"},
+		{"disallow-privileged.testcase2.failure.yaml", "testcase2.failure"},
+		{"policy.testcase3.success.yml", "testcase3.success"},
+		{"require-labels.success.yaml", "success"},
+		{"disallow-privileged.failure.yaml", "failure"},
+		{"policy.success.yml", "success"},
 	}
 
 	for _, test := range tests {
