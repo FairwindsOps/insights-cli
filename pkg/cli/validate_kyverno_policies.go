@@ -215,10 +215,13 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 		successCount := 0
 		failureCount := 0
 		for _, tc := range testCases {
-			if tc.ExpectedOutcome == "success" {
+			switch tc.ExpectedOutcome {
+			case "success":
 				successCount++
-			} else if tc.ExpectedOutcome == "failure" {
+			case "failure":
 				failureCount++
+			default:
+				continue
 			}
 		}
 		hasMixedCases := successCount > 0 && failureCount > 0
