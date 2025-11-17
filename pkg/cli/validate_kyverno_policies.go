@@ -250,7 +250,7 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 	}
 
 	if len(result.Errors) > 0 {
-		fmt.Printf("\n⚠️ Output:\n")
+		fmt.Printf("\n❌ Output:\n")
 		for _, err := range result.Errors {
 			fmt.Printf("  - %s\n", err)
 		}
