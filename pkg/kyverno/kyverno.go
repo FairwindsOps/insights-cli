@@ -210,13 +210,12 @@ func validatePath(path string) error {
 }
 
 func isPolicyFile(filename string) bool {
-	// Policy file: ends with .yaml/.yml but doesn't contain .testcase
 	return (strings.HasSuffix(filename, ".yaml") || strings.HasSuffix(filename, ".yml")) &&
-		!strings.Contains(filename, ".testcase")
+		!strings.Contains(filename, ".success.") && !strings.Contains(filename, ".failure.")
 }
 
 func isTestCaseFile(filename string) bool {
-	return strings.Contains(filename, ".testcase")
+	return strings.Contains(filename, ".success.") || strings.Contains(filename, ".failure.")
 }
 
 func extractPolicyNameFromFile(filename string) string {
@@ -237,10 +236,28 @@ func extractPolicyNameFromTestCase(filename string) string {
 
 func extractTestCaseName(filename string) string {
 	// Extract test case name from filename
-	// e.g., "require-labels.testcase1.success.yaml" -> "testcase1"
+	// Patterns:
+	//   - "require-labels.testcase1.success.yaml" -> "testcase1.success"
+	//   - "require-labels.success.yaml" -> "success"
+	//   - "require-labels.testcase2.failure.yaml" -> "testcase2.failure"
+	//   - "require-labels.failure.yaml" -> "failure"
 	parts := strings.Split(filename, ".")
-	for _, part := range parts {
-		if strings.HasPrefix(part, "testcase") {
+
+	// Find the index of "success" or "failure"
+	for i, part := range parts {
+		if part == "success" || part == "failure" {
+			// If there's a part before "success"/"failure", that's the test case name prefix
+			if i > 0 {
+				// Check if the previous part looks like a test case name
+				// (not the policy name, which is typically the first part)
+				prevPart := parts[i-1]
+				// If previous part is not empty and not just the base filename, combine it with outcome
+				if prevPart != "" && i > 1 {
+					// Return "testcase1.success" or "testcase2.failure"
+					return fmt.Sprintf("%s.%s", prevPart, part)
+				}
+			}
+			// If no test case name prefix, return "success" or "failure"
 			return part
 		}
 	}
