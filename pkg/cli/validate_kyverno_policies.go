@@ -227,21 +227,14 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 		hasMixedCases := successCount > 0 && failureCount > 0
 
 		for _, testCase := range testCases {
-			// Determine if this test case likely passed based on expected outcome and errors
-			// This is a fallback when TestResults are not available
 			var passed bool
 			if hasMixedCases {
-				// For mixed test cases, we can't reliably determine which errors belong to which test case
-				// Use the overall validation result for all test cases
 				passed = actualValid
 			} else {
-				// For single-type test cases, we can determine based on errors
 				switch testCase.ExpectedOutcome {
 				case "success":
-					// Success test case should have no errors
 					passed = len(result.Errors) == 0
 				case "failure":
-					// Failure test case should have errors
 					passed = len(result.Errors) > 0
 				default:
 					passed = actualValid
@@ -256,7 +249,6 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 		}
 	}
 
-	// Display errors if any (after test cases)
 	if len(result.Errors) > 0 {
 		fmt.Printf("\n⚠️ Output:\n")
 		for _, err := range result.Errors {
@@ -264,7 +256,6 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 		}
 	}
 
-	// Display warnings if any (after errors)
 	if len(result.Warnings) > 0 {
 		fmt.Printf("\n⚠️ Output:\n")
 		for _, warning := range result.Warnings {
@@ -283,7 +274,6 @@ func matchTestResultsToTestCases(result *kyverno.ValidationResult, testCases []k
 	resultMap := make(map[int]*kyverno.TestResult)
 
 	// Create a map of test cases by FileName and TestCaseName for quick lookup
-	// Key format: "FileName:TestCaseName" to ensure unique identification
 	testCaseMap := make(map[string]int)
 	for i, testCase := range testCases {
 		// Use FileName and TestCaseName as the unique identifier
@@ -351,9 +341,6 @@ func determineActualValidationResult(result *kyverno.ValidationResult, testCases
 		return allPassed
 	}
 
-	// Fallback: If TestResults are empty, use simple error-based logic
-	// This is a fallback when the backend doesn't populate TestResults
-	// Count test case types
 	successTestCases := 0
 	failureTestCases := 0
 	for _, testCase := range testCases {
