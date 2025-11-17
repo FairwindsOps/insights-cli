@@ -12,11 +12,13 @@ require (
 	github.com/imroc/req/v3 v3.54.2
 	github.com/open-policy-agent/opa v1.7.1
 	github.com/rogpeppe/go-internal v1.14.1
-	github.com/samber/lo v1.51.0
+	github.com/samber/lo v1.52.0
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
 	github.com/xlab/treeprint v1.2.0
+	go.yaml.in/yaml/v2 v2.4.2
+	go.yaml.in/yaml/v3 v3.0.4
 	golang.org/x/net v0.43.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -84,8 +86,6 @@ require (
 	go.opentelemetry.io/otel/sdk v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
 	go.uber.org/mock v0.5.2 // indirect
-	go.yaml.in/yaml/v2 v2.4.2 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/mod v0.26.0 // indirect
 	golang.org/x/oauth2 v0.30.0 // indirect
