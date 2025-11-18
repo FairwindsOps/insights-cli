@@ -27,7 +27,7 @@ var downloadPolicyMappingsCmd = &cobra.Command{
 			logrus.Fatalf("unable to fetch policy-mappings from insights: %v", err)
 		}
 		saveDir := downloadDir + "/" + downloadPolicyMappingsSubDir
-		c, err := saveEntitiesLocally(saveDir, policyMappings, overrideLocalFiles)
+		c, err := saveEntitiesLocally(saveDir, policyMappings, overrideLocalFiles, []string{})
 		if err != nil {
 			logrus.Fatalf("error saving policy-mappings locally: %v", err)
 		}
