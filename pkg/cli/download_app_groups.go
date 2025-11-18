@@ -27,7 +27,7 @@ var downloadAppGroupsCmd = &cobra.Command{
 			logrus.Fatalf("unable to fetch app-groups from insights: %v", err)
 		}
 		saveDir := downloadDir + "/" + downloadAppGroupsSubDir
-		c, err := saveEntitiesLocally(saveDir, appGroups, overrideLocalFiles)
+		c, err := saveEntitiesLocally(saveDir, appGroups, overrideLocalFiles, []string{})
 		if err != nil {
 			logrus.Fatalf("error saving app-groups locally: %v", err)
 		}
