@@ -82,18 +82,18 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 			// Single policy validation
 			policy, err := kyverno.ReadPolicyFromFile(kyvernoPolicyFileName)
 			if err != nil {
-				fmt.Printf("Unable to read policy file: %v", err)
+				logrus.Fatalf("Unable to read policy file: %v", err)
 			}
 
 			testResource, err := kyverno.ReadTestResourceFromFile(kyvernoTestResourceFileName)
 			if err != nil {
-				fmt.Printf("Unable to read test resource file: %v", err)
+				logrus.Fatalf("Unable to read test resource file: %v", err)
 			}
 
 			result, err := kyverno.ValidateKyvernoPolicy(
 				client, org, policy, []kyverno.TestResource{testResource}, true)
 			if err != nil {
-				fmt.Printf("Unable to validate policy: %v", err)
+				logrus.Fatalf("Unable to validate policy: %v", err)
 			}
 
 			displayValidationResults(result, []kyverno.TestResource{testResource})
