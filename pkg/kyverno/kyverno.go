@@ -290,19 +290,53 @@ func readPolicyFromFile(filePath string) (KyvernoPolicy, error) {
 		return KyvernoPolicy{}, fmt.Errorf("failed to parse YAML in policy file %s: %w", filePath, err)
 	}
 
-	// Extract name from metadata if not set
-	if policy.Name == "" {
-		// Parse YAML to extract metadata.name
-		var yamlData map[string]interface{}
-		err = yaml.Unmarshal(fileContents, &yamlData)
-		if err != nil {
-			return KyvernoPolicy{}, fmt.Errorf("failed to parse YAML metadata in policy file %s: %w", filePath, err)
+	var yamlData map[string]interface{}
+	err = yaml.Unmarshal(fileContents, &yamlData)
+	if err != nil {
+		return KyvernoPolicy{}, fmt.Errorf("failed to parse YAML metadata in policy file %s: %w", filePath, err)
+	}
+
+	if metadata, ok := yamlData["metadata"].(map[string]interface{}); ok {
+		// Store the full metadata object to preserve any additional fields
+		policy.Metadata = make(map[string]any)
+		for k, v := range metadata {
+			policy.Metadata[k] = v
 		}
 
-		if metadata, ok := yamlData["metadata"].(map[string]interface{}); ok {
+		// Extract name if not set
+		if policy.Name == "" {
 			if name, ok := metadata["name"].(string); ok {
 				policy.Name = name
 			}
+		}
+
+		// Extract namespace if present
+		if namespace, ok := metadata["namespace"].(string); ok {
+			policy.Namespace = namespace
+		}
+
+		// Extract labels if present
+		if labels, ok := metadata["labels"].(map[string]interface{}); ok {
+			policy.Labels = make(map[string]any)
+			for k, v := range labels {
+				policy.Labels[k] = v
+			}
+		}
+
+		// Extract annotations if present
+		if annotations, ok := metadata["annotations"].(map[string]interface{}); ok {
+			policy.Annotations = make(map[string]any)
+			for k, v := range annotations {
+				policy.Annotations[k] = v
+			}
+		}
+	}
+
+	// Extract status if present (at the top level)
+	if status, ok := yamlData["status"].(map[string]interface{}); ok {
+		policy.Status = make(map[string]any)
+		for k, v := range status {
+			policy.Status[k] = v
 		}
 	}
 
