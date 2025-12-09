@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  rok8s: fairwinds/rok8s-scripts@12.1.1
+  rok8s: fairwinds/rok8s-scripts@14
 
 references:
   install_vault: &install_vault
@@ -19,7 +19,7 @@ jobs:
     resource_class: large
     docker:
       # Note the goreleaser version is also referenced in the release and snapshot jobs.
-      - image: goreleaser/goreleaser:v2.11.2
+      - image: goreleaser/goreleaser:v2.13.1
     steps:
       - checkout
       - run:
@@ -31,7 +31,7 @@ jobs:
               echo "$output"
               exit 1
             fi
-            wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.3.1
+            wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.7.2
             golangci-lint run -v --timeout 2m0s
       - run: ./.circleci/scripts/e2e-env.sh
       - *install_vault
@@ -47,7 +47,7 @@ jobs:
     resource_class: large
     docker:
       # Note the goreleaser version is also referenced in the release and test jobs.
-      - image: goreleaser/goreleaser:v2.11.2
+      - image: goreleaser/goreleaser:v2.13.1
     steps:
       - checkout
       - setup_remote_docker:
@@ -63,7 +63,7 @@ jobs:
     shell: /bin/bash
     docker:
       # Note the goreleaser version is also referenced in the snapshot and test jobs.
-      - image: goreleaser/goreleaser:v2.11.2
+      - image: goreleaser/goreleaser:v2.13.1
     steps:
       - checkout
       - run: ./.circleci/scripts/e2e-env.sh
@@ -73,7 +73,7 @@ jobs:
       - rok8s/get_vault_env:
           vault_path: repo/insights-cli/env
       - run: |
-              wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.3.1
+              wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.7.2
               golangci-lint run -v --timeout 2m0s
               go test -tags e2e ./pkg/...
       - setup_remote_docker:
