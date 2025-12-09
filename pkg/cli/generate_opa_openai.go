@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -8,7 +9,6 @@ import (
 	"github.com/fairwindsops/insights-cli/pkg/openai"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"golang.org/x/net/context"
 )
 
 const (
