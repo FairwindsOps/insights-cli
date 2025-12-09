@@ -21,6 +21,7 @@ cp policy.rego populated_dir/opa/v2test/policy.rego
 mkdir populated_dir/rules
 mkdir populated_dir/app-groups
 mkdir populated_dir/policy-mappings
+mkdir populated_dir/kyverno-policies
 cp settings.yaml populated_dir/settings.yaml
 
 # Create a fairwinds-insights.yaml file.
@@ -143,4 +144,5 @@ spec:
        nova-all (Never block on these policies) (disabled)
        polaris-all (Always block on these policies) (disabled)
        trivy-all (Block based on policy settings) (enabled)
+   kyverno-policies
 

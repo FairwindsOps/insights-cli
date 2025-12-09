@@ -1,0 +1,126 @@
+// Copyright 2025 FairwindsOps Inc
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+package cli
+
+import (
+	"os"
+
+	"github.com/fairwindsops/insights-cli/pkg/kyverno"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+)
+
+var pushKyvernoPoliciesSubDir string
+var pushSpecificPolicies []string
+
+const defaultPushKyvernoPoliciesSubDir = "kyverno-policies"
+
+func init() {
+	pushKyvernoPoliciesCmd.PersistentFlags().StringVarP(&pushKyvernoPoliciesSubDir, "push-kyverno-policies-subdirectory", "s", defaultPushKyvernoPoliciesSubDir, "Sub-directory within push-directory, to contain Kyverno policies.")
+	pushKyvernoPoliciesCmd.PersistentFlags().StringSliceVarP(&pushSpecificPolicies, "policies", "p", []string{}, "Specific policy names to push (e.g., require-labels,disallow-privileged). If not specified, all policies will be pushed.")
+	pushCmd.AddCommand(pushKyvernoPoliciesCmd)
+}
+
+var pushKyvernoPoliciesCmd = &cobra.Command{
+	Use:   "kyverno-policies [-p policy1,policy2]",
+	Short: "Push Kyverno policies from local files to Insights.",
+	Long:  "Push Kyverno policies from local files to Insights. We recommend validating policies before pushing. For validating you need to provide samples in the form of .success.yaml and .failure.yaml files.",
+	Example: `
+	# Push all policies from the default subdirectory
+	insights-cli push kyverno-policies
+
+	# Push specific policies from a custom subdirectory
+	insights-cli push kyverno-policies -s custom-policies -p policy1,policy2
+
+	# Push all policies from a custom subdirectory
+	insights-cli push kyverno-policies -s custom-policies	
+
+	# Push with dry run to see what would be changed
+	insights-cli push kyverno-policies --dry-run
+
+	# Skip validation (not recommended)
+	insights-cli push kyverno-policies --skip-validation
+
+	# Force push even if validation fails (use with extreme caution)
+	insights-cli push kyverno-policies --force`,
+	PreRun: validateAndLoadInsightsAPIConfigWrapper,
+	Run: func(cmd *cobra.Command, args []string) {
+		org := configurationObject.Options.Organization
+
+		// Check if the push directory exists
+		_, err := os.Stat(pushDir)
+		if err != nil {
+			logrus.Fatalf("Push directory %s does not exist. You need to create it.", pushDir)
+		}
+
+		policyDir := pushDir + "/" + pushKyvernoPoliciesSubDir
+
+		// Check if the policy directory to push exists
+		_, err = os.Stat(policyDir)
+		if err != nil {
+			logrus.Fatalf("Kyverno push-kyverno-policies-subdirectory %s does not exist. You need to create it.", pushKyvernoPoliciesSubDir)
+		}
+
+		// Get all policy files (excluding test cases)
+		allPolicies, err := kyverno.GetPolicyFilesForPush(policyDir)
+		if err != nil {
+			logrus.Fatalf("Unable to read policy files: %v", err)
+		}
+
+		// Filter policies if specific ones are requested
+		var policiesToPush []kyverno.KyvernoPolicy
+		if len(pushSpecificPolicies) > 0 {
+			for _, requestedPolicy := range pushSpecificPolicies {
+				found := false
+				for _, policy := range allPolicies {
+					if policy.Name == requestedPolicy {
+						policiesToPush = append(policiesToPush, policy)
+						found = true
+						break
+					}
+				}
+				if !found {
+					logrus.Warnf("Policy '%s' not found in directory", requestedPolicy)
+				}
+			}
+		} else {
+			policiesToPush = allPolicies
+		}
+
+		if len(policiesToPush) == 0 {
+			logrus.Info("No policies to push")
+			return
+		}
+
+		if pushDryRun {
+			logrus.Infof("Dry run: Would synchronize %d Kyverno policies with Insights:", len(policiesToPush))
+			for _, policy := range policiesToPush {
+				logrus.Infof("  - %s (%s)", policy.Name, policy.Kind)
+			}
+			if pushDelete {
+				logrus.Info("Dry run: Would delete policies that exist in Insights but not locally")
+			}
+			return
+		}
+
+		// Push to Insights
+		err = kyverno.PushKyvernoPolicies(client, policiesToPush, org, pushDelete, pushDryRun)
+		if err != nil {
+			logrus.Fatalf("Unable to synchronize kyverno-policies with Insights: %v", err)
+		}
+
+		logrus.Infoln("Successfully synchronized kyverno-policies with Insights.")
+	},
+}

@@ -18,11 +18,12 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 )
 
 var downloadDir string
@@ -50,11 +51,12 @@ var downloadCmd = &cobra.Command{
 
 type nameable interface {
 	GetName() string
+	GetYamlBytes() ([]byte, error)
 }
 
 var filenameRegex = regexp.MustCompile("[^A-Za-z0-9]+")
 
-func saveEntitiesLocally[T nameable](saveDir string, entities []T, overrideLocalFiles bool) (int, error) {
+func saveEntitiesLocally[T nameable](saveDir string, entities []T, overrideLocalFiles bool, skipFilesPatterns []string) (int, error) {
 	_, err := os.Stat(saveDir)
 	if err != nil {
 		return 0, err
@@ -68,7 +70,7 @@ func saveEntitiesLocally[T nameable](saveDir string, entities []T, overrideLocal
 		return 0, nil
 	}
 
-	err = purgeDirectory(saveDir)
+	err = purgeDirectory(saveDir, skipFilesPatterns)
 	if err != nil {
 		return 0, fmt.Errorf("could not purge directory %s: %w", saveDir, err)
 	}
@@ -78,9 +80,9 @@ func saveEntitiesLocally[T nameable](saveDir string, entities []T, overrideLocal
 		filename := formatFilename(e.GetName())
 		filePath := saveDir + "/" + filename
 
-		b, err := yaml.Marshal(e)
+		b, err := e.GetYamlBytes()
 		if err != nil {
-			return saved, fmt.Errorf("error marshalling policy-mapping %s: %w", e.GetName(), err)
+			return saved, fmt.Errorf("error getting yaml bytes for entity %s: %w", e.GetName(), err)
 		}
 		err = os.WriteFile(filePath, b, 0644)
 		if err != nil {
@@ -91,16 +93,49 @@ func saveEntitiesLocally[T nameable](saveDir string, entities []T, overrideLocal
 	return saved, nil
 }
 
-// remove all contents of a directory and creates it again
-func purgeDirectory(saveDir string) error {
-	err := os.RemoveAll(saveDir)
-	if err != nil {
-		return fmt.Errorf("error clearing directory %s: %w", saveDir, err)
+// remove all contents of a directory except files matching skipFilesPatterns
+func purgeDirectory(saveDir string, skipFilesPatterns []string) error {
+	// If no skip patterns, remove everything
+	if len(skipFilesPatterns) == 0 {
+		err := os.RemoveAll(saveDir)
+		if err != nil {
+			return fmt.Errorf("error clearing directory %s: %w", saveDir, err)
+		}
+		err = os.MkdirAll(saveDir, 0755)
+		if err != nil {
+			return fmt.Errorf("error creating directory %s: %w", saveDir, err)
+		}
+		return nil
 	}
-	err = os.MkdirAll(saveDir, 0755)
+
+	// Read all files in the directory
+	entries, err := os.ReadDir(saveDir)
 	if err != nil {
-		return fmt.Errorf("error creating directory %s: %w", saveDir, err)
+		return fmt.Errorf("error reading directory %s: %w", saveDir, err)
 	}
+
+	// Check each entry and delete if it doesn't match any skip pattern
+	for _, entry := range entries {
+		entryPath := filepath.Join(saveDir, entry.Name())
+
+		// Check if the entry matches any skip pattern
+		shouldSkip := false
+		for _, pattern := range skipFilesPatterns {
+			if strings.Contains(entry.Name(), pattern) {
+				shouldSkip = true
+				break
+			}
+		}
+
+		// Delete if it doesn't match any skip pattern
+		if !shouldSkip {
+			err := os.RemoveAll(entryPath)
+			if err != nil {
+				return fmt.Errorf("error removing %s: %w", entryPath, err)
+			}
+		}
+	}
+
 	return nil
 }
 

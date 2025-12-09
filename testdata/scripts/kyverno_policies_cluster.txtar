@@ -1,0 +1,124 @@
+# Test cluster-specific Kyverno policy commands
+exec echo "=== DEBUG: Starting Kyverno cluster tests ==="
+exec echo "DEBUG: Current directory: $(pwd)"
+exec echo "DEBUG: Backend status check..."
+exec sh -c 'curl -s http://localhost:3000/health >/dev/null 2>&1 && echo "DEBUG: Backend is running" || echo "DEBUG: Backend not running"'
+mkdir test-dir/kyverno-policies
+
+# Create a fairwinds-insights.yaml file for configuration
+exec printf 'options:\n  organization: %s\n  hostname: %s\n' $CI_INSIGHTS_ORGANIZATION $CI_INSIGHTS_API_URL
+cp stdout fairwinds-insights.yaml
+
+# Create some test policy files
+cp require-labels.yaml test-dir/kyverno-policies/
+cp disallow-privileged.yaml test-dir/kyverno-policies/
+cp require-labels.testcase1.success.yaml test-dir/kyverno-policies/
+cp require-labels.testcase2.failure.yaml test-dir/kyverno-policies/
+cp disallow-privileged.testcase1.failure.yaml test-dir/kyverno-policies/
+cp disallow-privileged.testcase2.success.yaml test-dir/kyverno-policies/
+
+# Test cluster list command (expects success for non-existent cluster)
+exec insights-cli list kyverno-policies --cluster test-cluster
+! stderr .
+exec echo "DEBUG: Cluster list command completed - checking for success"
+
+# Test cluster list with app groups command (expects success for non-existent cluster)
+exec echo "DEBUG: Testing cluster list with app groups command..."
+exec insights-cli list kyverno-policies --cluster test-cluster
+! stderr .
+
+# Test cluster export yaml command (expects success for non-existent cluster)
+exec echo "DEBUG: Testing cluster export yaml command..."
+exec insights-cli list kyverno-policies --cluster test-cluster --format yaml
+! stderr .
+
+
+-- require-labels.yaml --
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-labels
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: check-labels
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Label 'app' is required"
+      pattern:
+        metadata:
+          labels:
+            app: "?*"
+
+-- disallow-privileged.yaml --
+apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: disallow-privileged
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: disallow-privileged
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Privileged containers are not allowed"
+      pattern:
+        spec:
+          =(securityContext):
+            =(privileged): "false"
+
+-- require-labels.testcase1.success.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod
+  labels:
+    app: myapp
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+-- require-labels.testcase2.failure.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-pod-no-labels
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+-- disallow-privileged.testcase1.failure.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: privileged-pod
+spec:
+  securityContext:
+    privileged: true
+  containers:
+  - name: nginx
+    image: nginx:latest
+
+-- disallow-privileged.testcase2.success.yaml --
+apiVersion: v1
+kind: Pod
+metadata:
+  name: non-privileged-pod
+spec:
+  securityContext:
+    privileged: false
+  containers:
+  - name: nginx
+    image: nginx:latest
