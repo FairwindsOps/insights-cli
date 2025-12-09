@@ -28,8 +28,10 @@ type KyvernoPolicy struct {
 	Name              string         `json:"name" yaml:"metadata.name"`
 	Kind              string         `json:"kind" yaml:"kind"`
 	APIVersion        string         `json:"apiVersion" yaml:"apiVersion"`
+	Namespace         string         `json:"namespace,omitempty" yaml:"metadata.namespace"`
 	Labels            map[string]any `json:"labels,omitempty" yaml:"metadata.labels"`
 	Annotations       map[string]any `json:"annotations,omitempty" yaml:"metadata.annotations"`
+	Metadata          map[string]any `json:"metadata,omitempty" yaml:"metadata"` // Full metadata for any additional fields
 	Spec              map[string]any `json:"spec" yaml:"spec"`
 	Status            map[string]any `json:"status,omitempty"`
 	ManagedByInsights *bool          `json:"managedByInsights,omitempty" yaml:"managedByInsights,omitempty"`
@@ -47,24 +49,42 @@ func (k KyvernoPolicy) GetYamlBytes() ([]byte, error) {
 
 // Helper function to convert a KyvernoPolicy spec to YAML string
 func convertPolicySpecToYAML(policy KyvernoPolicy) (string, error) {
+	// Start with the full metadata if available, otherwise create a new map
+	var metadata map[string]any
+	if len(policy.Metadata) > 0 {
+		// Deep copy the metadata to avoid modifying the original
+		metadata = make(map[string]any)
+		for k, v := range policy.Metadata {
+			metadata[k] = v
+		}
+	} else {
+		metadata = make(map[string]any)
+	}
+
+	// Ensure name is set in metadata
+	metadata["name"] = policy.Name
+
+	// Add namespace if set
+	if policy.Namespace != "" {
+		metadata["namespace"] = policy.Namespace
+	}
+
+	// Add labels if they exist and are not empty
+	if len(policy.Labels) > 0 {
+		metadata["labels"] = policy.Labels
+	}
+
+	// Add annotations if they exist
+	if len(policy.Annotations) > 0 {
+		metadata["annotations"] = policy.Annotations
+	}
+
 	// Create the full policy structure
 	policyMap := map[string]any{
 		"apiVersion": policy.APIVersion,
 		"kind":       policy.Kind,
-		"metadata": map[string]any{
-			"name": policy.Name,
-		},
-		"spec": policy.Spec,
-	}
-
-	// Add labels and annotations if they exist and are not empty
-	if len(policy.Labels) > 0 {
-		policyMap["metadata"].(map[string]any)["labels"] = policy.Labels
-	}
-
-	// Add existing annotations if they exist
-	if len(policy.Annotations) > 0 {
-		policyMap["metadata"].(map[string]any)["annotations"] = policy.Annotations
+		"metadata":   metadata,
+		"spec":       policy.Spec,
 	}
 
 	// Add status only if it exists and is not null
@@ -181,8 +201,10 @@ type KyvernoPolicyInput struct {
 	Name              string            `json:"name"`
 	Kind              string            `json:"kind"`
 	APIVersion        string            `json:"apiVersion"`
+	Namespace         string            `json:"namespace,omitempty"`
 	Labels            map[string]string `json:"labels,omitempty"`
 	Annotations       map[string]string `json:"annotations,omitempty"`
+	Metadata          map[string]any    `json:"metadata,omitempty"` // Full metadata for any additional fields
 	Spec              map[string]any    `json:"spec"`
 	Status            *map[string]any   `json:"status,omitempty"`
 	ManagedByInsights *bool             `json:"managedByInsights,omitempty"`
@@ -222,8 +244,10 @@ func (k KyvernoPolicy) ToKyvernoPolicyInput() KyvernoPolicyInput {
 		Name:              k.Name,
 		Kind:              k.Kind,
 		APIVersion:        k.APIVersion,
+		Namespace:         k.Namespace,
 		Labels:            labels,
 		Annotations:       annotations,
+		Metadata:          k.Metadata,
 		Spec:              k.Spec,
 		Status:            status,
 		ManagedByInsights: k.ManagedByInsights,
