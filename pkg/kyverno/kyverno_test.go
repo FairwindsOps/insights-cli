@@ -201,3 +201,116 @@ func TestConvertPolicySpecToYAML(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "apiVersion: kyverno.io/v1\nkind: ClusterPolicy\nmetadata:\n  name: test-policy\nspec:\n  metadata:\n    name: test-policy", yaml)
 }
+
+func TestReadPolicyFromFileWithLabelsAndAnnotations(t *testing.T) {
+	policy, err := readPolicyFromFile("testdata/policy-with-metadata.yaml")
+	assert.NoError(t, err)
+
+	// Verify basic fields
+	assert.Equal(t, "policy-with-metadata", policy.Name)
+	assert.Equal(t, "ClusterPolicy", policy.Kind)
+	assert.Equal(t, "kyverno.io/v1", policy.APIVersion)
+
+	// Verify labels are extracted
+	assert.NotNil(t, policy.Labels)
+	assert.Equal(t, "my-app", policy.Labels["app"])
+	assert.Equal(t, "production", policy.Labels["environment"])
+	assert.Equal(t, "security", policy.Labels["team"])
+
+	// Verify annotations are extracted
+	assert.NotNil(t, policy.Annotations)
+	assert.Equal(t, "This is a test policy with labels and annotations", policy.Annotations["description"])
+	assert.Equal(t, "platform-team", policy.Annotations["owner"])
+
+	// Verify spec is extracted
+	assert.NotNil(t, policy.Spec)
+}
+
+func TestReadPolicyFromFileWithoutLabelsAndAnnotations(t *testing.T) {
+	policy, err := readPolicyFromFile("testdata/disallow-privileged.yaml")
+	assert.NoError(t, err)
+
+	// Verify basic fields
+	assert.Equal(t, "disallow-privileged", policy.Name)
+	assert.Equal(t, "Policy", policy.Kind)
+	assert.Equal(t, "kyverno.io/v1", policy.APIVersion)
+
+	// Labels and annotations should be nil or empty
+	assert.Empty(t, policy.Labels)
+	assert.Empty(t, policy.Annotations)
+
+	// Verify spec is extracted
+	assert.NotNil(t, policy.Spec)
+}
+
+func TestReadPolicyFromFileWithNamespaceAndFullMetadata(t *testing.T) {
+	policy, err := readPolicyFromFile("testdata/namespaced-policy.yaml")
+	assert.NoError(t, err)
+
+	// Verify basic fields
+	assert.Equal(t, "namespaced-policy", policy.Name)
+	assert.Equal(t, "Policy", policy.Kind)
+	assert.Equal(t, "kyverno.io/v1", policy.APIVersion)
+
+	// Verify namespace is extracted
+	assert.Equal(t, "my-namespace", policy.Namespace)
+
+	// Verify labels are extracted
+	assert.NotNil(t, policy.Labels)
+	assert.Equal(t, "test-app", policy.Labels["app"])
+
+	// Verify annotations are extracted
+	assert.NotNil(t, policy.Annotations)
+	assert.Equal(t, "A namespaced policy", policy.Annotations["description"])
+
+	// Verify full metadata is preserved (including generateName, finalizers, etc.)
+	assert.NotNil(t, policy.Metadata)
+	assert.Equal(t, "namespaced-policy", policy.Metadata["name"])
+	assert.Equal(t, "my-namespace", policy.Metadata["namespace"])
+	assert.Equal(t, "test-prefix-", policy.Metadata["generateName"])
+
+	// Check finalizers are preserved
+	finalizers, ok := policy.Metadata["finalizers"].([]interface{})
+	assert.True(t, ok, "finalizers should be a slice")
+	assert.Len(t, finalizers, 1)
+	assert.Equal(t, "kyverno.io/finalizer", finalizers[0])
+
+	// Verify spec is extracted
+	assert.NotNil(t, policy.Spec)
+}
+
+func TestToKyvernoPolicyInputPreservesAllFields(t *testing.T) {
+	policy := KyvernoPolicy{
+		Name:       "test-policy",
+		Kind:       "Policy",
+		APIVersion: "kyverno.io/v1",
+		Namespace:  "test-namespace",
+		Labels: map[string]any{
+			"app": "my-app",
+		},
+		Annotations: map[string]any{
+			"description": "Test policy",
+		},
+		Metadata: map[string]any{
+			"name":         "test-policy",
+			"namespace":    "test-namespace",
+			"generateName": "prefix-",
+		},
+		Spec: map[string]any{
+			"validationFailureAction": "enforce",
+		},
+	}
+
+	input := policy.ToKyvernoPolicyInput()
+
+	// Verify all fields are preserved
+	assert.Equal(t, "test-policy", input.Name)
+	assert.Equal(t, "Policy", input.Kind)
+	assert.Equal(t, "kyverno.io/v1", input.APIVersion)
+	assert.Equal(t, "test-namespace", input.Namespace)
+	assert.Equal(t, "my-app", input.Labels["app"])
+	assert.Equal(t, "Test policy", input.Annotations["description"])
+	assert.NotNil(t, input.Metadata)
+	assert.Equal(t, "prefix-", input.Metadata["generateName"])
+	assert.NotNil(t, input.Spec)
+}
