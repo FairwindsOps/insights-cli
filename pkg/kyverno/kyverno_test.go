@@ -15,6 +15,8 @@
 package kyverno
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -203,7 +205,41 @@ func TestConvertPolicySpecToYAML(t *testing.T) {
 }
 
 func TestReadPolicyFromFileWithLabelsAndAnnotations(t *testing.T) {
-	policy, err := readPolicyFromFile("testdata/policy-with-metadata.yaml")
+	// Create a temporary directory and file for testing
+	tmpDir := t.TempDir()
+	policyContent := `apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: policy-with-metadata
+  labels:
+    app: my-app
+    environment: production
+    team: security
+  annotations:
+    description: "This is a test policy with labels and annotations"
+    owner: platform-team
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: check-labels
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Labels are required"
+      pattern:
+        metadata:
+          labels:
+            app: "?*"
+`
+	policyFile := filepath.Join(tmpDir, "policy-with-metadata.yaml")
+	err := os.WriteFile(policyFile, []byte(policyContent), 0644)
+	assert.NoError(t, err)
+
+	policy, err := readPolicyFromFile(policyFile)
 	assert.NoError(t, err)
 
 	// Verify basic fields
@@ -244,7 +280,42 @@ func TestReadPolicyFromFileWithoutLabelsAndAnnotations(t *testing.T) {
 }
 
 func TestReadPolicyFromFileWithNamespaceAndFullMetadata(t *testing.T) {
-	policy, err := readPolicyFromFile("testdata/namespaced-policy.yaml")
+	// Create a temporary directory and file for testing
+	tmpDir := t.TempDir()
+	policyContent := `apiVersion: kyverno.io/v1
+kind: Policy
+metadata:
+  name: namespaced-policy
+  namespace: my-namespace
+  labels:
+    app: test-app
+  annotations:
+    description: "A namespaced policy"
+  generateName: test-prefix-
+  finalizers:
+    - kyverno.io/finalizer
+spec:
+  validationFailureAction: enforce
+  background: true
+  rules:
+  - name: check-labels
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Labels are required"
+      pattern:
+        metadata:
+          labels:
+            app: "?*"
+`
+	policyFile := filepath.Join(tmpDir, "namespaced-policy.yaml")
+	err := os.WriteFile(policyFile, []byte(policyContent), 0644)
+	assert.NoError(t, err)
+
+	policy, err := readPolicyFromFile(policyFile)
 	assert.NoError(t, err)
 
 	// Verify basic fields
