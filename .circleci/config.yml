@@ -31,7 +31,7 @@ jobs:
               echo "$output"
               exit 1
             fi
-            wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.3.1
+            wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.7.2
             golangci-lint run -v --timeout 2m0s
       - run: ./.circleci/scripts/e2e-env.sh
       - *install_vault
@@ -73,7 +73,7 @@ jobs:
       - rok8s/get_vault_env:
           vault_path: repo/insights-cli/env
       - run: |
-              wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.3.1
+              wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.7.2
               golangci-lint run -v --timeout 2m0s
               go test -tags e2e ./pkg/...
       - setup_remote_docker:
