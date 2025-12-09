@@ -65,7 +65,8 @@ var downloadKyvernoPoliciesCmd = &cobra.Command{
 			logrus.Fatalf("unable to create directory %s: %v", saveDir, err)
 		}
 
-		c, err := saveEntitiesLocally(saveDir, kyvernoPolicies, overrideLocalFiles)
+		// We do not want to delete files that contains .success.yaml and .failure.yaml.
+		c, err := saveEntitiesLocally(saveDir, kyvernoPolicies, overrideLocalFiles, []string{".success.yaml", ".failure.yaml"})
 		if err != nil {
 			logrus.Fatalf("error saving kyverno-policies locally: %v", err)
 		}

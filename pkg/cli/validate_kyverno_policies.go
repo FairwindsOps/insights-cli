@@ -82,25 +82,27 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 			// Single policy validation
 			policy, err := kyverno.ReadPolicyFromFile(kyvernoPolicyFileName)
 			if err != nil {
-				fmt.Printf("Unable to read policy file: %v", err)
+				logrus.Fatalf("Unable to read policy file: %v", err)
 			}
 
 			testResource, err := kyverno.ReadTestResourceFromFile(kyvernoTestResourceFileName)
 			if err != nil {
-				fmt.Printf("Unable to read test resource file: %v", err)
+				logrus.Fatalf("Unable to read test resource file: %v", err)
 			}
 
 			result, err := kyverno.ValidateKyvernoPolicy(
 				client, org, policy, []kyverno.TestResource{testResource}, true)
 			if err != nil {
-				fmt.Printf("Unable to validate policy: %v", err)
+				logrus.Fatalf("Unable to validate policy: %v", err)
 			}
 
 			displayValidationResults(result, []kyverno.TestResource{testResource})
 			if !determineActualValidationResult(result, []kyverno.TestResource{testResource}) {
+				fmt.Println("❌ Kyverno policy validation failed.")
 				os.Exit(1)
 			}
-			fmt.Println("Kyverno policy validated successfully.")
+			fmt.Println("✅ Kyverno policy validated successfully.")
+			return
 		}
 
 		if kyvernoPolicyDir != "" {
@@ -128,20 +130,20 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 			}
 
 			if len(policiesToValidate) == 0 {
-				fmt.Println("No policies to validate")
-				return
+				fmt.Println("❌ No policies to validate")
+				os.Exit(1)
 			}
 
 			// Validate each policy
 			allValid := true
 			for _, policyWithTestCases := range policiesToValidate {
-				fmt.Printf("Validating policy: %s", policyWithTestCases.Policy.Name)
-
+				fmt.Println("\n--------------------------------")
+				fmt.Printf("🔍 Validating policy: %s\n", policyWithTestCases.Policy.Name)
 				result, err := kyverno.ValidateKyvernoPolicy(
 					client, org, policyWithTestCases.Policy, policyWithTestCases.TestCases, true)
 				if err != nil {
-					fmt.Printf("Unable to validate policy %s: %v", policyWithTestCases.Policy.Name, err)
 					allValid = false
+					fmt.Printf("❌ Unable to validate policy %s: %v\n", policyWithTestCases.Policy.Name, err)
 					continue
 				}
 
@@ -152,10 +154,12 @@ var validateKyvernoPoliciesCmd = &cobra.Command{
 			}
 
 			if !allValid {
+				fmt.Println("\n--------------------------------")
+				fmt.Println("❌ Some Kyverno policies validation failed. Please check the output for details.")
 				os.Exit(1)
 			}
-
-			fmt.Println("All Kyverno policies validated successfully!")
+			fmt.Println("✅ All Kyverno policies validated successfully!")
+			return
 		}
 	},
 }
@@ -188,76 +192,155 @@ func displayValidationResults(result *kyverno.ValidationResult, testCases []kyve
 	// Determine if validation actually passed based on test case results
 	actualValid := determineActualValidationResult(result, testCases)
 
-	if actualValid {
-		fmt.Printf("✅ Policy validation: PASSED\n")
-	} else {
-		fmt.Printf("❌ Policy validation: FAILED\n")
+	// Display test case results with clear messaging
+	if len(result.TestResults) > 0 {
+		fmt.Printf("\n📋 Test case results:\n")
+		for _, testResult := range result.TestResults {
+			passed := testResult.Passed
+
+			// Display the result with test case name prominently
+			if passed {
+				fmt.Printf("  ✅ %s (%s)\n", testResult.TestCaseName, testResult.FileName)
+			} else {
+				fmt.Printf("  ❌ %s (%s)\n", testResult.TestCaseName, testResult.FileName)
+			}
+		}
 	}
 
-	// Display errors if any
+	// If TestResults are empty but we have test cases, show them with fallback info
+	if len(result.TestResults) == 0 && len(testCases) > 0 {
+		fmt.Printf("\n📋 Test cases:\n")
+
+		// Check if we have mixed test cases (both success and failure)
+		successCount := 0
+		failureCount := 0
+		for _, tc := range testCases {
+			switch tc.ExpectedOutcome {
+			case "success":
+				successCount++
+			case "failure":
+				failureCount++
+			default:
+				continue
+			}
+		}
+		hasMixedCases := successCount > 0 && failureCount > 0
+
+		for _, testCase := range testCases {
+			var passed bool
+			if hasMixedCases {
+				passed = actualValid
+			} else {
+				switch testCase.ExpectedOutcome {
+				case "success":
+					passed = len(result.Errors) == 0
+				case "failure":
+					passed = len(result.Errors) > 0
+				default:
+					passed = actualValid
+				}
+			}
+
+			if passed {
+				fmt.Printf("  ✅ %s (%s)\n", testCase.TestCaseName, testCase.FileName)
+			} else {
+				fmt.Printf("  ❌ %s (%s)\n", testCase.TestCaseName, testCase.FileName)
+			}
+		}
+	}
+
 	if len(result.Errors) > 0 {
-		fmt.Printf("❌ Errors:\n")
+		fmt.Printf("\n❌ Output:\n")
 		for _, err := range result.Errors {
 			fmt.Printf("  - %s\n", err)
 		}
 	}
 
-	// Display warnings if any
 	if len(result.Warnings) > 0 {
-		fmt.Printf("⚠️  Warnings:\n")
+		fmt.Printf("\n⚠️ Output:\n")
 		for _, warning := range result.Warnings {
 			fmt.Printf("  - %s\n", warning)
 		}
 	}
+}
 
-	// Display test case results
+// matchTestResultsToTestCases matches TestResults to TestCases using FileName and TestCaseName
+// Returns a map of test case index to its TestResult (if found)
+// Uses FileName:TestCaseName as the unique identifier to ensure correct matching
+// Handles both patterns:
+//   - "policy.testcase1.success.yaml" -> TestCaseName: "testcase1.success", FileName: "policy.testcase1.success.yaml"
+//   - "policy.success.yaml" -> TestCaseName: "success", FileName: "policy.success.yaml"
+func matchTestResultsToTestCases(result *kyverno.ValidationResult, testCases []kyverno.TestResource) map[int]*kyverno.TestResult {
+	resultMap := make(map[int]*kyverno.TestResult)
+
+	// Create a map of test cases by FileName and TestCaseName for quick lookup
+	testCaseMap := make(map[string]int)
+	for i, testCase := range testCases {
+		// Use FileName and TestCaseName as the unique identifier
+		// This handles both patterns:
+		// - "policy.testcase1.success.yaml" with TestCaseName "testcase1.success"
+		// - "policy.success.yaml" with TestCaseName "success"
+		key := fmt.Sprintf("%s:%s", testCase.FileName, testCase.TestCaseName)
+		testCaseMap[key] = i
+	}
+
+	// Match TestResults to test cases using FileName and TestCaseName
 	for _, testResult := range result.TestResults {
-		if testResult.Passed {
-			fmt.Printf("✓ Test case %s (%s): PASSED - Expected %s, got %s\n",
-				testResult.TestCaseName, testResult.FileName,
-				testResult.ExpectedOutcome, testResult.ActualOutcome)
-		} else {
-			fmt.Printf("❌ Test case %s (%s): FAILED - Expected %s, got %s\n",
-				testResult.TestCaseName, testResult.FileName,
-				testResult.ExpectedOutcome, testResult.ActualOutcome)
+		if testResult.FileName != "" && testResult.TestCaseName != "" {
+			key := fmt.Sprintf("%s:%s", testResult.FileName, testResult.TestCaseName)
+			if idx, exists := testCaseMap[key]; exists {
+				resultMap[idx] = &testResult
+			}
 		}
 	}
+
+	return resultMap
 }
 
 // determineActualValidationResult determines if validation actually passed based on test case results
+// A test case passes if:
+//   - .success.yaml file: Expected "success" and actual "success" (policy allows good resource) → PASS
+//   - .failure.yaml file: Expected "failure" and actual "failure" (policy rejects bad resource) → PASS
+//
+// A test case fails if:
+//   - .success.yaml file: Expected "success" but actual "failure" (policy incorrectly rejects good resource) → FAIL
+//   - .failure.yaml file: Expected "failure" but actual "success" (policy incorrectly allows bad resource) → FAIL
 func determineActualValidationResult(result *kyverno.ValidationResult, testCases []kyverno.TestResource) bool {
-	// If there are test results from backend, use them
+	// If we have TestResults, use them to match test cases by FileName and TestCaseName
 	if len(result.TestResults) > 0 {
-		// Create a map of test case names to expected outcomes for quick lookup
-		expectedOutcomes := make(map[string]string)
-		for _, testCase := range testCases {
-			expectedOutcomes[testCase.TestCaseName] = testCase.ExpectedOutcome
+		resultMap := matchTestResultsToTestCases(result, testCases)
+
+		// Check each test case individually
+		allPassed := true
+		for i, testCase := range testCases {
+			testResult, hasResult := resultMap[i]
+
+			if hasResult {
+				// We have a TestResult for this test case - use it directly
+				// A test case passes if expected outcome matches actual outcome
+				expectedSuccess := testCase.ExpectedOutcome == "success"
+				actualSuccess := testResult.ActualOutcome == "success"
+
+				// Test case fails if expected outcome doesn't match actual outcome
+				if expectedSuccess != actualSuccess {
+					allPassed = false
+				}
+
+				// Also check the Passed field if available
+				if !testResult.Passed {
+					allPassed = false
+				}
+			} else {
+				// No TestResult for this test case - we can't determine if it passed
+				// This should not happen if the backend is working correctly
+				// Fail validation if we can't find a result for a test case
+				allPassed = false
+			}
 		}
 
-		// Check each test result to see if it behaved as expected
-		for _, testResult := range result.TestResults {
-			expectedOutcome, exists := expectedOutcomes[testResult.TestCaseName]
-			if !exists {
-				// If we can't find the expected outcome, fall back to the test result's expected outcome
-				expectedOutcome = testResult.ExpectedOutcome
-			}
-
-			// A test case passes if:
-			// 1. Expected "success" and actual "success" (policy allows good resource)
-			// 2. Expected "failure" and actual "failure" (policy rejects bad resource)
-			expectedSuccess := expectedOutcome == "success"
-			actualSuccess := testResult.ActualOutcome == "success"
-
-			// Test case passes if expected outcome matches actual outcome
-			if expectedSuccess != actualSuccess {
-				return false
-			}
-		}
-
-		return true
+		return allPassed
 	}
 
-	// Count test case types
 	successTestCases := 0
 	failureTestCases := 0
 	for _, testCase := range testCases {
@@ -271,11 +354,24 @@ func determineActualValidationResult(result *kyverno.ValidationResult, testCases
 		}
 	}
 
-	// Simple logic:
-	// - If we have SUCCESS test cases and NO errors → PASS (policy allows good resources)
-	// - If we have FAILURE test cases and HAVE errors → PASS (policy rejects bad resources)
-	// - If we have SUCCESS test cases and HAVE errors → FAIL (policy incorrectly rejects good resources)
-	// - If we have FAILURE test cases and NO errors → FAIL (policy incorrectly allows bad resources)
+	// Simple fallback logic:
+	// - If we have ONLY SUCCESS test cases and NO errors → PASS
+	// - If we have ONLY FAILURE test cases and HAVE errors → PASS
+	// - If we have ONLY SUCCESS test cases and HAVE errors → FAIL
+	// - If we have ONLY FAILURE test cases and NO errors → FAIL
+	// - If we have MIXED test cases → Cannot reliably determine without TestResults
+
+	if successTestCases > 0 && failureTestCases > 0 {
+		// Mixed test cases: we can't reliably determine which errors belong to which test case
+		// Without TestResults, we cannot properly validate mixed cases
+		// If we have errors, assume failure test cases failed (expected) and success test cases passed (expected)
+		if len(result.Errors) > 0 {
+			return true
+		} else {
+			// No errors means failure test cases passed when they should have failed
+			return false
+		}
+	}
 
 	if successTestCases > 0 && len(result.Errors) == 0 {
 		return true
