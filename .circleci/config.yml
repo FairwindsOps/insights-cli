@@ -9,8 +9,8 @@ references:
       command: |
         apk --update add curl yq
         cd /tmp
-        curl -LO https://releases.hashicorp.com/vault/1.9.2/vault_1.9.2_linux_amd64.zip
-        unzip vault_1.9.2_linux_amd64.zip
+        curl -LO https://releases.hashicorp.com/vault/1.21.1/vault_1.21.1_linux_amd64.zip
+        unzip vault_1.21.1_linux_amd64.zip
         mv vault /usr/bin/vault
 
 jobs:
@@ -51,7 +51,7 @@ jobs:
     steps:
       - checkout
       - setup_remote_docker:
-          version: docker24
+          version: docker27
       - run: goreleaser --snapshot
       # Avoid copying both archive files and the directories used to create them.
       - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.json snapshot-artifacts
@@ -77,7 +77,7 @@ jobs:
               golangci-lint run -v --timeout 2m0s
               go test -tags e2e ./pkg/...
       - setup_remote_docker:
-          version: docker24
+          version: docker27
       - rok8s/docker_login:
           registry: "quay.io"
           username: $FAIRWINDS_QUAY_USER
