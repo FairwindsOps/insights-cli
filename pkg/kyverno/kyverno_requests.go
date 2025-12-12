@@ -37,7 +37,7 @@ const (
 
 // FetchKyvernoPolicies queries Fairwinds Insights to retrieve all Kyverno policies for an organization
 func FetchKyvernoPolicies(client *req.Client, org string) ([]KyvernoPolicy, error) {
-	url := fmt.Sprintf(kyvernoPoliciesURLFormat, org)
+	url := fmt.Sprintf("%s?pageSize=1000", fmt.Sprintf(kyvernoPoliciesURLFormat, org))
 	logrus.Debugf("Kyverno policies URL: %s", url)
 	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Get(url)
 	if err != nil {
@@ -191,7 +191,7 @@ func policyToYAML(policy KyvernoPolicy) string {
 
 // FetchClusterKyvernoPoliciesWithAppGroups queries Fairwinds Insights to retrieve Kyverno policies for a specific cluster with app groups applied
 func FetchClusterKyvernoPoliciesWithAppGroups(client *req.Client, org, cluster string) ([]KyvernoPolicy, error) {
-	url := fmt.Sprintf(clusterKyvernoPoliciesWithAppGroupsURLFormat, org, cluster)
+	url := fmt.Sprintf("%s?pageSize=1000", fmt.Sprintf(clusterKyvernoPoliciesWithAppGroupsURLFormat, org, cluster))
 	logrus.Debugf("Cluster Kyverno policies with app groups URL: %s", url)
 	resp, err := client.R().SetHeaders(utils.GetHeaders("")).Get(url)
 	if err != nil {
