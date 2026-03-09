@@ -24,8 +24,7 @@ stderr 'options.organization not set'
 exec printf 'options:\n  organization: %s\n  hostname: %s\n' $CI_INSIGHTS_ORGANIZATION $CI_INSIGHTS_API_URL
 cp stdout fairwinds-insights.yaml
 # This should still fail because the above dummy token value is invalid.
-# The API may report this as org not found or as auth required (401).
-# If CI_INSIGHTS_* env vars are unset, config validation fails first (options.organization not set).
+# The API reports this failure as org not found instead of token is invalid.
 ! exec insights-cli list all
 ! stdout .
-stderr 'Organization not found|You need to be logged in|401|options.organization not set'
+stderr 'Organization not found'
