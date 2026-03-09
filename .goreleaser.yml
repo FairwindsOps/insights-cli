@@ -35,6 +35,9 @@ builds:
   ignore:
   - goos: windows
     goarch: arm64
+  # windows/arm port not supported by Go
+  - goos: windows
+    goarch: arm
 changelog:
   sort: asc
   filters:
