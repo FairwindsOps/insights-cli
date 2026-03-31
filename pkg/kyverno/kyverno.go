@@ -16,6 +16,7 @@ package kyverno
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -290,18 +291,16 @@ func readPolicyFromFile(filePath string) (KyvernoPolicy, error) {
 		return KyvernoPolicy{}, fmt.Errorf("failed to parse YAML in policy file %s: %w", filePath, err)
 	}
 
-	var yamlData map[string]interface{}
+	var yamlData map[string]any
 	err = yaml.Unmarshal(fileContents, &yamlData)
 	if err != nil {
 		return KyvernoPolicy{}, fmt.Errorf("failed to parse YAML metadata in policy file %s: %w", filePath, err)
 	}
 
-	if metadata, ok := yamlData["metadata"].(map[string]interface{}); ok {
+	if metadata, ok := yamlData["metadata"].(map[string]any); ok {
 		// Store the full metadata object to preserve any additional fields
 		policy.Metadata = make(map[string]any)
-		for k, v := range metadata {
-			policy.Metadata[k] = v
-		}
+		maps.Copy(policy.Metadata, metadata)
 
 		// Extract name if not set
 		if policy.Name == "" {
@@ -316,28 +315,22 @@ func readPolicyFromFile(filePath string) (KyvernoPolicy, error) {
 		}
 
 		// Extract labels if present
-		if labels, ok := metadata["labels"].(map[string]interface{}); ok {
+		if labels, ok := metadata["labels"].(map[string]any); ok {
 			policy.Labels = make(map[string]any)
-			for k, v := range labels {
-				policy.Labels[k] = v
-			}
+			maps.Copy(policy.Labels, labels)
 		}
 
 		// Extract annotations if present
-		if annotations, ok := metadata["annotations"].(map[string]interface{}); ok {
+		if annotations, ok := metadata["annotations"].(map[string]any); ok {
 			policy.Annotations = make(map[string]any)
-			for k, v := range annotations {
-				policy.Annotations[k] = v
-			}
+			maps.Copy(policy.Annotations, annotations)
 		}
 	}
 
 	// Extract status if present (at the top level)
-	if status, ok := yamlData["status"].(map[string]interface{}); ok {
+	if status, ok := yamlData["status"].(map[string]any); ok {
 		policy.Status = make(map[string]any)
-		for k, v := range status {
-			policy.Status[k] = v
-		}
+		maps.Copy(policy.Status, status)
 	}
 
 	return policy, nil

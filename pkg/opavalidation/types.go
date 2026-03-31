@@ -49,7 +49,7 @@ func (AI actionItem) valid() (bool, error) {
 
 // setFieldsFromobject sets the resourceName, resourceNamespace, and resourceKind,
 // actionItem fields from a Kubernetes object.
-func (AI *actionItem) setFieldsFromObject(obj map[string]interface{}) error {
+func (AI *actionItem) setFieldsFromObject(obj map[string]any) error {
 	objKind, err := getStringField(obj, "kind")
 	if err != nil {
 		return fmt.Errorf("while getting the Kind from the Kubernetes object: %v", err)
@@ -139,7 +139,7 @@ func (AIs actionItems) NumInvalid() int {
 
 // setFieldsFromObject adds the Kind, name, and namespace of a
 // Kubernetes object to  all actionItems in the slice of actionItems.
-func (AIs actionItems) setFieldsFromObject(obj map[string]interface{}) error {
+func (AIs actionItems) setFieldsFromObject(obj map[string]any) error {
 	for n := range AIs {
 		err := AIs[n].setFieldsFromObject(obj)
 		if err != nil {

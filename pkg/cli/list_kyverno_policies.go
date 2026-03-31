@@ -186,8 +186,8 @@ func extractPolicyNameFromTestCase(filename string) string {
 }
 
 func extractTestCaseName(filename string) string {
-	parts := strings.Split(filename, ".")
-	for _, part := range parts {
+	parts := strings.SplitSeq(filename, ".")
+	for part := range parts {
 		if strings.HasPrefix(part, "testcase") {
 			return part
 		}

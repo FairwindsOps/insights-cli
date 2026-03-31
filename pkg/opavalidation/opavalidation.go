@@ -153,7 +153,7 @@ func ValidateRego(ctx context.Context, regoAsString string, regoVersion string, 
 }
 
 // runRegoForObject executes rego with a Kubernetes object as input.
-func runRegoForObject(ctx context.Context, regoAsString string, regoVersion string, object map[string]interface{}, insightsInfo fwrego.InsightsInfo, libs map[string]string) (rego.ResultSet, error) {
+func runRegoForObject(ctx context.Context, regoAsString string, regoVersion string, object map[string]any, insightsInfo fwrego.InsightsInfo, libs map[string]string) (rego.ResultSet, error) {
 	opts := []func(r *rego.Rego){rego.EnablePrintStatements(true), rego.PrintHook(topdown.NewPrintHook(os.Stdout)),
 		rego.Query("results = data"),
 		rego.Module("fairwinds", regoAsString),
@@ -207,7 +207,7 @@ func runRegoForObject(ctx context.Context, regoAsString string, regoVersion stri
 var isCheckRE = regexp.MustCompile(`^package\s+fairwinds\s*(#.*)?$`)
 
 func IsOPACustomLibrary(rego string) bool {
-	for _, line := range strings.Split(strings.TrimSuffix(rego, "\n"), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSuffix(rego, "\n"), "\n") {
 		if strings.HasPrefix(strings.TrimSpace(line), "package") {
 			isCheck := isCheckRE.MatchString(strings.TrimSpace(line))
 			return !isCheck
