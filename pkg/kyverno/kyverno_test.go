@@ -192,8 +192,8 @@ func TestConvertPolicySpecToYAML(t *testing.T) {
 		Name:       "test-policy",
 		Kind:       "ClusterPolicy",
 		APIVersion: "kyverno.io/v1",
-		Spec: map[string]interface{}{
-			"metadata": map[string]interface{}{
+		Spec: map[string]any{
+			"metadata": map[string]any{
 				"name": "test-policy",
 			},
 		},
@@ -341,7 +341,7 @@ spec:
 	assert.Equal(t, "test-prefix-", policy.Metadata["generateName"])
 
 	// Check finalizers are preserved
-	finalizers, ok := policy.Metadata["finalizers"].([]interface{})
+	finalizers, ok := policy.Metadata["finalizers"].([]any)
 	assert.True(t, ok, "finalizers should be a slice")
 	assert.Len(t, finalizers, 1)
 	assert.Equal(t, "kyverno.io/finalizer", finalizers[0])

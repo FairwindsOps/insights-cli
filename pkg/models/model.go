@@ -41,12 +41,12 @@ type CustomCheckModel struct {
 
 // CustomCheckInstanceModel is a model for the API endpoint to receive an Instance for a Custom Check in OPA
 type CustomCheckInstanceModel struct {
-	CheckName    string                 `json:"-" yaml:"-"`
-	InstanceName string                 `json:"-" yaml:"-"`
-	Targets      []KubernetesTarget     `yaml:"targets"`
-	Clusters     []string               `yaml:"clusters"`
-	Parameters   map[string]interface{} `yaml:"parameters"`
-	Output       OutputModel            `yaml:"output"`
+	CheckName    string             `json:"-" yaml:"-"`
+	InstanceName string             `json:"-" yaml:"-"`
+	Targets      []KubernetesTarget `yaml:"targets"`
+	Clusters     []string           `yaml:"clusters"`
+	Parameters   map[string]any     `yaml:"parameters"`
+	Output       OutputModel        `yaml:"output"`
 }
 
 type PolicyModel struct {

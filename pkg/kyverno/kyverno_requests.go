@@ -118,7 +118,7 @@ func BulkUpsertKyvernoPolicies(client *req.Client, org string, policies []Kyvern
 		policyInputs[i] = policy.ToKyvernoPolicyInput()
 	}
 
-	requestBody := map[string]interface{}{
+	requestBody := map[string]any{
 		"policies":      policyInputs,
 		"deleteMissing": deleteMissing,
 	}
@@ -147,23 +147,23 @@ func BulkUpsertKyvernoPolicies(client *req.Client, org string, policies []Kyvern
 // Helper function to convert policy to YAML string
 func policyToYAML(policy KyvernoPolicy) string {
 	// Create a map structure that matches the Kyverno policy format
-	policyMap := map[string]interface{}{
+	policyMap := map[string]any{
 		"apiVersion": policy.APIVersion,
 		"kind":       policy.Kind,
-		"metadata": map[string]interface{}{
+		"metadata": map[string]any{
 			"name": policy.Name,
 		},
 	}
 
 	// Add labels if present
 	if len(policy.Labels) > 0 {
-		metadata := policyMap["metadata"].(map[string]interface{})
+		metadata := policyMap["metadata"].(map[string]any)
 		metadata["labels"] = policy.Labels
 	}
 
 	// Add annotations if present
 	if len(policy.Annotations) > 0 {
-		metadata := policyMap["metadata"].(map[string]interface{})
+		metadata := policyMap["metadata"].(map[string]any)
 		metadata["annotations"] = policy.Annotations
 	}
 

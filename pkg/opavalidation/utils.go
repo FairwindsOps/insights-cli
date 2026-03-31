@@ -18,15 +18,15 @@ import (
 
 // arrayFromRegoOutput converts rego output into an array of interface{}, to
 // make rego output iteratable.
-func arrayFromRegoOutput(results rego.ResultSet) []interface{} {
-	returnSet := make([]interface{}, 0)
+func arrayFromRegoOutput(results rego.ResultSet) []any {
+	returnSet := make([]any, 0)
 
 	for _, result := range results {
-		for _, pack := range result.Bindings["results"].(map[string]interface{}) {
-			if _, ok := pack.(map[string]interface{}); ok {
-				for _, outputArray := range pack.(map[string]interface{}) {
-					if _, ok := outputArray.([]interface{}); ok {
-						returnSet = append(returnSet, outputArray.([]interface{})...)
+		for _, pack := range result.Bindings["results"].(map[string]any) {
+			if _, ok := pack.(map[string]any); ok {
+				for _, outputArray := range pack.(map[string]any) {
+					if _, ok := outputArray.([]any); ok {
+						returnSet = append(returnSet, outputArray.([]any)...)
 					}
 				}
 			}
@@ -43,7 +43,7 @@ func actionItemsFromRegoResult(results rego.ResultSet) (actionItems, error) {
 	allErrs := new(multierror.Error)
 	for n, result := range resultsAsArray {
 		var AI actionItem
-		resultAsMap, ok := result.(map[string]interface{})
+		resultAsMap, ok := result.(map[string]any)
 		if ok {
 			var err error
 			AI, err = actionItemFromMap(resultAsMap)
@@ -63,7 +63,7 @@ func actionItemsFromRegoResult(results rego.ResultSet) (actionItems, error) {
 // actionItemFromMap converts a map[string]interface{} to a type actionItem.
 // ANy missing actionItem fields are returned in an error.
 // This is used while converting rego results to actionItems.
-func actionItemFromMap(m map[string]interface{}) (actionItem, error) {
+func actionItemFromMap(m map[string]any) (actionItem, error) {
 	var AI actionItem
 	missingFields := make(map[string]error) // Store errors from get*Field functions
 	var err error
@@ -152,8 +152,8 @@ func HumanizeStringsOutput(s []string, noun string) string {
 
 // objectBytesToMap converts a slice of bytes to a map[string]interface{},
 // suitable for passing into runRegoForObject().
-func objectBytesToMap(objectAsBytes []byte) (map[string]interface{}, error) {
-	objectAsMap := make(map[string]interface{})
+func objectBytesToMap(objectAsBytes []byte) (map[string]any, error) {
+	objectAsMap := make(map[string]any)
 	err := yaml.Unmarshal(objectAsBytes, &objectAsMap)
 	if err != nil {
 		return nil, fmt.Errorf("cannot process input object: %v", err)
@@ -163,7 +163,7 @@ func objectBytesToMap(objectAsBytes []byte) (map[string]interface{}, error) {
 
 // updateObjectWithNamespaceOverride sets the metadata.namespace field of a
 // Kubernetes object.
-func updateObjectWithNamespaceOverride(obj map[string]interface{}, NS string) error {
+func updateObjectWithNamespaceOverride(obj map[string]any, NS string) error {
 	if NS == "" {
 		return nil
 	}
@@ -175,11 +175,11 @@ func updateObjectWithNamespaceOverride(obj map[string]interface{}, NS string) er
 }
 
 // getMapField attempts to get a sub-map at the provided key of a map[string]interface{}.
-func getMapField(m map[string]interface{}, key string) (map[string]interface{}, error) {
+func getMapField(m map[string]any, key string) (map[string]any, error) {
 	if m[key] == nil {
 		return nil, fmt.Errorf("key %q not found", key)
 	}
-	subMap, ok := m[key].(map[string]interface{})
+	subMap, ok := m[key].(map[string]any)
 	if !ok {
 		return nil, errors.New(key + " was not a map")
 	}
@@ -188,7 +188,7 @@ func getMapField(m map[string]interface{}, key string) (map[string]interface{}, 
 
 // getStringField attempts to get a string at the provided key of a
 // map[string]interface{}.
-func getStringField(m map[string]interface{}, key string) (string, error) {
+func getStringField(m map[string]any, key string) (string, error) {
 	if m[key] == nil {
 		return "", fmt.Errorf("key %q not found", key)
 	}
@@ -201,7 +201,7 @@ func getStringField(m map[string]interface{}, key string) (string, error) {
 
 // getFloatField attempts to get a float at the provided key of a
 // map[string]interface{}.
-func getFloatField(m map[string]interface{}, key string) (float64, error) {
+func getFloatField(m map[string]any, key string) (float64, error) {
 	if m[key] == nil {
 		return 0.0, fmt.Errorf("key %q not found", key)
 	}

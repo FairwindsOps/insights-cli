@@ -17,6 +17,7 @@ package kyverno
 import (
 	"bytes"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -54,9 +55,7 @@ func convertPolicySpecToYAML(policy KyvernoPolicy) (string, error) {
 	if len(policy.Metadata) > 0 {
 		// Deep copy the metadata to avoid modifying the original
 		metadata = make(map[string]any)
-		for k, v := range policy.Metadata {
-			metadata[k] = v
-		}
+		maps.Copy(metadata, policy.Metadata)
 	} else {
 		metadata = make(map[string]any)
 	}
