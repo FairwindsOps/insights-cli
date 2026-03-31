@@ -75,7 +75,7 @@ jobs:
               -v /var/run/docker.sock:/var/run/docker.sock \
               -v "$(pwd):/workspace" -w /workspace \
               -e CIRCLE_SHA1 -e CIRCLE_BRANCH -e CIRCLE_TAG \
-              goreleaser/goreleaser:v2.14.2 --snapshot
+              goreleaser/goreleaser:v2.14.2 release --snapshot
       - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.json snapshot-artifacts
       - store_artifacts:
           path: snapshot-artifacts
@@ -108,8 +108,11 @@ jobs:
             docker run --rm \
               -v /var/run/docker.sock:/var/run/docker.sock \
               -v "$(pwd):/workspace" -w /workspace \
+              -v "${HOME}/.docker:/root/.docker" \
               -e GORELEASER_CURRENT_TAG -e CIRCLE_TAG -e CIRCLE_SHA1 \
-              goreleaser/goreleaser:v2.14.2
+              -e GO111MODULE=on \
+              -e GITHUB_TOKEN \
+              goreleaser/goreleaser:v2.14.2 release
 
 workflows:
   version: 2
