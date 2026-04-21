@@ -113,6 +113,12 @@ jobs:
               -e GO111MODULE=on \
               -e GITHUB_TOKEN \
               goreleaser/goreleaser:v2.14.2 release
+      - run:
+          name: docker login Google Artifact Registry
+          command: |
+            docker login -u _json_key -p "$(echo $GCP_ARTIFACTREADWRITE_JSON_KEY | base64 -d)" us-docker.pkg.dev
+      - run: echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
+      - run: goreleaser
 
 workflows:
   version: 2

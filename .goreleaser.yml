@@ -52,12 +52,15 @@ dockers:
   # tags. E.G. VX.Y.Z-rc1 should not docker-push latest.
 - image_templates:
   - "quay.io/fairwinds/insights-cli:{{ .Tag }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:{{ .Tag }}-amd64"
   use: buildx
   build_flag_templates:
   - "--platform=linux/amd64"
 - image_templates:
   - "quay.io/fairwinds/insights-cli:v{{ .Major }}-amd64"
   - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}.{{ .Minor }}-amd64"
   use: buildx
   # Do not push images if the git tag indicates prerelease. E.G. 1.0.0-rc1
   skip_push: auto
@@ -65,6 +68,7 @@ dockers:
   - "--platform=linux/amd64"
 - image_templates:
   - "quay.io/fairwinds/insights-cli:{{ .Tag }}-arm64v8"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:{{ .Tag }}-arm64v8"
   use: buildx
   goarch: arm64
   goos: linux
@@ -73,6 +77,8 @@ dockers:
 - image_templates:
   - "quay.io/fairwinds/insights-cli:v{{ .Major }}-arm64v8"
   - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-arm64v8"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}-arm64v8"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}.{{ .Minor }}-arm64v8"
   use: buildx
   # Do not push images if the git tag indicates prerelease. E.G. 1.0.0-rc1
   skip_push: auto
@@ -82,6 +88,7 @@ dockers:
   - "--platform=linux/arm64/v8"
 - image_templates:
   - "quay.io/fairwinds/insights-cli:{{ .Tag }}-armv7"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:{{ .Tag }}-armv7"
   use: buildx
   goarch: arm
   goarm: 7
@@ -91,6 +98,8 @@ dockers:
 - image_templates:
   - "quay.io/fairwinds/insights-cli:v{{ .Major }}-armv7"
   - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-armv7"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}-armv7"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}.{{ .Minor }}-armv7"
   use: buildx
   # Do not push images if the git tag indicates prerelease. E.G. 1.0.0-rc1
   skip_push: auto
@@ -129,4 +138,30 @@ docker_manifests:
   - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-amd64"
   - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-arm64v8"
   - "quay.io/fairwinds/insights-cli:v{{ .Major }}.{{ .Minor }}-armv7"
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:latest
+  # Do not push manifests if the git tag indicates prerelease. E.G. 1.0.0-rc1
+  skip_push: auto
+  image_templates:
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:{{ .Tag }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:{{ .Tag }}-arm64v8"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:{{ .Tag }}-armv7"
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:{{ .Tag }}
+  image_templates:
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:{{ .Tag }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:{{ .Tag }}-arm64v8"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:{{ .Tag }}-armv7"
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}
+  # Do not push manifests if the git tag indicates prerelease. E.G. 1.0.0-rc1
+  skip_push: auto
+  image_templates:
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}-arm64v8"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}-armv7"
+- name_template: us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}.{{ .Minor }}
+  # Do not push manifests if the git tag indicates prerelease. E.G. 1.0.0-rc1
+  skip_push: auto
+  image_templates:
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}.{{ .Minor }}-amd64"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}.{{ .Minor }}-arm64v8"
+  - "us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v{{ .Major }}.{{ .Minor }}-armv7"
 
