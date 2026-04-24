@@ -23,3 +23,40 @@ Check out the docs at [docs.fairwinds.com](https://insights.docs.fairwinds.com/c
 PRs welcome! Check out the [Contributing Guidelines](CONTRIBUTING.md) and
 [Code of Conduct](CODE_OF_CONDUCT.md) for more information.
 
+## Notice: Registry Migration and Immutable Images (v3.1.10 → v3.2.0)
+
+Starting with **v3.2.0**:
+
+- Images moved to `us-docker.pkg.dev/fairwinds-ops/oss/insights-cli`
+- `quay.io/fairwinds/insights-cli` is deprecated
+
+### Required action
+
+```diff
+- quay.io/fairwinds/insights-cli:<tag>
++ us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:<tag>
+```
+
+---
+
+## Immutable and signed images
+
+* Images are now **signed**
+* Tags are **immutable**
+* No more floating tags:
+
+  * `v3`
+  * `v3.1`
+  * `latest`
+
+Use full version tags:
+
+```
+us-docker.pkg.dev/fairwinds-ops/oss/insights-cli:v<major>.<minor>.<patch>
+```
+
+Or pin by digest:
+
+```
+us-docker.pkg.dev/fairwinds-ops/oss/insights-cli@sha256:<digest>
+```
