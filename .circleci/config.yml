@@ -13,16 +13,6 @@ references:
         sha256sum vault_1.21.4_linux_amd64.zip | grep 889b681990fe221b884b7932fa9c9dd0ee9811b9349554f1aa287ab63c9f3dae
         unzip vault_1.21.4_linux_amd64.zip
         mv vault /usr/bin/vault
-  install_vault_machine: &install_vault_machine
-    run:
-      name: install hashicorp vault
-      command: |
-        sudo apt-get update -y && sudo apt-get install -y curl unzip
-        cd /tmp
-        curl -LO https://releases.hashicorp.com/vault/1.21.4/vault_1.21.4_linux_amd64.zip
-        echo '889b681990fe221b884b7932fa9c9dd0ee9811b9349554f1aa287ab63c9f3dae  vault_1.21.4_linux_amd64.zip' | sha256sum -c
-        unzip -o vault_1.21.4_linux_amd64.zip
-        sudo mv vault /usr/bin/vault
   setup_qemu_binfmt: &setup_qemu_binfmt
     run:
       name: Setup QEMU for multi-arch Docker builds
@@ -79,45 +69,46 @@ jobs:
       - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.json snapshot-artifacts
       - store_artifacts:
           path: snapshot-artifacts
-  release:
-    machine:
-      image: ubuntu-2204:current
+  e2e:
+    working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     resource_class: large
-    shell: /bin/bash
+    docker:
+      - image: goreleaser/goreleaser:v2.15.4
     steps:
       - checkout
       - run: ./.circleci/scripts/e2e-env.sh
-      - *install_vault_machine
+      - *install_vault
       - rok8s/get_vault_env:
           vault_path: repo/global/env
       - rok8s/get_vault_env:
           vault_path: repo/insights-cli/env
-      - run: |
-              wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.11.2
-              golangci-lint run -v --timeout 2m0s
-              go test -tags e2e ./pkg/...
-      - rok8s/docker_login:
-          registry: "quay.io"
-          username: $FAIRWINDS_QUAY_USER
-          password-variable: FAIRWINDS_QUAY_TOKEN
-      - *setup_qemu_binfmt
       - run:
-          name: Run GoReleaser release
+          name: lint and e2e tests
           command: |
-            export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              -v "$(pwd):/workspace" -w /workspace \
-              -v "${HOME}/.docker:/root/.docker" \
-              -e GORELEASER_CURRENT_TAG -e CIRCLE_TAG -e CIRCLE_SHA1 \
-              -e GO111MODULE=on \
-              -e GITHUB_TOKEN \
-              goreleaser/goreleaser:v2.15.4 release
+            wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.11.2
+            golangci-lint run -v --timeout 2m0s
+            go test -tags e2e ./pkg/...
+            go vet ./...
+  release:
+    working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
+    resource_class: large
+    shell: /bin/bash
+    docker:
+      - image: goreleaser/goreleaser:v2.15.4
+        environment:
+          GO111MODULE: "on"
+    steps:
+      - checkout
+      - setup_remote_docker
+      - *install_vault
+      - rok8s/get_vault_env:
+          vault_path: repo/global/env
+      - rok8s/get_vault_env:
+          vault_path: repo/insights-cli/env
       - run:
-          name: docker login Google Artifact Registry
+          name: docker login
           command: |
             docker login -u _json_key -p "$(echo $GCP_ARTIFACTREADWRITE_JSON_KEY | base64 -d)" us-docker.pkg.dev
-      - run: echo 'export GORELEASER_CURRENT_TAG="${CIRCLE_TAG}"' >> $BASH_ENV
       - run: goreleaser
 
 workflows:
@@ -135,8 +126,17 @@ workflows:
               ignore: /.*/
   release:
     jobs:
+      - e2e:
+          context: org-global
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /.*/
       - release:
           context: org-global
+          requires:
+            - e2e
           filters:
             branches:
               ignore: /.*/
