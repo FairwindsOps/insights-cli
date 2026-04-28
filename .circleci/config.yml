@@ -109,6 +109,11 @@ jobs:
           name: docker login
           command: |
             docker login -u _json_key -p "$(echo $GCP_ARTIFACTREADWRITE_JSON_KEY | base64 -d)" us-docker.pkg.dev
+      # Remote Docker must emulate non-native platforms for GoReleaser's buildx targets (linux/arm64, linux/arm/v7); without binfmt.
+      - run:
+          name: Enable multi-arch emulation on remote Docker (QEMU binfmt)
+          command: |
+            docker run --rm --privileged tonistiigi/binfmt:latest --install all
       - run: goreleaser
 
 workflows:
