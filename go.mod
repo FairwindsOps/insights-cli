@@ -8,7 +8,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imroc/req/v3 v3.57.0
-	github.com/open-policy-agent/opa v1.14.1
+	github.com/open-policy-agent/opa v1.15.2
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/samber/lo v1.53.0
 	github.com/sirupsen/logrus v1.9.4
