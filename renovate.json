@@ -5,6 +5,7 @@
     ":dependencyDashboard"
   ],
   "labels": ["dependencies"],
+  "assignees": ["jdesouza", "vitorvezani"],
   "prConcurrentLimit": 10,
   "branchConcurrentLimit": 10,
   "enabledManagers": ["gomod", "dockerfile", "circleci", "custom.regex"],
