@@ -1,0 +1,55 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard"
+  ],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 10,
+  "branchConcurrentLimit": 10,
+  "enabledManagers": ["gomod", "dockerfile", "circleci", "custom.regex"],
+  "packageRules": [
+    {
+      "description": "Group all non-major (minor + patch) updates into a single PR",
+      "matchUpdateTypes": ["minor", "patch", "digest", "lockFileMaintenance"],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-non-major",
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Keep major updates separate and also enforce minimum age",
+      "matchUpdateTypes": ["major"],
+      "minimumReleaseAge": "7 days"
+    },
+    {
+      "description": "Disable replace updates",
+      "matchManagers": ["gomod"],
+      "matchDepTypes": ["replace"],
+      "enabled": false
+    },
+    {
+      "description": "Every upgrade: upstream release must be at least 7 days old (applies to all enabled managers)",
+      "matchManagers": ["gomod", "dockerfile", "circleci", "custom.regex"],
+      "minimumReleaseAge": "7 days"
+    }
+  ],
+  "minimumReleaseAge": "7 days",
+  "gomod": {
+    "enabled": true
+  },
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
+  "customManagers": [
+    {
+      "description": "golangci-lint version in CircleCI test and e2e jobs",
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)\\.circleci/config\\.yml$/"],
+      "matchStrings": [
+        "golangci/golangci-lint/HEAD/install.sh \\| sh -s -- -b /usr/local/bin v(?<currentValue>[0-9.]+)"
+      ],
+      "depNameTemplate": "golangci/golangci-lint",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.*)$",
+      "autoReplaceStringTemplate": "golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v{{{newValue}}}"
+    }
+  ]
+}
