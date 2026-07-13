@@ -34,12 +34,6 @@
       "minimumReleaseAge": "7 days"
     },
     {
-      "description": "Keep GoReleaser image in sync across CircleCI executor and docker run",
-      "groupName": "GoReleaser",
-      "matchManagers": ["circleci", "custom.regex"],
-      "matchDepNames": ["goreleaser/goreleaser"]
-    },
-    {
       "description": "Group HashiCorp Vault version bumps (sha256 checksum still needs manual update)",
       "groupName": "HashiCorp Vault",
       "matchManagers": ["custom.regex"],
@@ -63,17 +57,6 @@
       "datasourceTemplate": "github-releases",
       "extractVersionTemplate": "^v?(?<version>.*)$",
       "autoReplaceStringTemplate": "golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v{{{newValue}}}"
-    },
-    {
-      "description": "GoReleaser image in CircleCI docker run commands (snapshot job)",
-      "customType": "regex",
-      "managerFilePatterns": ["/(^|/)\\.circleci/config\\.yml$/"],
-      "matchStrings": [
-        "docker run[^\\n]*goreleaser/goreleaser:v(?<currentValue>[0-9.]+)"
-      ],
-      "depNameTemplate": "goreleaser/goreleaser",
-      "datasourceTemplate": "docker",
-      "autoReplaceStringTemplate": "goreleaser/goreleaser:v{{{newValue}}}"
     },
     {
       "description": "HashiCorp Vault download URL in CircleCI install_vault",

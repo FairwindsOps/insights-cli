@@ -13,21 +13,13 @@ references:
         sha256sum vault_1.21.4_linux_amd64.zip | grep 889b681990fe221b884b7932fa9c9dd0ee9811b9349554f1aa287ab63c9f3dae
         unzip vault_1.21.4_linux_amd64.zip
         mv vault /usr/bin/vault
-  setup_qemu_binfmt: &setup_qemu_binfmt
-    run:
-      name: Setup QEMU for multi-arch Docker builds
-      command: |
-        sudo apt-get update -y
-        sudo apt-get install -y qemu-user-static binfmt-support
-        docker buildx create --use || true
-        docker buildx inspect --bootstrap
 
 jobs:
   test:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     resource_class: large
     docker:
-      # Note the goreleaser version is also referenced in the release and snapshot jobs.
+      # Note the goreleaser version is also referenced in the e2e and release jobs.
       - image: goreleaser/goreleaser:v2.17.0
     steps:
       - checkout
@@ -41,7 +33,7 @@ jobs:
               exit 1
             fi
             wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.12.2
-            golangci-lint run -v --timeout 2m0s
+            golangci-lint run -v --timeout 5m0s
       - run: ./.circleci/scripts/e2e-env.sh
       - *install_vault
       - rok8s/get_vault_env:
@@ -51,24 +43,25 @@ jobs:
           command: |
             go test -tags e2e ./...
             go vet ./...
-  snapshot:
-    machine:
-      image: ubuntu-2204:current
-    resource_class: large
-    steps:
-      - checkout
-      - *setup_qemu_binfmt
-      - run:
-          name: Run GoReleaser snapshot
-          command: |
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              -v "$(pwd):/workspace" -w /workspace \
-              -e CIRCLE_SHA1 -e CIRCLE_BRANCH -e CIRCLE_TAG \
-              goreleaser/goreleaser:v2.15.4 release --snapshot --skip=sign
-      - run: mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.json snapshot-artifacts
-      - store_artifacts:
-          path: snapshot-artifacts
+      # Snapshot build is part of the required `test` job so branch protection covers it.
+      # Skip on tags; the release workflow handles tagged builds.
+      - when:
+          condition:
+            equal: ["", << pipeline.git.tag >>]
+          steps:
+            - setup_remote_docker
+            # Remote Docker must emulate non-native platforms for GoReleaser's buildx targets (linux/arm64, linux/arm/v7).
+            - run:
+                name: Enable multi-arch emulation on remote Docker (QEMU binfmt)
+                command: |
+                  docker run --rm --privileged tonistiigi/binfmt:latest --install all
+            - run:
+                name: Run GoReleaser snapshot
+                command: |
+                  goreleaser release --snapshot --skip=sign
+                  mkdir snapshot-artifacts && cp dist/*.tar.gz dist/*.txt dist/*.json snapshot-artifacts
+            - store_artifacts:
+                path: snapshot-artifacts
   e2e:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     resource_class: large
@@ -86,7 +79,7 @@ jobs:
           name: lint and e2e tests
           command: |
             wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh | sh -s -- -b /usr/local/bin v2.12.2
-            golangci-lint run -v --timeout 2m0s
+            golangci-lint run -v --timeout 5m0s
             go test -tags e2e ./pkg/...
             go vet ./...
   release:
@@ -121,14 +114,6 @@ workflows:
   test_and_build:
     jobs:
       - test
-      - snapshot:
-          requires:
-            - test
-          filters:
-            branches:
-              only: /.*/
-            tags:
-              ignore: /.*/
   release:
     jobs:
       - e2e:
