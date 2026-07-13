@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"go.yaml.in/yaml/v2"
+	"go.yaml.in/yaml/v3"
 )
 
 func GetHeaders(inputContentType string) map[string]string {
