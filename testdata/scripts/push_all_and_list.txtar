@@ -8,6 +8,7 @@ mkdir empty_dir/opa
 mkdir empty_dir/rules
 mkdir empty_dir/app-groups
 mkdir empty_dir/policy-mappings
+mkdir empty_dir/kyverno-policies
 # There has to be a settings.yaml file to push policy configuration.
 cp settings.yaml empty_dir/settings.yaml
 mkdir populated_dir
@@ -44,6 +45,9 @@ stderr 'Push succeeded.'
 exec insights-cli push app-groups --delete -d empty_dir
 ! stdout .
 stderr 'Push succeeded.'
+exec insights-cli push kyverno-policies --delete -d empty_dir
+! stdout .
+stderr 'Successfully synchronized kyverno-policies with Insights.'
 exec insights-cli push settings -d empty_dir
 ! stdout .
 stderr 'Push succeeded.'

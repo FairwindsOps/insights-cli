@@ -54,7 +54,10 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 	insights-cli push kyverno-policies --skip-validation
 
 	# Force push even if validation fails (use with extreme caution)
-	insights-cli push kyverno-policies --force`,
+	insights-cli push kyverno-policies --force
+
+	# Delete all remote policies by syncing an empty directory
+	insights-cli push kyverno-policies --delete`,
 	PreRun: validateAndLoadInsightsAPIConfigWrapper,
 	Run: func(cmd *cobra.Command, args []string) {
 		org := configurationObject.Options.Organization
@@ -100,8 +103,10 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 		}
 
 		if len(policiesToPush) == 0 {
-			logrus.Info("No policies to push")
-			return
+			if !pushDelete || len(pushSpecificPolicies) > 0 {
+				logrus.Info("No policies to push")
+				return
+			}
 		}
 
 		if pushDryRun {
@@ -115,7 +120,6 @@ var pushKyvernoPoliciesCmd = &cobra.Command{
 			return
 		}
 
-		// Push to Insights
 		err = kyverno.PushKyvernoPolicies(client, policiesToPush, org, pushDelete, pushDryRun)
 		if err != nil {
 			logrus.Fatalf("Unable to synchronize kyverno-policies with Insights: %v", err)
