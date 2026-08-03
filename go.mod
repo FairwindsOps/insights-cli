@@ -15,7 +15,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	github.com/xlab/treeprint v1.2.0
-	go.yaml.in/yaml/v3 v3.0.4
+	go.yaml.in/yaml/v3 v3.0.5
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.36.3
 	sigs.k8s.io/yaml v1.6.0

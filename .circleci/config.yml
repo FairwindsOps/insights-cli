@@ -20,7 +20,7 @@ jobs:
     resource_class: large
     docker:
       # Note the goreleaser version is also referenced in the e2e and release jobs.
-      - image: goreleaser/goreleaser:v2.17.0
+      - image: goreleaser/goreleaser:v2.17.1
     steps:
       - checkout
       - run:
@@ -66,7 +66,7 @@ jobs:
     working_directory: /home/circleci/go/src/github.com/fairwindsops/insights-cli
     resource_class: large
     docker:
-      - image: goreleaser/goreleaser:v2.17.0
+      - image: goreleaser/goreleaser:v2.17.1
     steps:
       - checkout
       - run: ./.circleci/scripts/e2e-env.sh
@@ -87,7 +87,7 @@ jobs:
     resource_class: large
     shell: /bin/bash
     docker:
-      - image: goreleaser/goreleaser:v2.17.0
+      - image: goreleaser/goreleaser:v2.17.1
         environment:
           GO111MODULE: "on"
     steps:
