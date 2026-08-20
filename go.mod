@@ -11,7 +11,7 @@ require (
 	github.com/open-policy-agent/opa v1.19.0
 	github.com/rogpeppe/go-internal v1.16.0
 	github.com/samber/lo v1.53.0
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.0
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.0
 	github.com/xlab/treeprint v1.2.0
