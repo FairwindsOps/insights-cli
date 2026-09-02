@@ -1,9 +1,9 @@
 module github.com/fairwindsops/insights-cli
 
-go 1.26.5
+go 1.26.6
 
 require (
-	github.com/fairwindsops/insights-plugins/plugins/opa v0.0.0-20260812202120-478cdc4bbd0a
+	github.com/fairwindsops/insights-plugins/plugins/opa v0.0.0-20260825134227-332c3500ea7f
 	github.com/fatih/color v1.19.0
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-multierror v1.1.1
@@ -11,7 +11,7 @@ require (
 	github.com/open-policy-agent/opa v1.19.1
 	github.com/rogpeppe/go-internal v1.16.0
 	github.com/samber/lo v1.53.0
-	github.com/sirupsen/logrus v1.10.1
+	github.com/sirupsen/logrus v1.10.2
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.12.1
 	github.com/xlab/treeprint v1.2.0
