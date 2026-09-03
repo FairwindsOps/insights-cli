@@ -8,7 +8,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/imroc/req/v3 v3.61.0
-	github.com/open-policy-agent/opa v1.19.1
+	github.com/open-policy-agent/opa v1.20.1
 	github.com/rogpeppe/go-internal v1.16.0
 	github.com/samber/lo v1.53.0
 	github.com/sirupsen/logrus v1.10.2
@@ -78,9 +78,9 @@ require (
 	github.com/onsi/ginkgo/v2 v2.28.1 // indirect
 	github.com/onsi/gomega v1.39.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
-	github.com/prometheus/client_golang v1.24.0 // indirect
+	github.com/prometheus/client_golang v1.24.1 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
-	github.com/prometheus/common v0.70.0 // indirect
+	github.com/prometheus/common v0.70.1 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.61.0 // indirect
@@ -109,9 +109,9 @@ require (
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/api v0.36.3 // indirect
+	k8s.io/api v0.37.0 // indirect
 	k8s.io/apiextensions-apiserver v0.36.0 // indirect
-	k8s.io/client-go v0.36.3 // indirect
+	k8s.io/client-go v0.37.0 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
 	k8s.io/utils v0.0.0-20260626114624-be93311217bd // indirect
