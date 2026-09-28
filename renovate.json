@@ -11,7 +11,21 @@
   "minimumReleaseAge": "7 days",
   "enabledManagers": [
     "gomod",
-    "dockerfile"
+    "dockerfile",
+    "custom.regex"
+  ],
+  "customManagers": [
+    {
+      "description": "Trivy version in CircleCI install-trivy.sh",
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)\\.circleci/scripts/install-trivy\\.sh$/"],
+      "matchStrings": [
+        "trivyVersion=[\"']?(?<currentValue>[\\d.]+)[\"']?"
+      ],
+      "depNameTemplate": "aquasecurity/trivy",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v?(?<version>.*)$"
+    }
   ],
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths"],
   "packageRules": [
@@ -35,7 +49,7 @@
     },
     {
       "description": "Every upgrade: upstream release must be at least 7 days old",
-      "matchManagers": ["gomod", "dockerfile"],
+      "matchManagers": ["gomod", "dockerfile", "custom.regex"],
       "minimumReleaseAge": "7 days"
     }
   ]

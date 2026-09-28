@@ -3,6 +3,7 @@ version: 2.1
 
 orbs:
   rok8s: fairwinds/rok8s-scripts@17.0.0
+  slack: circleci/slack@6.1.3
 
 references:
   install_vault_machine: &install_vault_machine
@@ -108,10 +109,51 @@ jobs:
               -e VAULT_ADDR \
               -e VAULT_TOKEN \
               goreleaser/goreleaser:v2.18.1 release
+  scan_for_vulnerabilities:
+    docker:
+      - image: cimg/go:1.27.1
+    steps:
+      - checkout
+      - setup_remote_docker:
+          docker_layer_caching: false
+      - *install_vault_machine
+      - rok8s/get_vault_env:
+          vault_path: repo/global/env
+      - rok8s/get_vault_env:
+          vault_path: repo/insights-cli/env
+      - run:
+          name: docker login Google Artifact Registry
+          command: |
+            echo "$GCP_ARTIFACTREADWRITE_JSON_KEY" | base64 -d | docker login -u _json_key --password-stdin us-docker.pkg.dev || true
+      - run: ./.circleci/scripts/install-trivy.sh
+      - run:
+          name: Scan tip image
+          command: ./.circleci/scripts/scan-vulnerabilities.sh
+      - store_artifacts:
+          path: trivy-fs-table.txt
+          when: always
+      - slack/notify:
+          event: fail
+          channel: CPYBX810T
+          branch_pattern: main
+          custom: |
+            {
+                "text": "insights-cli: CRITICAL vulnerabilities",
+                "blocks": [
+                    {
+                        "type": "section",
+                        "text": {
+                            "type": "mrkdwn",
+                            "text": "insights-cli: CRITICAL vulnerabilities\n\n$CRITICAL_VULNERABILITIES_LIST\n\n$CIRCLE_BUILD_URL"
+                        }
+                    }
+                ]
+            }
 
 workflows:
   version: 2
   test_and_build:
+    when: pipeline.trigger_source != "scheduled_pipeline"
     jobs:
       - test:
           filters:
@@ -127,6 +169,7 @@ workflows:
             tags:
               ignore: /.*/
   release:
+    when: pipeline.trigger_source != "scheduled_pipeline"
     jobs:
       - test:
           filters:
@@ -144,3 +187,11 @@ workflows:
               ignore: /.*/
             tags:
               only: /v.*/
+
+  # Driven by a CircleCI Schedule Trigger named "check_vulnerabilities" on main,
+  # ~12:00 UTC, created under Project Settings > Triggers.
+  check_vulnerabilities:
+    when: pipeline.trigger_source == "scheduled_pipeline" and pipeline.schedule.name == "check_vulnerabilities"
+    jobs:
+      - scan_for_vulnerabilities:
+          context: org-global
