@@ -1,0 +1,23 @@
+name: kyverno-test-with-labels
+spec:
+    match:
+        - clusters:
+            - us-east-1
+          kinds:
+            - Pod
+            - Deployment
+          namespaces:
+            - '*'
+          namespaceLabels:
+            - critical: true
+              environment: production
+              policy-applied: "true"
+              priority: 1
+              team: platform
+          labels:
+            - flag: "yes"
+              managed-by: kyverno
+              note: 'team: platform'
+              policy-applied: "true"
+              tier: "1"
+type: AppGroup

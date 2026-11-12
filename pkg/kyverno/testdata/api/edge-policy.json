@@ -1,0 +1,88 @@
+{
+  "name": "edge-policy",
+  "kind": "Policy",
+  "apiVersion": "kyverno.io/v2",
+  "namespace": "production",
+  "labels": {
+    "app": "security",
+    "tier": "1",
+    "flag": "yes",
+    "switch": "on",
+    "off": "no",
+    "quoted-false": "false",
+    "empty": ""
+  },
+  "annotations": {
+    "policies.kyverno.io/title": "Edge: values that must stay strings",
+    "policies.kyverno.io/description": "Requires labels.\nSecond line with a # hash",
+    "example.com/template": "Pod {{ request.object.metadata.name }} must set app",
+    "example.com/pattern": "?*",
+    "example.com/image": "!*:latest"
+  },
+  "metadata": {
+    "name": "ignored-name",
+    "namespace": "ignored-namespace",
+    "generateName": "edge-",
+    "finalizers": ["kyverno.io/finalizer"],
+    "extra": null
+  },
+  "spec": {
+    "validationFailureAction": "Enforce",
+    "background": true,
+    "schemaValidation": false,
+    "webhookTimeoutSeconds": 10,
+    "rules": [
+      {
+        "name": "check-edge",
+        "match": {
+          "any": [
+            {
+              "resources": {
+                "kinds": ["Pod"],
+                "namespaces": ["production", "staging"]
+              }
+            }
+          ]
+        },
+        "validate": {
+          "message": "Image tag should be specified: not latest",
+          "pattern": {
+            "spec": {
+              "replicas": 2,
+              "progressDeadlineSeconds": 600,
+              "ratio": 1.5,
+              "containers": [
+                {
+                  "name": "*",
+                  "image": "registry.company.com/*",
+                  "securityContext": {
+                    "privileged": "false",
+                    "runAsNonRoot": true
+                  }
+                }
+              ]
+            }
+          },
+          "foreach": null
+        },
+        "cel": {
+          "expressions": [
+            {
+              "expression": "has(object.metadata.annotations) &&\n(\"app.kubernetes.io/name\" in object.metadata.annotations) &&\nobject.spec.replicas > 0\n",
+              "message": "Deployment must have app.kubernetes.io/name"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "status": {
+    "ready": true,
+    "conditions": null,
+    "message": ""
+  },
+  "managedByInsights": true,
+  "createdAt": "2025-06-10T11:35:58Z",
+  "updatedAt": "2025-06-10T12:00:00Z",
+  "appliedAppGroups": ["production-workloads"]
+}

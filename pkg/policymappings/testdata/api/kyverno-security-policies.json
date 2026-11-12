@@ -1,0 +1,8 @@
+{
+  "name": "kyverno-security-policies",
+  "spec": {
+    "appGroups": ["production-workloads", "staging-workloads", "security-critical"],
+    "contexts": ["Agent", "Admission", "CI"],
+    "policies": ["require-labels-policy", "disallow-privileged-policy", "image-security-policy"]
+  }
+}

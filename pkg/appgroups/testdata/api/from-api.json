@@ -1,0 +1,34 @@
+{
+  "id": 42,
+  "createdAt": "2025-06-10T11:35:58Z",
+  "updatedAt": "2025-06-10T11:35:58Z",
+  "name": "kyverno-test-with-labels",
+  "type": "AppGroup",
+  "spec": {
+    "match": [
+      {
+        "namespaces": ["*"],
+        "kinds": ["Pod", "Deployment"],
+        "labels": [
+          {
+            "managed-by": "kyverno",
+            "policy-applied": "true",
+            "flag": "yes",
+            "note": "team: platform",
+            "tier": "1"
+          }
+        ],
+        "namespaceLabels": [
+          {
+            "team": "platform",
+            "environment": "production",
+            "priority": 1,
+            "critical": true,
+            "policy-applied": "true"
+          }
+        ],
+        "clusters": ["us-east-1"]
+      }
+    ]
+  }
+}

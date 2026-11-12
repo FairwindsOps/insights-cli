@@ -1,0 +1,14 @@
+{
+  "id": 7,
+  "createdAt": "2025-06-10T11:35:58Z",
+  "updatedAt": "2025-06-10T11:35:58Z",
+  "name": "kyverno-test-with-block",
+  "type": "PolicyMapping",
+  "spec": {
+    "enabled": false,
+    "appGroups": ["kyverno-test-production", "kyverno-test-with-labels"],
+    "contexts": ["Agent", "Admission"],
+    "policies": ["kyverno.test-cluster-policy", "kyverno.test-mutating-policy"],
+    "block": true
+  }
+}

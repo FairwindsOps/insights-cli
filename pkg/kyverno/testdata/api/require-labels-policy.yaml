@@ -1,0 +1,31 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  annotations:
+    policies.kyverno.io/category: Security
+    policies.kyverno.io/description: Requires labels on pods for proper identification and management
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/title: Require Labels Policy
+  labels:
+    app: security
+    env: production
+    tier: policy
+  name: require-labels-policy
+spec:
+  background: true
+  rules:
+    - match:
+        resources:
+          kinds:
+            - Pod
+      name: check-labels
+      validate:
+        message: 'Pod must have required labels: app and tier'
+        pattern:
+          metadata:
+            labels:
+              app: ?*
+              tier: ?*
+  validationFailureAction: Enforce
+status:
+  ready: true
