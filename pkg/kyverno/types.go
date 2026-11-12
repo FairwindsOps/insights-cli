@@ -15,7 +15,6 @@
 package kyverno
 
 import (
-	"bytes"
 	"fmt"
 	"maps"
 	"strings"
@@ -93,18 +92,16 @@ func convertPolicySpecToYAML(policy KyvernoPolicy) (string, error) {
 	// Clean up any null values before marshaling
 	cleanPolicyMap := cleanNullValues(policyMap)
 
-	// Convert to YAML
-	// yaml converter should use only 2 spaces for indentation
-	var buf bytes.Buffer
-	encoder := yaml.NewEncoder(&buf)
-	encoder.SetIndent(2)
-	err := encoder.Encode(cleanPolicyMap)
+	// 2-space indent, block sequences, and no line wrapping.
+	yamlBytes, err := yaml.Dump(cleanPolicyMap,
+		yaml.WithV3Defaults(),
+		yaml.WithIndent(2),
+		yaml.WithLineWidth(-1),
+	)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal policy to YAML: %w", err)
 	}
-	yamlContent := buf.String()
-	yamlContent = strings.TrimSpace(yamlContent)
-	return yamlContent, nil
+	return strings.TrimSpace(string(yamlBytes)), nil
 }
 
 // cleanNullValues recursively removes null values from a map

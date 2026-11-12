@@ -1,0 +1,31 @@
+{
+  "name": "production-workloads",
+  "spec": {
+    "match": [
+      {
+        "kinds": ["Pod", "Deployment", "StatefulSet", "Service"],
+        "namespaces": ["production", "prod-*"],
+        "labels": [
+          {
+            "env": "production"
+          },
+          {
+            "tier": "production"
+          }
+        ],
+        "clusters": ["us-east-1", "us-west-2"]
+      }
+    ],
+    "exclude": [
+      {
+        "kinds": ["Pod", "Deployment", "StatefulSet", "Service"],
+        "namespaces": ["kube-system", "kube-public", "kube-node-lease"],
+        "labels": [
+          {
+            "app": "system"
+          }
+        ]
+      }
+    ]
+  }
+}

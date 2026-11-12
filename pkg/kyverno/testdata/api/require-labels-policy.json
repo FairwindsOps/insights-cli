@@ -1,0 +1,44 @@
+{
+  "name": "require-labels-policy",
+  "kind": "ClusterPolicy",
+  "apiVersion": "kyverno.io/v1",
+  "labels": {
+    "app": "security",
+    "tier": "policy",
+    "env": "production"
+  },
+  "annotations": {
+    "policies.kyverno.io/category": "Security",
+    "policies.kyverno.io/description": "Requires labels on pods for proper identification and management",
+    "policies.kyverno.io/severity": "medium",
+    "policies.kyverno.io/title": "Require Labels Policy"
+  },
+  "spec": {
+    "validationFailureAction": "Enforce",
+    "background": true,
+    "rules": [
+      {
+        "name": "check-labels",
+        "match": {
+          "resources": {
+            "kinds": ["Pod"]
+          }
+        },
+        "validate": {
+          "message": "Pod must have required labels: app and tier",
+          "pattern": {
+            "metadata": {
+              "labels": {
+                "app": "?*",
+                "tier": "?*"
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "status": {
+    "ready": true
+  }
+}

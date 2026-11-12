@@ -1,0 +1,65 @@
+{
+  "name": "image-security-policy",
+  "kind": "ClusterPolicy",
+  "apiVersion": "kyverno.io/v1",
+  "labels": {
+    "app": "security",
+    "tier": "image",
+    "env": "production"
+  },
+  "annotations": {
+    "policies.kyverno.io/category": "Security",
+    "policies.kyverno.io/description": "Enforces image security requirements and approved registries",
+    "policies.kyverno.io/severity": "high",
+    "policies.kyverno.io/title": "Image Security Policy"
+  },
+  "spec": {
+    "validationFailureAction": "Enforce",
+    "background": true,
+    "rules": [
+      {
+        "name": "require-approved-registry",
+        "match": {
+          "resources": {
+            "kinds": ["Pod"]
+          }
+        },
+        "validate": {
+          "message": "Images must come from approved registries",
+          "pattern": {
+            "spec": {
+              "containers": [
+                {
+                  "image": "registry.company.com/*"
+                }
+              ]
+            }
+          }
+        }
+      },
+      {
+        "name": "disallow-latest-tag",
+        "match": {
+          "resources": {
+            "kinds": ["Pod"]
+          }
+        },
+        "validate": {
+          "message": "Images must not use the 'latest' tag",
+          "pattern": {
+            "spec": {
+              "containers": [
+                {
+                  "image": "!*:latest"
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "status": {
+    "ready": true
+  }
+}

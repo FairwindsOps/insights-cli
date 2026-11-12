@@ -1,0 +1,14 @@
+name: kyverno-test-with-block
+spec:
+    enabled: false
+    appGroups:
+        - kyverno-test-production
+        - kyverno-test-with-labels
+    contexts:
+        - Agent
+        - Admission
+    policies:
+        - kyverno.test-cluster-policy
+        - kyverno.test-mutating-policy
+    block: true
+type: PolicyMapping
