@@ -161,8 +161,8 @@ github.com/onsi/ginkgo/v2 v2.33.1 h1:62XfWJbEIjPSCSDYrsCPP/SHcmH7O0M8ne8zfqQ2iz4
 github.com/onsi/ginkgo/v2 v2.33.1/go.mod h1:+aXOY+vzZ5mu2iI2HpTZUPmM//oQfsNFX6gU9kNcA44=
 github.com/onsi/gomega v1.44.0 h1:eAiGl3Pw5jz5GQdDff0BcxYpAX1JxW8xD7mFUuwNfZQ=
 github.com/onsi/gomega v1.44.0/go.mod h1:e/C2HwaZ1DhvjzXXuFhcR7hY7Sh9pl7MmoWKEjzwcdA=
-github.com/open-policy-agent/opa v1.22.1 h1:nHBFO1vU5yZCL9dGtHot0bKKPPkpZFqookrxaLw/z88=
-github.com/open-policy-agent/opa v1.22.1/go.mod h1:yspbCEa/ZmNfyZTOpfCwf4lBD08E7CHMe26Ol1FHKRk=
+github.com/open-policy-agent/opa v1.22.2 h1:WzqReKk2VjcvBN/NQTlcIxKqFPKpzIdb6KYMHzPEbe0=
+github.com/open-policy-agent/opa v1.22.2/go.mod h1:yspbCEa/ZmNfyZTOpfCwf4lBD08E7CHMe26Ol1FHKRk=
 github.com/pandatix/go-abnf v0.5.1 h1:iyLvSu2Aq12iE0r4n948Qw21BHDuckLq/8WIXAAF+HI=
 github.com/pandatix/go-abnf v0.5.1/go.mod h1:VBmbtpFgQNEaQpyAvmi+Ecd9wAYJKzA3TmiB3L93sVg=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
