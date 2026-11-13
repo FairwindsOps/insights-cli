@@ -117,7 +117,6 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-          context: org-global
       - snapshot:
           requires:
             - test
