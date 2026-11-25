@@ -31,48 +31,50 @@ exec echo "DEBUG: All validation tests completed"
 exec echo "DEBUG: If any test failed, the actual stderr content should be shown above"
 
 -- require-labels.yaml --
-apiVersion: kyverno.io/v1
-kind: ClusterPolicy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
   name: require-labels
 spec:
-  validationFailureAction: enforce
-  background: true
-  rules:
-  - name: check-labels
-    match:
-      any:
-      - resources:
-          kinds:
-          - Pod
-    validate:
+  validationActions:
+    - Deny
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+  validations:
+    - expression: "has(object.metadata.labels) && has(object.metadata.labels.app) && object.metadata.labels.app != ''"
       message: "Label 'app' is required"
-      pattern:
-        metadata:
-          labels:
-            app: "?*"
 
 -- disallow-privileged.yaml --
-apiVersion: kyverno.io/v1
-kind: Policy
+apiVersion: policies.kyverno.io/v1
+kind: ValidatingPolicy
 metadata:
   name: disallow-privileged
 spec:
-  validationFailureAction: enforce
-  background: true
-  rules:
-  - name: disallow-privileged
-    match:
-      any:
-      - resources:
-          kinds:
-          - Pod
-    validate:
+  validationActions:
+    - Deny
+  matchConstraints:
+    resourceRules:
+      - apiGroups:
+          - ""
+        apiVersions:
+          - v1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - pods
+  validations:
+    - expression: "!has(object.spec.securityContext) || !has(object.spec.securityContext.privileged) || object.spec.securityContext.privileged == false"
       message: "Privileged containers are not allowed"
-      pattern:
-        spec:
-          =(securityContext):
-            =(privileged): "false"
 
 -- require-labels.testcase1.success.yaml --
 apiVersion: v1
